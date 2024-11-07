@@ -19,6 +19,14 @@ void AMessage::setHeader(const std::string& key, const std::string& value) {
   }
 }
 
+void AMessage::setContentLength(void) {
+  std::size_t content_length = _message_body.length();
+  std::stringstream ss;
+
+  ss << content_length;
+  setHeader("Content-Length", ss.str());
+}
+
 void AMessage::setBody(const std::string& body) {
   _message_body = body;
 }

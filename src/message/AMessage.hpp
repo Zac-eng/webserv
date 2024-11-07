@@ -16,6 +16,7 @@ class AMessage {
 
 public:
   void setHeader(const std::string& key, const std::string& value);
+  void setContentLength(void);
   void setBody(const std::string& body);
   void Send(int stream_fd);
 
