@@ -1,4 +1,4 @@
-#include "response/Response.hpp"
+#include "message/Response.hpp"
 #include <netinet/in.h>
 #include <unistd.h>
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
       std::cerr << "Accept failed" << std::endl;
       continue;
     }
-    dummy.sendResponse(new_socket);
+    dummy.Send(new_socket);
     close(new_socket);
   }
   return 0;

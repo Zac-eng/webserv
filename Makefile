@@ -6,7 +6,7 @@ OBJDIR = object
 
 RM = rm -rf
 
-SRCS = $(wildcard ./src/*.cpp) $(wildcard ./src/response/*.cpp)
+SRCS = $(wildcard ./src/*.cpp) $(wildcard ./src/message/*.cpp)
 OBJS = $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
 
 all: $(NAME)

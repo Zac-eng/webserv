@@ -1,6 +1,6 @@
 #pragma once
-# ifndef RESPONSE_HPP
-# define RESPONSE_HPP
+#ifndef A_MESSAGE_HPP
+# define A_MESSAGE_HPP
 
 # include <map>
 # include <vector>
@@ -12,30 +12,19 @@
 # include <sys/socket.h>
 
 
-class Response {
+class AMessage {
 
 public:
-
-  enum StatusCode {
-    OK = 200,
-    NotFound = 404,
-  };
-
-  // construct Response from socket stream. will be used in client use
-  Response(int stream_fd);
-  // construct Response with necessary components. will be used in server use
-  Response(double version, StatusCode status_code);
-
   void setHeader(const std::string& key, const std::string& value);
-  void setBody(std::string body);
-  void sendResponse(int stream_fd);
+  void setBody(const std::string& body);
+  void Send(int stream_fd);
 
-private:
-  Response(void);
+protected:
+  AMessage(void);
+  virtual ~AMessage();
 
   // necessary components
   double _version;
-  StatusCode _status_code;
 
   // optional, can be "empty"
   std::map<std::string, std::vector<std::string> > _headers;
@@ -45,8 +34,7 @@ private:
   class BadHeaderException: std::exception {};
 
   // internal functions
-  std::string flattenContents(void) const;
-  std::string resolveStatusCode(StatusCode status_code) const;
+  virtual std::string flattenContents(void) const = 0;
   bool canDuplicate(const std::string header) const;
 
 };
