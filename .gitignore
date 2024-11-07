@@ -1,2 +1,9 @@
 webserv
 *.o
+test.cpp
+html
+default.conf
+.DS_Store
+.vscord
+.env
+init.sh
