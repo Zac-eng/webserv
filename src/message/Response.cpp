@@ -1,5 +1,9 @@
 #include "Response.hpp"
 
+Response::Response(int stream_fd) {
+  
+}
+
 Response::Response(double version, StatusCode status_code) {
   _version = version;
   _status_code = status_code;

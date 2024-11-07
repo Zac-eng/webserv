@@ -31,7 +31,7 @@ void AMessage::setBody(const std::string& body) {
   _message_body = body;
 }
 
-void AMessage::Send(int stream_fd) {
+void AMessage::Send(int stream_fd) const {
   std::string contents = flattenContents();
   if (send(stream_fd, contents.c_str(), contents.length(), 0) < 0)
     std::cerr << "failed to send http AMessage" << std::endl;
