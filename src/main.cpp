@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "Server.hpp"
+#include "Request.hpp"
 
 Server::Server()
 {
@@ -63,6 +64,7 @@ void	Server::ServerRequest()
 				{
 					this->_poll_fds[i].fd = client_fd;
 					this->_poll_fds[i].events = POLLIN;
+					// default_page(client_fd);
 					break;
 				}
 			}
@@ -86,6 +88,7 @@ void	Server::ServerRequest()
 					{
 						buffer[bytes_read] = '\0';
 						std::cout << "Client fd " << this->_poll_fds[i].fd << ": message: " << buffer << std::endl;
+						Request req((std::string(buffer)));
 						send(this->_poll_fds[i].fd, buffer, strlen(buffer), 0);
 					}
 				}

@@ -21,5 +21,4 @@ class Server {
 	public:
 		Server();
 		void ServerRequest();
-		void HandleRequest(int client_fd);
 };

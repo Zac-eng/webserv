@@ -7,3 +7,4 @@ default.conf
 .vscord
 .env
 init.sh
+./a.out
