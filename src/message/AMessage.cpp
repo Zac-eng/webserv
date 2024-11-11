@@ -37,6 +37,21 @@ void AMessage::Send(int stream_fd) const {
     std::cerr << "failed to send http AMessage" << std::endl;
 }
 
+std::stringstream AMessage::createStream(int fd) const {
+  std::stringstream ss;
+  char buffer[1024];
+
+  while (true) {
+    int result = read(fd, buffer, 1024);
+    if (result < 0)
+      throw std::exception();
+    ss << buffer;
+    if (result < 1024)
+      break ;
+  }
+  return ss;
+}
+
 bool AMessage::canDuplicate(const std::string header_key) const {
   return header_key == "Set-Cookie" || header_key == "Warning" || header_key == "Link" || header_key == "WWW-Authenticate";
 }

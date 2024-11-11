@@ -10,6 +10,7 @@
 # include <algorithm>
 # include <sstream>
 # include <sys/socket.h>
+# include <unistd.h>
 
 class AMessage {
 
@@ -35,6 +36,7 @@ protected:
 
   // internal functions
   virtual std::string flattenContents(void) const = 0;
+  std::stringstream createStream(int fd) const;
   bool canDuplicate(const std::string header) const;
 
 };

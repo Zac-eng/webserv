@@ -60,7 +60,9 @@ public:
 
   enum StatusCode {
     OK = 200,
+    BadRequest = 400,
     NotFound = 404,
+    Error = -1,
   };
 
   // construct Response from socket stream. will be used in client use
@@ -76,6 +78,10 @@ private:
   // necessary components
   StatusCode _status_code;
 
+  //functions to parse
+  double parseHttpVersion(std::stringstream& ss);
+  StatusCode parseStatusCode(std::stringstream& ss);
+  void parseHeader(const std::string& line);
   // internal functions
   std::string flattenContents(void) const;
   std::string resolveStatusCode(StatusCode status_code) const;

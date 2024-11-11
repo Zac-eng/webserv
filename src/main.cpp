@@ -58,8 +58,14 @@
 // }
 
 int main(void) {
-  Request request(1.1, Request::GET, "/index.html");
-  CgiClient cgi("127.0.0.1", 80);
+  Request request(1.1, Request::GET, "index.html");
+  request.setHeader("Host", "localhost");
+  request.setHeader("User-")
+  request.setHeader("Accept", "text/html");
+  request.setHeader("Connection", "keep-alive");
+  request.setHeader("Content-Type", "application/json");
+  CgiClient cgi("127.0.0.1", 8080);
   Response response = cgi.sendRequest(request);
+  response.Send(1);
   return 0;
 }

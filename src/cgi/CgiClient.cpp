@@ -26,6 +26,7 @@ Response CgiClient::sendRequest(const Request& request) const {
     throw std::exception();
   }
   request.Send(sock_fd);
+  Response res = Response(sock_fd);
   close(sock_fd);
-  return Response(1.1, Response::OK);
+  return res;
 }
