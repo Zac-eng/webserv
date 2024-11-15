@@ -8,3 +8,5 @@ default.conf
 .env
 init.sh
 ./a.out
+error.html
+index.html

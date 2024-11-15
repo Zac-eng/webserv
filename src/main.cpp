@@ -13,6 +13,15 @@ Server::Server()
 	{
 		throw std::runtime_error("socket failed");
 	}
+	int opt = 1;
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	{
+		throw std::runtime_error("set socket failed");
+	}
+	if (setsockopt(server_fd, SOL_SOCKET,SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+	{
+		throw std::runtime_error("set socket failed");
+	}
 	memset(&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_port = htons(8080);
@@ -43,7 +52,9 @@ void	Server::ServerRequest()
 	std::cout << "ServerRequest" << std::endl;
 	while (1)
 	{
+		std::cout << "メッセージを受け取る待機前" << std::endl;
 		int poll_fd = poll(this->_poll_fds, BACKLOG, -1);
+		std::cout << "メッセージを受け取る待機後です。" << std::endl;
 		if (poll_fd < 0)
 		{
 			throw std::runtime_error("poll failed");
@@ -77,19 +88,28 @@ void	Server::ServerRequest()
 					std::cout << "New client connected: socket fd set" << client_fd << std::endl;
 					std::cout << "Client fd " << this->_poll_fds[i].fd << ": data received" << std::endl;
 					char buffer[MAX_SIZE];
-					int bytes_read = read(this->_poll_fds[i].fd, buffer, sizeof(buffer) - 1);
-					if (bytes_read <= 0)
+					Request req(this->_poll_fds[i].fd, "index.html");
+					while (true)
 					{
-						close(this->_poll_fds[i].fd);
-						this->_poll_fds[i].fd = -1;
-						std::cout << "Client disconnected: socket fd " << this->_poll_fds[i].fd << std::endl;
-					}
-					else
-					{
-						buffer[bytes_read] = '\0';
-						std::cout << "Client fd " << this->_poll_fds[i].fd << ": message: " << buffer << std::endl;
-						Request req((std::string(buffer)));
-						send(this->_poll_fds[i].fd, buffer, strlen(buffer), 0);
+						int bytes_read = read(this->_poll_fds[i].fd, buffer, sizeof(buffer) - 1);
+						std::cout<< "buffer :" << buffer <<std::endl;
+						if (bytes_read <= 0)
+						{
+							close(this->_poll_fds[i].fd);
+							this->_poll_fds[i].fd = -1;
+							std::cout << "Client disconnected: socket fd " << this->_poll_fds[i].fd << std::endl;
+							break;
+						}
+						else
+						{
+							buffer[bytes_read] = '\0';
+							std::cout << "Client fd " << this->_poll_fds[i].fd << ": message: " << buffer << std::endl;
+							if (req.HandleMethod(buffer) == false)
+							{
+								close(this->_poll_fds[i].fd);
+								return ;
+							}
+						}
 					}
 				}
 		}

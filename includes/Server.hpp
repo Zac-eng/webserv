@@ -7,6 +7,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <poll.h>
+#include <fstream>
+#include <sstream>
 
 #define PORT 8080
 #define BACKLOG 5
