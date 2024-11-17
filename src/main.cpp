@@ -60,7 +60,6 @@
 int main(void) {
   Request request(1.1, Request::GET, "index.html");
   request.setHeader("Host", "localhost");
-  request.setHeader("User-")
   request.setHeader("Accept", "text/html");
   request.setHeader("Connection", "keep-alive");
   request.setHeader("Content-Type", "application/json");
