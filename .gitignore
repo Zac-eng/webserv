@@ -7,6 +7,6 @@ default.conf
 .vscord
 .env
 init.sh
-./a.out
+a.out
 error.html
 index.html

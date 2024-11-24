@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <sstream>
+#include <map>
 
 class Request
 {
@@ -21,8 +22,7 @@ class Request
 		std::string _method;
 		std::string _path;
 		std::string _version;
-		std::string _host;
-		std::vector<std::pair<std::string, std::string> > _headers;
+		std::map<std::string, std::string> _header;
 		bool eroor_flag;
 		const unsigned int _fd;
 		std::string _root_path;
@@ -35,7 +35,13 @@ class Request
 		bool GetEroorFlag(void) const;
 		bool HandleFile(const std::string& filename);
 		bool HandleMethod(const std::string& request);
-		bool ParseHeader(std::string::const_iterator it, const std::string& request);
+		bool ParseHeader(std::string::const_iterator& it, const std::string& request);
+		
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
+
+	void ParseMethod(std::string& method,const std::string& request, std::string::const_iterator& it);
+	bool ParsePath(std::string::const_iterator& it, const std::string& request);
+	bool ParseVersion(std::string::const_iterator& it, const std::string& request);
+	bool ParseHost(std::string::const_iterator& it, const std::string& request);
 };

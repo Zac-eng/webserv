@@ -9,6 +9,10 @@
 #include <poll.h>
 #include <fstream>
 #include <sstream>
+#include <map>
+#include <fcntl.h>
+#include <unistd.h>
+
 
 #define PORT 8080
 #define BACKLOG 5
@@ -23,4 +27,9 @@ class Server {
 	public:
 		Server();
 		void ServerRequest();
+		void MethodWait(std::map<int, std::string>& array_buffer);
+		void AcceptRequest(std::map<int, std::string>& array_buffer, int i);
+		void BindSocket(int server_fd);
+		int SetSocket(void);
+		void	SetNonBlock(int fd);
 };
