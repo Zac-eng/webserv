@@ -1,6 +1,5 @@
 #include "message/Response.hpp"
 #include "message/Request.hpp"
-#include "cgi/CgiClient.hpp"
 #include <netinet/in.h>
 #include <unistd.h>
 
@@ -64,7 +63,7 @@ int main(void) {
   request.setHeader("Connection", "keep-alive");
   request.setHeader("Content-Type", "application/json");
   CgiClient cgi("127.0.0.1", 8080);
-  Response response = cgi.sendRequest(request);
+
   response.Send(1);
   return 0;
 }
