@@ -10,21 +10,14 @@ class Parser {
 private:
   Parser(void);
   ~Parser();
+  Parser(const Parser& object);
+  Parser& operator = (const Parser& object);
+
+  static int parseConfFirstLine(std::ifstream& ifs);
+  static void skipBlank(std::string str, std::size_t& it);
 
 public:
-  Server parseConfig(const std::string& config_path);
-  class DirectiveException: std::exception {
-    public:
-      DirectiveException(const std::string& directive, int line);
-      std::string _directive;
-      int _line;
-  };
-  class InvalidArgException: std::exception {
-    public:
-      InvalidArgException(const std::string& directive, int line);
-      std::string _directive;
-      int _line;
-  };
+  static Server parseConfig(const std::string& config_path);
 
 };
 
