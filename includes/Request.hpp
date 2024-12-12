@@ -23,25 +23,36 @@ class Request
 		std::string _path;
 		std::string _version;
 		std::map<std::string, std::string> _header;
+		std::string _body;
+		bool _request_flag;
+		bool _host_flag;
 		bool eroor_flag;
 		const unsigned int _fd;
 		std::string _root_path;
 
+		std::vector<std::string> _valid_header_key;
+
 	public:
 		Request(const unsigned int fd, const std::string &root_path);
 		~Request();
-		bool Get(std::string::const_iterator it, const std::string& request);
-		bool SearchPath(void);
-		bool GetEroorFlag(void) const;
-		bool HandleFile(const std::string& filename);
-		bool HandleMethod(const std::string& request);
-		bool ParseHeader(std::string::const_iterator& it, const std::string& request);
-		
-		// void Post(std::string::iterator it, std::string request);
-		// void Delete(std::string::iterator it, std::string request);
+		bool ParseMethod(const std::string& request, std::string::const_iterator& it);
+		bool ParseUri(const std::string& request, std::string::const_iterator& it);
+		bool ParseVersion(const std::string& request, std::string::const_iterator& it)
+		bool ParseHeader(const std::string& request);
+		bool ParseRequestLine(const std::string& request);
+		bool ParseRequest(const std::string& request);
+		bool isCarriagereturn(const std::string& request);
+		void InsertHeaderKey(void);
 
-	void ParseMethod(std::string& method,const std::string& request, std::string::const_iterator& it);
-	bool ParsePath(std::string::const_iterator& it, const std::string& request);
-	bool ParseVersion(std::string::const_iterator& it, const std::string& request);
-	bool ParseHost(std::string::const_iterator& it, const std::string& request);
 };
+
+namespace Error
+{
+	void MissingRequestLineAndHost(void);
+	void InvalidMethod(void);
+	void InvalidUri(void);
+	void InvalidVersion(void);
+	void InvalidRequestLine(void);
+	void InvalidHeaderKey(void);
+	void InvalidHeaderValue(void);
+}

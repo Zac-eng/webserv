@@ -1,277 +1,233 @@
 #include "Request.hpp"
 
-bool	Request::ParseHeader(std::string::const_iterator& it, const std::string& request)
+bool Request::SearchHeaderKey(std::string &key)
 {
-	std::string host;
-	std::string host_name;
-	while (it != request.end())
+	for (size_t i = 0; i < _valid_header_key.size(); i++)
 	{
-		if (it != request.end() && *it == '\r')
-		{
-			it++;
-			if (it != request.end() || *it == '\n')
-			{
-				it++;
-				if (it == request.end())
-					return (true);
-				return (false);
-			}
-		}
-		while (std::isspace(*it))
-			it++;
-		while (it != request.end() && *it != ':' && !std::isspace(*it))
-		{
-			host += *it;
-			it++;
-		}
-		if (it == request.end() || *it != ':')
-		{
-			std::cerr << "Invalid header" << host << "aaa"<< *it << std::endl;
+		if (key == _valid_header_key[i])
+			return (true);
+	}
+	return (false);
+}
+
+bool Request::HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
+{
+	for (; it != request.end() && *it != ':'; it++)
+	{
+		if (std::isspace(*it))
 			return (false);
-		}
-		it++;
-		while (it != request.end() && std::isspace(*it) && *it != '\r')
-			it++;
-		while (it != request.end() && *it != '\r')
-		{
-			host_name += *it;
-			it++;
-		}
-		if ((std::distance(it, request.end()) < 2) && *it != '\r' && *(it + 1) != '\n')
-		{
-			std::cerr << "Invalid Error: current char '" << *it << "', next char '" << *(it + 1) << "'" << std::endl;
-			return (false);
-		}
-		it++;
-		it++;
-		this->_header[host] = host_name;
-		host.clear();
-		host_name.clear();
+		key += *it;
 	}
-	return (true);
-}
-
-bool	Request::SearchPath(void)
-{
-	if (this->_path == "/")
-	{
-		if (HandleFile(this->_root_path) == false)
-			return (false);
-		return (true);
-	}
-	size_t pos = this->_path.find_last_of("/");
-	if (pos == std::string::npos)
+	if (it == request.end())
 		return (false);
-	std::string dir_path = this->_path.substr(0, pos+1);
-	std::string filename = this->_path.substr(pos + 1);
-	std::cout << pos << "aa " << dir_path << "bb " << filename<< std::endl;
-	DIR *dir = opendir(dir_path.c_str());
-	if (dir == NULL)
-	{
-		std::cerr << "opendir failed" << std::endl;
-		return (false);
-	}
-	dirent *entry = NULL;
-	while ((entry = readdir(dir)) != NULL)
-	{
-		std::cout << "Name: " << entry->d_name << ", ";
-		if (entry->d_type == DT_REG && filename == entry->d_name)
-		{
-			std::cout << "Type: Regular file" << std::endl;
-			break ;
-		}
-	}
-	if (HandleFile(filename) == false)
+	if (SearchHeaderKey(key) == false)
 		return (false);
 	return (true);
 }
 
-bool Request::HandleFile(const std::string& filename)
+bool Request::ParseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
-	std::ifstream file(filename);
-	if (!file.is_open())
-	{
-		std::ifstream error_file("error.html");
-		std::string content((std::istreambuf_iterator<char>(error_file)), std::istreambuf_iterator<char>());
-		error_file.close();
-		
-		std::ostringstream stream;
-		stream << "HTTP/1.1 404 Not Found\r\n";
-		stream << "Content-Type: text/html\r\n";
-		stream << "Content-Length: " << content.length() << "\r\n\r\n";
-		stream << content;
-		std::string response = stream.str();
-		send(this->_fd, response.c_str(), response.length(), 0);
-		return (true);
-	}
-	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	file.close();
-	std::ostringstream stream;
-	stream << "HTTP/1.1 200 OK\r\n";
-	stream << "Content-Type: text/html\r\n";
-	stream << "Content-Length: " << content.length() << "\r\n\r\n";
-	stream << content;
-	std::string response = stream.str();
-	send(this->_fd, response.c_str(), response.length(), 0);
+	if (SkipSpaceAndCheckEnd(request, it) == false)
+		return (false);
+	if (HandleHeaderKey(request, it, key) == false)
+		return (false);
 	return (true);
 }
 
-bool Request::ParsePath(std::string::const_iterator& it, const std::string& request)
+bool Request::HandleHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& value)
 {
-	while (it != request.end() && std::isspace(*it))
-		it++;
-	if (*it != '/')
-	{
-		std::cerr << "Invalid path" << std::endl;
+	if (GetSubstringUntilCarriageReturn(request, it, value) == false)
 		return (false);
-	}
-	while (it != request.end() && !std::isspace(*it))
-	{
-		this->_path += *it;
-		it++;
-	}
-	if (this->SearchPath() == false)
-		return (false);
-	while (it != request.end() && std::isspace(*it))
-		it++;
-	return (true);
-}
-
-bool Request::ParseVersion(std::string::const_iterator& it, const std::string& request)
-{
-	if (*it != 'H')
-	{
-		std::cerr << "Invalid version" << std::endl;
-		return (false);
-	}
-	while (it != request.end() && *it != '\n' && !std::isspace(*it))
-	{
-		this->_version += *it;
-		it++;
-	}
-	if (this->_version != "HTTP/1.1")
-	{
-		std::cerr << "Invalid version" << std::endl;
-		return (false);
-	}
-	while (it != request.end() && *it != '\n' )
-	{
-		it++;
-	}
 	if (it != request.end())
+		return (false);
+	return (true);
+}
+
+bool Request::ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key)
+{
+	if (SkipSpaceAndCheckEnd(request, it) == false)
+		return (false);
+	if (HandleHeaderValue(request, it, key) == false)
+		return (false);
+	return (true);
+}
+
+bool Request::ParseHeader(const std::string& request)
+{
+	std::string key;
+	std::string value;
+	std::string::const_iterator it;
+
+	it = request.begin();
+	if (ParseHeaderKey(request, it, key) == false)
 	{
-		it++;
+		Error::InvalidHeaderKey();
+		return (false);
+	}
+	if (ParseHeaderValue(request, it, value) == false)
+	{
+		Error::InvalidHeaderValue();
+		return (false);
+	}
+	this->_header[key] = value;
+	return (true);
+}
+
+bool Request::ValidMethod(const std::string& method)
+{
+	switch (method)
+	{
+		case ("GET"):
+			this->_method = method;
+			break ;
+		case ("POST"):
+			this->_method = method;
+			break ;
+		case ("DELETE"):
+			this->_method = method;
+			break ;
+		default:
+			Error::InvalidMethod();
+			return (false);
 	}
 	return (true);
 }
 
-bool Request::ParseHost(std::string::const_iterator& it, const std::string& request)
-{
-	std::string host;
-	std::string host_name;
-
-	while (it != request.end() && std::isspace(*it))
-	{
-		it++;
-	}
-	if (*it != 'H')
-	{
-		std::cerr << "Invalid host" << std::endl;
-		return (false);
-	}
-	while (it != request.end() && *it != '\n' && !std::isspace(*it))
-	{
-		host += *it;
-		it++;
-	}
-	if (host != "Host:")
-	{
-		std::cerr << "Invalid host" << std::endl;
-		return (false);
-	}
-	while (it != request.end() && std::isspace(*it))
-		it++;
-	while (it != request.end() && *it != '\r' && !std::isspace(*it))
-	{
-		host_name += *it;
-		it++;
-	}
-	if ((std::distance(it, request.end()) < 2) && *it != '\r' && *(it + 1) != '\n')
-	{
-		std::cerr << "Invalid Error: current char '" << *it << "', next char '" << *(it + 1) << "'" << std::endl;
-		return (false);
-	}
-	it++;
-	it++;
-	this->_header["Host"] = host_name;
-	return (true);
-}
-
-bool	Request::Get(std::string::const_iterator it, const std::string& request)
-{
-	if (ParsePath(it, request) == false)
-		return (false);
-	if (ParseVersion(it, request) == false)
-		return (false);
-	std::cout << "Method: " << this->_method << std::endl;
-	std::cout << "Path: " << this->_path << std::endl;
-	std::cout << "Version: " << this->_version << std::endl;
-	if (ParseHost(it, request) == false)
-		return (false);
-	if (ParseHeader(it, request) == false)
-		return (false);
-    for (std::map<std::string, std::string>::const_iterator it = _header.begin(); it != _header.end(); ++it) {
-        std::cout << "header----" << it->first << ": " << it->second << std::endl;
-    }
-	return (true);
-}
-
-void Request::ParseMethod(std::string& method, const std::string& request, std::string::const_iterator& it)
-{
-	while (it != request.end() && std::isspace(*it))
-		it++;
-	while (it != request.end() && !std::isspace(*it))
-	{
-		method += *it;
-		it++;
-	}
-	return ;
-}
-
-bool Request::HandleMethod(const std::string& request)
+bool Request::ParseMethod(const std::string& request, std::string::const_iterator& it)
 {
 	std::string method;
-	this->_request = request;
-	std::string::const_iterator it = request.begin();
 
-	ParseMethod(method, request, it);
-	if (method == "GET")
-	{
-		this->_method = "GET";
-		if (this->Get(it, request) == false)
-			return (false);
-		return (true);
-	}
-	// else if (method == "POST")
-	// {
-	// 	this->_method = "POST";
-	// 	this->Post(it, request);
-	// }
-	// else if (method == "DELETE")
-	// {
-	// 	this->_method = "DELETE";
-	// 	this->Delete(it, request);
-	// }
-	else
-	{
-		std::cerr << "Invalid method" << std::endl;
+	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-	}
+	if (GetSubstringUntilSpace(request, it, version) == false)
+		return (false);
+	if (ValidMethod(method) == false)
+		return (false);
+	return (true);
 }
 
+bool isSlash(const std::string& uri, std::string::iterator& it)
+{
+	if (it != uri.end() && *it == '/')
+	{
+		it++;
+		return (true);
+	}
+	Error::InvalidUri();
+	return (false);
+}
+
+bool Request::VaildUri(const std::string& uri)
+{
+	std::string::iterator it;
+
+	it = uri.begin();
+	if (isSlash(uri, it) == false)
+		return (false);
+	for (; it != uri.end(); it++)
+	{
+		if (!std::isalnum(*it))
+		{
+			Error::InvalidUri();
+			return (false);
+		}
+	}
+	return (true);
+}
+
+bool Request::ParseUri(const std::string& uri)
+{
+	std::string uri;
+
+	if (SkipSpaceAndCheckEnd(request, it) == false)
+		return (false);
+	if (GetSubstringUntilSpace(request, it, uri) == false)
+		return (false);
+	if (ValidUri(uri) == false)
+		return (false);
+	return (true);
+}
+
+bool Request::VaildVersion(const std::string& version)
+{
+	if (version == "HTTP/1.1")
+		return (true);
+	Error::InvalidVersion();
+	return (false);
+}
+
+bool Request::ParseVersion(const std::string& request, std::string::const_iterator& it)
+{
+	std::string version;
+
+	if (SkipSpaceAndCheckEnd(request) == false)
+		return (false);
+	if (GetSubstringUntilSpace(request, it, version) == false)
+		return (false);
+	if (ValidUri(version) == false)
+		return (false);
+	return (true);
+}
+
+bool Request::ParseRequestLine(const std::string& request)
+{
+	std::string::const_iterator it = request.begin();
+	if (ParseMethod(request, it) == false)
+		return (false);
+	if (ParseUri(request, it) == false)
+		return (false);
+	if (ParseVersion(request, it) == false)
+		return (false);
+	if (it != request.end())
+	{
+		Error::InvalidRequestLine();
+	}
+	return (true);
+}
+
+bool isCarriagereturn(const std::string& request)
+{
+	if (request == "\r\n")
+		return (true);
+	return (false);
+}
+
+
+bool Request::ParseRequest(const std::string& request)
+{
+	if (isCarriagereturn(request) == true)
+	{
+		if (_request_flag == false || _host_flag == false)
+			return (Error::MissingRequestLineAndHost(), false);
+		return (true);
+	}
+	if (_request_flag == false)
+	{
+		if (ParseRequestLine(request) == false)
+			return (Error::MissingRequestLineAndHost());
+	}
+	else
+	{
+		if (ParseHeader(request); == false)
+			return (Error::MissingRequestLineAndHost());
+	}
+	return (true);
+}
+
+void Request::InsertHeaderKey(void)
+{
+	_valid_header_key.clear();
+	_valid_header_key.push_back("Host");
+	_valid_header_key.push_back("User-Agent");
+	_valid_header_key.push_back("Accept");
+	_valid_header_key.push_back("Content-Type");
+	_valid_header_key.push_back("Content-Length");
+	_valid_header_key.push_back("Transfer-Enconding");
+}
 
 Request::Request(const unsigned int fd, const std::string &root_path) : _fd(fd), _root_path(root_path)
 {
+	this->InsertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
 }
 

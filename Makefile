@@ -10,6 +10,7 @@ RM = rm -rf
 SRCS = $(wildcard ./src/*.cpp) $(wildcard ./src/message/*.cpp)
 OBJS = $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
 
+
 all: $(NAME)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp

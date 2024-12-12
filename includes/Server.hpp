@@ -22,6 +22,7 @@ class Server {
 	private:
 		int _server_fd;
 		struct pollfd _poll_fds[BACKLOG];
+		std::map<int, std::string> _request_buffer;
 		
 
 	public:

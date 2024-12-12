@@ -104,7 +104,7 @@ void	Server::AcceptRequest(std::map<int, std::string>& array_buffer, int i)
 		{
 			buffer[bytes_read] = '\0';
 			std::cout << "Client fd " << this->_poll_fds[i].fd << ": message: " << buffer << std::endl;
-			if (req.HandleMethod(buffer) == false)
+			if (req.Parserequest(buffer) == false)
 			{
 				array_buffer.erase(this->_poll_fds[i].fd);
 				close(this->_poll_fds[i].fd);
