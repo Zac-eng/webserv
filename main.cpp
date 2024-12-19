@@ -152,14 +152,15 @@ int main()
                 std::cout << "  Error Page: " << it->first << " -> " << it->second << std::endl;
             }
 
+            std::cout << "  Locations:" << std::endl;
             for (size_t j = 0; j < server.locations.size(); ++j)
             {
                 const LocationConfig& loc = server.locations[j];
-                std::cout << "  Location " << j + 1 << ":" << std::endl;
-                std::cout << "    Path: " << loc.path << std::endl;
-                std::cout << "    Root: " << loc.root << std::endl;
-                std::cout << "    Index: " << loc.index << std::endl;
-                std::cout << "    Allow Methods: ";
+                std::cout << "    Location " << j + 1 << ":" << std::endl;
+                std::cout << "      Path: " << loc.path << std::endl;
+                std::cout << "      Root: " << loc.root << std::endl;
+                std::cout << "      Index: " << loc.index << std::endl;
+                std::cout << "      Allow Methods: ";
                 for (size_t k = 0; k < loc.allow_methods.size(); ++k)
                 {
                     std::cout << loc.allow_methods[k] << " ";

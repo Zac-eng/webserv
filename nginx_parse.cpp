@@ -73,147 +73,34 @@ std::string	extract_quoted_string(const std::string& str)
 	return result;
 }
 
-
-// bool	check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& configs)
-// {
-// 	std::string line;
-// 	std::string block_content;
-// 	bool has_closing = false;
-
-// 	while (std::getline(config_file, line))
-// 	{
-// 		line = trim(line);
-// 		if (line == "}")
-// 		{
-// 			has_closing = true;
-// 			break;
-// 		}
-// 		block_content += line + "\n";
-// 	}
-// 	if (!has_closing)
-// 	{
-// 		std::cerr << "Error: Missing closing '}' in server block." << std::endl;
-// 		return false;
-// 	}
-// 	ServerConfig config;
-// 	std::stringstream block_stream(block_content);
-// 	// std::string block_line;
-
-// 	while (std::getline(block_stream, line))
-// 	{
-// 		line = trim(line);
-// 		if (line.empty())
-// 			continue;
-// 		std::stringstream block_line_stream(line);
-// 		std::string block_keyword;
-// 		block_line_stream >> block_keyword;
-// 		if (block_keyword == "listen")
-// 		{
-// 			block_line_stream >> config.listen_port;
-// 		}
-// 		else if (block_keyword == "server_name")
-// 		{
-// 			std::string	value;
-// 			std::getline(block_line_stream, value, ';');				
-// 			config.server_name = extract_quoted_string(value);
-// 		}
-// 		else if (block_keyword == "error_page")
-// 		{
-// 			int	error_code;
-// 			std::string error_path;
-// 			block_line_stream >> error_code;
-// 			std::getline(block_line_stream, error_path, ';');
-// 			error_path = trim(error_path);
-// 			if (error_code >= 400 && error_code <= 599)
-// 				config.error_pages[error_code] = error_path;
-// 			else
-// 			{
-// 				std::cerr << "Error: Invalid error code: " << line << std::endl;
-// 				return false;
-// 			}
-// 		}
-// 		else if (block_keyword == "location")
-// 		{
-// 			LocationConfig location_config;
-
-// 			std::string location_path;
-// 			block_line_stream >> location_path;
-// 			location_config.setPath(location_path);
-
-// 			std::string next_token;
-// 			if (!(block_line_stream >> next_token) || next_token != "{")
-// 			{
-// 				while (std::getline(config_file, line))
-// 				{
-// 					line = trim(line);
-// 					if (!line.empty())
-// 					{
-// 						if (line == "{")
-// 							break;
-// 						else
-// 						{
-// 							std::cerr << "Error: Expected '{' after 'location' directive." << std::endl;
-// 							return false;
-// 						}
-// 					}
-// 				}
-// 			}
-// 			if (!check_location(config_file, location_config))
-// 				return false;
-// 			config.locations.push_back(location_config);
-// 		}
-// 	}
-// 	if (config.listen_port == '\0')
-// 		config.listen_port = 80;
-// 	try
-// 	{
-// 		config.validate();
-// 		configs.push_back(config);
-// 	}
-// 	catch (const std::runtime_error& e)
-// 	{
-// 		std::cerr << "Error" << e.what() << std::endl;
-// 		return false;
-// 	}
-// 	return true;
-// }
-
 bool check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& configs)
 {
     std::string line;
     std::string block_content;
     bool has_closing = false;
-
+	bool has_open = false;
+	bool set_path = false;
+	
+	std::cout << "check_listen_name" << std::endl;
     while (std::getline(config_file, line))
     {
         line = trim(line);
-        if (line == "}")
-        {
-            has_closing = true;
-            break;
-        }
         block_content += line + "\n";
     }
-
-    if (!has_closing)
-    {
-        std::cerr << "Error: Missing closing '}' in server block." << std::endl;
-        return false;
-    }
-
     ServerConfig config;
     std::stringstream block_stream(block_content);
-
+	LocationConfig location_config;
+	int count = 0;
+	int i = 0;
+	bool has_next_server = false;
     while (std::getline(block_stream, line))
     {
         line = trim(line);
         if (line.empty())
             continue;
-
         std::stringstream block_line_stream(line);
         std::string block_keyword;
         block_line_stream >> block_keyword;
-
         if (block_keyword == "listen")
         {
             block_line_stream >> config.listen_port;
@@ -241,45 +128,59 @@ bool check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& co
         }
         else if (block_keyword == "location")
 		{
-    		LocationConfig location_config;
-
+			count ++;
 			std::string location_path;
     		block_line_stream >> location_path;
-		    location_config.setPath(location_path);
-
+			location_config.setPath(location_path);
     		std::string next_token;
+			block_line_stream >> next_token;
+			if (next_token == "{")
+				has_open = true;
+			set_path = true;
 
-    // 次のトークンが '{' かどうかを確認
-			if (!(block_line_stream >> next_token))
-    		{
-        // 次のトークンがない場合、次の行をチェック
-        		while (std::getline(config_file, line))
-        		{
-            		line = trim(line);
-            		if (line == "{")
-            			break;
-            		else if (!line.empty())
-            		{
-                		std::cerr << "Error: Expected '{' after 'location' directive." << std::endl;
-                		return false;
-            		}
-        		}
-    		}
-    		else if (next_token != "{")
-    		{
-        // 次のトークンが '{' でない場合エラー
-        		std::cerr << "Error: Expected '{' after 'location' directive." << std::endl;
-        		return false;
-    		}
+		}
+		else if (block_keyword == "}")
+		{
+			std::cout << "count" << count << std::endl;
+			i++;
+		}
+		else if (block_keyword == "server")
+		{
+			has_next_server = true;
+		}
+		if (set_path == true && block_keyword == "location")
+		{
 
-    // location ブロックの内容を解析
-    		if (!check_location(config_file, location_config))
-        		return false;
-
-    		config.locations.push_back(location_config);
+			std::cout << " here" << std::endl;
+			if (has_open == false)
+			{
+				while (std::getline(block_stream, line))
+				{
+					line = trim(line);
+					if (!line.empty())
+					{
+						if (line == "{")
+							break;
+						else
+						{
+							std::cerr << "Error: Expected '{' after 'location' directive." << std::endl;
+							return false;
+						}
+					}
+				}
+			}
+			if (!(check_location(block_stream, location_config)))
+				return false;
+			has_open = false;
+			set_path = false;
+			config.locations.push_back(location_config);
 		}
     }
-
+	if (count + 1 != i && has_next_server == false)
+	{
+		std::cerr << "Error: Missing closing '}' in server block." << std::endl;
+		return false;
+	}
     if (config.listen_port == 0)
         config.listen_port = 80;
 
@@ -317,7 +218,6 @@ bool	check_server_block(std::ifstream& config_file, std::vector<ServerConfig>& c
 			{
 				while (std::getline(config_file, line))
 				{
-					std::cout << "line" << line << std::endl;
 					line = trim(line);
 					if (!line.empty())
 					{
@@ -334,23 +234,17 @@ bool	check_server_block(std::ifstream& config_file, std::vector<ServerConfig>& c
 			if (!check_listen_name(config_file, configs))
 				return false;
 		}
-		else if (line == "}")
-		{
-			has_closing = true;
-			break;
-		}
 		else
 		{
 			std::cerr << "Error: Unexpected directive in http block: " << line << std::endl;
 			return false;
 		}
-
 	}
-	if (!has_closing)
-	{
-		std::cerr << "Error: Missing closing '}' in http block." << std::endl;
-		return false;
-	}
+	// if (has_closing == false)
+	// {
+	// 	std::cerr << "Error: Missing closing '}' in http block." << std::endl;
+	// 	return false;
+	// }
 	return true;
 }
 
@@ -366,7 +260,6 @@ bool	parse_config(const std::string& filename, std::vector<ServerConfig>& config
 	bool	http_found = false;
 	while (std::getline(config_file, line))
 	{
-		std::cout << line << std::endl;
 		line = trim(line);
 		if (line.empty())
 			continue;
