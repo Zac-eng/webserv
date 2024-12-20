@@ -16,7 +16,11 @@ RUN apt-get update && \
 WORKDIR /app
 
 # ホストマシンの現在のディレクトリの内容をコンテナの/appにコピー
-COPY . /app
+COPY ./src /app/src
+
+COPY ./includes ./includes
+
+COPY ./Makefile ./Makefile
 
 # プロジェクトのビルド
 RUN make

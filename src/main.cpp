@@ -3,6 +3,9 @@
 #include <vector>
 #include "Server.hpp"
 #include "Request.hpp"
+#include "Socket.hpp"
+#include "Client.hpp"
+
 
 int main()
 {
@@ -15,12 +18,14 @@ int main()
 		// std::string message = av[1];
 		// Class nginx(message);
 		// nginx_parse(nginx);
-		ServerConfig conf("8080", "localhost");
-		Server server(nginx);
+		ServerConfig conf(8080, "localhost");
+		std::vector<ServerConfig> confs;
+		confs.push_back(conf);
+		Server server(confs);
 		if (server.ServerCreate() == false);
 			return (1);
-		if (server.ExecuteLoop() == false)
-		return (false);
+		// if (server.ExecuteLoop() == false)
+		// return (false);
 	}
 	catch (const std::exception &e)
 	{

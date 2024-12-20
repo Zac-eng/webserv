@@ -1,7 +1,6 @@
 #ifndef NGINX_HPP
 #define NGINX_HPP
 
-#include "location.hpp"
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -13,22 +12,15 @@ class ServerConfig
 {
 	public:
 		//ポート番号
-		int listen_port;
+		int _listen_port;
 		//サーバー名
-		std::string server_name;
+		std::string _server_name;
 
-		std::map<int, std::string> error_pages;
-		// std::vector<LocationConfig> locations;
-		std::vector<LocationConfig> locations;
-		ServerConfig() : listen_port(0) {}
-		//材料チェック
-
-		void validate() const;
+		ServerConfig(int port, std::string server);
+		ServerConfig();
+		~ServerConfig();
 };
 
-bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
-std::string trim(const std::string& str);
-std::string	extract_quoted_string(const std::string& str);
 
 
 #endif

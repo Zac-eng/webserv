@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "Client.hpp"
 
 namespace Error
 {
@@ -27,6 +28,11 @@ namespace Error
 		std::cout << "Error: Invalid request line" << std::endl;
 		return ;
 	}
+	void ReadingBuffer(void)
+	{
+		std::cout << "Error: Invalid request line" << std::endl;
+		return ;
+	}
 }
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it)
@@ -48,13 +54,13 @@ bool GetSubstringUntilSpace(const std::string& request, std::string::const_itera
 	object = request.substr(it - request.begin(), pos - (it - request.begin()));
 	it += pos + 1;
 	return (true);
-}
+} 
 
 bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object)
 {
 	size_t pos = 0;
 
-	pos = request.find('\r\n', it - request.begin());
+	pos = request.find("\r\n", it - request.begin());
 	if (pos == std::string::npos)
 		return (false);
 	object = request.substr(it - request.begin(), pos - (it - request.begin()));
@@ -63,26 +69,14 @@ bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::co
 	return (true);
 }
 
-bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object)
+std::string SubstringObject(const std::string& buffer, std::string::iterator& it)
 {
 	size_t pos = 0;
+	std::string object;
 
-	pos = request.find('\r\n', it - request.begin());
-	if (pos == std::string::npos)
-		return (false);
-	object = request.substr(it - request.begin(), pos - (it - request.begin()));
-	//現在地から、\r\nが見つかった場所-現在地の要素数分切り取る。
-	it += pos + 2;
-	return (true);
-}
-
-std::string SubstringObject(const std::string& buffer, std::string::const_iterator& it)
-{
-	size_t pos = 0;
-
-	pos = buffer.find('\r\n', it - buffer.begin());
-	if (pos == std::string::npos)
-		return (false);
+	pos = buffer.find("\r\n", it - buffer.begin());
+	// if (pos == std::string::npos)
+	// 	return (false);
 	object = buffer.substr(it - buffer.begin(), pos - (it - buffer.begin()) + 2);
 	it += pos + 2;
 	return (object);

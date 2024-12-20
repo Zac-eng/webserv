@@ -6,8 +6,8 @@ Client::Client() {};
 
 void ReadRequestError(void)
 {
-	Error::ReadingBuffer();
-	close(_fd);
+	// Error::ReadingBuffer();
+	// close(_fd);
 }
 
 bool Client::CheckCarrigereturn(std::string& buffer)
@@ -20,7 +20,7 @@ bool Client::CheckCarrigereturn(std::string& buffer)
 	return (true);
 }
 
-void Client::RestOfBuffer(std::string& buffer, std::string::const_iterator& it)
+void Client::RestOfBuffer(std::string& buffer, std::string::iterator& it)
 {
 	size_t pos;
 
@@ -32,12 +32,12 @@ void Client::RestOfBuffer(std::string& buffer, std::string::const_iterator& it)
 void Client::LoopRequest(std::string& buffer)
 {
 	std::string object;
-	std::string::const_iterator it = buffer.begin();
+	std::string::iterator it = buffer.begin();
 
 	//キャリッジリターンがなく、まだ読み取る必要がない場合。
 	while (CheckCarrigereturn(buffer) == true)
 	{
-		object = SubstringObject(buffer, it)
+		object = SubstringObject(buffer, it);
 		this->_buffer += object;
 		this->_request.ParseRequest(this->_buffer);
 		//RequestのParse
@@ -51,6 +51,7 @@ bool Client::AcceptRequest()
 {
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
+	std::string buffer;
 	
 	while  (1)
 	{
@@ -59,8 +60,8 @@ bool Client::AcceptRequest()
 			return (ReadRequestError(), false);
 		else if (byte_size == 0)
 		{
-			if (_request.parse_flag == true)
-				this->_response.ResponseExecute(_request);
+			if (_request._parse_flag == true)
+				this->_response.ExecuteResponse(_request);
 			//構文に問題がなく、reaponseの準備が整った場合
 			break;
 		}

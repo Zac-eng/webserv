@@ -11,7 +11,9 @@
 
 class Request
 {
-	private:
+	// private:
+	public:
+
 		std::string _request;
 		std::string _method;
 		std::string _path;
@@ -21,31 +23,35 @@ class Request
 		bool _request_flag;
 		bool _host_flag;
 		bool _post_flag;
-		std::string _body;
+		bool _parse_flag;
 		std::vector<std::string> _valid_header_key;
-		LocationConfig _conf;
+		// LocationConfig _conf;
 
-	public:
-		Request(const std::string &root_path);
+		Request();
 		~Request();
 		bool ParseMethod(const std::string& request, std::string::const_iterator& it);
 		bool ParseUri(const std::string& request, std::string::const_iterator& it);
-		bool ParseVersion(const std::string& request, std::string::const_iterator& it)
+		bool ParseVersion(const std::string& request, std::string::const_iterator& it);
 		bool ParseHeader(const std::string& request);
 		bool ParseRequestLine(const std::string& request);
 		bool ParseRequest(const std::string& request);
-		bool isCarriagereturn(const std::string& request);
 		void InsertHeaderKey(void);
+bool SearchHeaderKey(std::string &key);
+bool HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
+bool ParseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
+bool HandleHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& value);
+bool ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key);
+bool ValidMethod(const std::string& method);
+bool ValidUri(const std::string& uri);
+bool VaildVersion(const std::string& version);
+bool ParseBody(const std::string& request);
+
+
+
+
 
 };
-
-namespace Error
-{
-	void MissingRequestLineAndHost(void);
-	void InvalidMethod(void);
-	void InvalidUri(void);
-	void InvalidVersion(void);
-	void InvalidRequestLine(void);
-	void InvalidHeaderKey(void);
-	void InvalidHeaderValue(void);
-}
+bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
+bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);
+bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object);
+		bool isCarriagereturn(const std::string& request);

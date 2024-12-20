@@ -61,12 +61,12 @@ bool Request::ParseHeader(const std::string& request)
 	it = request.begin();
 	if (ParseHeaderKey(request, it, key) == false)
 	{
-		Error::InvalidHeaderKey();
+		// Error::InvalidHeaderKey();
 		return (false);
 	}
 	if (ParseHeaderValue(request, it, value) == false)
 	{
-		Error::InvalidHeaderValue();
+		// Error::InvalidHeaderValue();
 		return (false);
 	}
 	this->_header[key] = value;
@@ -75,22 +75,12 @@ bool Request::ParseHeader(const std::string& request)
 
 bool Request::ValidMethod(const std::string& method)
 {
-	switch (method)
+	if (method == "GET" || method == "POST" || method == "DELETE")
 	{
-		case ("GET"):
-			this->_method = method;
-			break ;
-		case ("POST"):
-			this->_method = method;
-			break ;
-		case ("DELETE"):
-			this->_method = method;
-			break ;
-		default:
-			Error::InvalidMethod();
-			return (false);
+		this->_method = method;
+		return (true);
 	}
-	return (true);
+	return (false);
 }
 
 bool Request::ParseMethod(const std::string& request, std::string::const_iterator& it)
@@ -99,27 +89,27 @@ bool Request::ParseMethod(const std::string& request, std::string::const_iterato
 
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-	if (GetSubstringUntilSpace(request, it, version) == false)
+	if (GetSubstringUntilSpace(request, it, _version) == false)
 		return (false);
 	if (ValidMethod(method) == false)
 		return (false);
 	return (true);
 }
 
-bool isSlash(const std::string& uri, std::string::iterator& it)
+bool isSlash(const std::string& uri, std::string::const_iterator& it)
 {
 	if (it != uri.end() && *it == '/')
 	{
 		it++;
 		return (true);
 	}
-	Error::InvalidUri();
+	// Error::InvalidUri();
 	return (false);
 }
 
-bool Request::VaildUri(const std::string& uri)
+bool Request::ValidUri(const std::string& uri)
 {
-	std::string::iterator it;
+	std::string::const_iterator it;
 
 	it = uri.begin();
 	if (isSlash(uri, it) == false)
@@ -128,14 +118,14 @@ bool Request::VaildUri(const std::string& uri)
 	{
 		if (!std::isalnum(*it))
 		{
-			Error::InvalidUri();
+			// Error::InvalidUri();
 			return (false);
 		}
 	}
 	return (true);
 }
 
-bool Request::ParseUri(const std::string& uri)
+bool Request::ParseUri(const std::string& request, std::string::const_iterator& it)
 {
 	std::string uri;
 
@@ -152,7 +142,7 @@ bool Request::VaildVersion(const std::string& version)
 {
 	if (version == "HTTP/1.1")
 		return (true);
-	Error::InvalidVersion();
+	// Error::InvalidVersion();
 	return (false);
 }
 
@@ -160,7 +150,7 @@ bool Request::ParseVersion(const std::string& request, std::string::const_iterat
 {
 	std::string version;
 
-	if (SkipSpaceAndCheckEnd(request) == false)
+	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
 	if (GetSubstringUntilSpace(request, it, version) == false)
 		return (false);
@@ -180,7 +170,8 @@ bool Request::ParseRequestLine(const std::string& request)
 		return (false);
 	if (it != request.end())
 	{
-		Error::InvalidRequestLine();
+		// Error::InvalidRequestLine();
+		return (false);
 	}
 	return (true);
 }
@@ -194,10 +185,10 @@ bool isCarriagereturn(const std::string& request)
 
 bool Request::ParseBody(const std::string& request)
 {
-	std::string::iterator it = reequest.begin();
+	std::string::const_iterator it = request.begin();
 	size_t pos = request.find("\r\n");
 
-	if (pos == 0 || pos = std::string::npos)
+	if (pos == 0 || pos == std::string::npos)
 		return (false);
 	it += pos + 2;
 	if (it != request.end())
@@ -212,13 +203,15 @@ bool Request::ParseRequest(const std::string& request)
 	if (_post_flag == true)
 	{
 		if (ParseBody(request) == false)
-			return (Error::InvalidBody());
+			return (false);
+			// return (Error::InvalidBody());
 		return (true);
 	}
 	if (isCarriagereturn(request) == true)
 	{
 		if (_request_flag == false || _host_flag == false)
-			return (Error::MissingRequestLineAndHost(), false);
+			return (false);
+			// return (Error::MissingRequestLineAndHost(), false);
 		if (_method == "POST")
 			_post_flag = true;
 		return (true);
@@ -226,12 +219,14 @@ bool Request::ParseRequest(const std::string& request)
 	if (_request_flag == false)
 	{
 		if (ParseRequestLine(request) == false)
-			return (Error::MissingRequestLineAndHost());
+			return (false);
+			// return (Error::MissingRequestLineAndHost());
 	}
 	else
 	{
-		if (ParseHeader(request); == false)
-			return (Error::MissingRequestLineAndHost());
+		if (ParseHeader(request) == false)
+			return (false);
+			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
 }
@@ -247,7 +242,7 @@ void Request::InsertHeaderKey(void)
 	_valid_header_key.push_back("Transfer-Enconding");
 }
 
-Request::Request(const unsigned int fd, const std::string &root_path) : _fd(fd), _root_path(root_path)
+Request::Request()
 {
 	this->InsertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
