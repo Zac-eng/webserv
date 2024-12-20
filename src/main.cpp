@@ -15,8 +15,12 @@ int main()
 		// std::string message = av[1];
 		// Class nginx(message);
 		// nginx_parse(nginx);
-		Server server;
-		server.ServerRequest();
+		ServerConfig conf("8080", "localhost");
+		Server server(nginx);
+		if (server.ServerCreate() == false);
+			return (1);
+		if (server.ExecuteLoop() == false)
+		return (false);
 	}
 	catch (const std::exception &e)
 	{
@@ -24,4 +28,3 @@ int main()
 		return 1;
 	}
 }
-

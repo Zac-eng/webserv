@@ -7,24 +7,20 @@
 #include <vector>
 #include <utility>
 #include <fstream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
-#include <poll.h>
 #include <sstream>
 #include <map>
 
 class Response
 {
 	private:
+		std::string _response_message;
 		std::string _version;
 		unsigned int _status_code;
 		std::string _response_message;
 		std::map<std::string, std::string> _header;
 		std::string _body;
 		bool eroor_flag;
-		const unsigned int _fd;
 		std::string _root_path;
 
 	public:
@@ -36,6 +32,7 @@ class Response
 		bool HandleFile(const std::string& filename);
 		bool HandleMethod(const std::string& request);
 		bool ParseHeader(std::string::const_iterator& it, const std::string& request);
+		void ExecuteResponse(Response& req);
 		
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
@@ -54,4 +51,9 @@ namespace StatusCode
 		BadRequest = 400,
 		NotFound = 404
 	};
+}
+
+namespace StatusMessage
+{
+
 }

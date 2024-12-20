@@ -12,21 +12,21 @@
 #include <map>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/epoll.h>
 
-
-#define PORT 8080
-#define BACKLOG 5
-#define MAX_SIZE 1024
+#define MAX_EVENTS 10
 
 class Server {
 	private:
-		int _server_fd;
-		struct pollfd _poll_fds[BACKLOG];
-		std::map<int, std::string> _request_buffer;
+		std::vector<Socket> _socket;
+		std::vector<ServerConfig> _conf;
+		std::vector<Client> _client;
+		int _poll_fd;
+		bool _listen_fd;
 		
 
 	public:
-		Server();
+		Server(ServerConf& _conf);
 		void ServerRequest();
 		void MethodWait(std::map<int, std::string>& array_buffer);
 		void AcceptRequest(std::map<int, std::string>& array_buffer, int i);

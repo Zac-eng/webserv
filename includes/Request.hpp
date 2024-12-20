@@ -3,15 +3,9 @@
 #include <iostream>
 #include <string>
 #include <sys/types.h>
-#include <dirent.h>
 #include <vector>
 #include <utility>
 #include <fstream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <poll.h>
 #include <sstream>
 #include <map>
 
@@ -26,14 +20,13 @@ class Request
 		std::string _body;
 		bool _request_flag;
 		bool _host_flag;
-		bool eroor_flag;
-		const unsigned int _fd;
-		std::string _root_path;
-
+		bool _post_flag;
+		std::string _body;
 		std::vector<std::string> _valid_header_key;
+		LocationConfig _conf;
 
 	public:
-		Request(const unsigned int fd, const std::string &root_path);
+		Request(const std::string &root_path);
 		~Request();
 		bool ParseMethod(const std::string& request, std::string::const_iterator& it);
 		bool ParseUri(const std::string& request, std::string::const_iterator& it);

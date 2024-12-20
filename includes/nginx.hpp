@@ -1,30 +1,34 @@
-#pragma once
+#ifndef NGINX_HPP
+#define NGINX_HPP
 
-#include <iostream>
+#include "location.hpp"
+#include <string>
+#include <vector>
+#include <stdexcept>
+#include <functional>
+#include <map>
 
-class NginxSetting {
-	private:
-		unsigned int _server_count;
-		std::string _default_server_number;
-		std::vector<NginxServer> _server_name;
 
+class ServerConfig
+{
 	public:
-		NginxSetting();
-		virtual ~NginxSetting();
-		void DefaultSetting(std::string& nginx_setting_path);
-		void FileReading(std::string& nginx_setting_path)
-		// defaultのroot,index,locationを設定
+		//ポート番号
+		int listen_port;
+		//サーバー名
+		std::string server_name;
+
+		std::map<int, std::string> error_pages;
+		// std::vector<LocationConfig> locations;
+		std::vector<LocationConfig> locations;
+		ServerConfig() : listen_port(0) {}
+		//材料チェック
+
+		void validate() const;
 };
 
-class NginxServer {
-	private:
-		std::string _server_name;
-		unsigned int _port;
-		std::string _root;
-	
-	public:
-		NginxServer();
-		~NginxServer();
-		void ServerNameSetting();
-		// server_nameの設定をカウント
-};
+bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
+std::string trim(const std::string& str);
+std::string	extract_quoted_string(const std::string& str);
+
+
+#endif

@@ -192,13 +192,35 @@ bool isCarriagereturn(const std::string& request)
 	return (false);
 }
 
+bool Request::ParseBody(const std::string& request)
+{
+	std::string::iterator it = reequest.begin();
+	size_t pos = request.find("\r\n");
+
+	if (pos == 0 || pos = std::string::npos)
+		return (false);
+	it += pos + 2;
+	if (it != request.end())
+		return (false);
+	this->_body = request.substr(0, pos);
+	return (true);
+}
 
 bool Request::ParseRequest(const std::string& request)
 {
+	//終了フラグをつけるか悩み(_complete_flag)
+	if (_post_flag == true)
+	{
+		if (ParseBody(request) == false)
+			return (Error::InvalidBody());
+		return (true);
+	}
 	if (isCarriagereturn(request) == true)
 	{
 		if (_request_flag == false || _host_flag == false)
 			return (Error::MissingRequestLineAndHost(), false);
+		if (_method == "POST")
+			_post_flag = true;
 		return (true);
 	}
 	if (_request_flag == false)
