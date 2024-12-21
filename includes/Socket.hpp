@@ -28,3 +28,6 @@ bool ListenSocket();
 bool SocketCreate(void);
 
 };
+void debug();
+void debugconf(ServerConfig& conf);
+void debugSocket(Socket& socket);

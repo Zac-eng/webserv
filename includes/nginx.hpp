@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <functional>
 #include <map>
+#include <stdlib.h>
+#include <iostream>
 
 
 class ServerConfig
@@ -20,6 +22,25 @@ class ServerConfig
 		ServerConfig();
 		~ServerConfig();
 };
+
+
+template <typename T>
+void debug1(const T& value)
+{
+	std::cout << "デバック: " << value << std::endl;
+	exit(0);
+}
+
+template <typename T>
+void debug2(T& value)
+{
+	typename T::iterator it = value.begin();
+	std::cout << "デバック" <<std::endl; 
+	for (; it != value.end(); it++)
+		std::cout << *it << std::endl;
+	exit(0);
+}
+
 
 
 

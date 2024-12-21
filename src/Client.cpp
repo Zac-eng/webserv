@@ -39,8 +39,9 @@ void Client::LoopRequest(std::string& buffer)
 	{
 		object = SubstringObject(buffer, it);
 		this->_buffer += object;
-		this->_request.ParseRequest(this->_buffer);
-		//RequestのParse
+		if (this->_request.ParseRequest(this->_buffer) == false)
+			return (false);
+		//RequestのParse｀ー
 		this->_buffer.clear();
 	}
 	if (it != buffer.end())

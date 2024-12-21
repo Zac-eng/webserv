@@ -13,8 +13,6 @@ bool Server::ListenSocketCreate(void)
 	for (std::vector<ServerConfig>::iterator it = _conf.begin(); it != _conf.end(); it++)
 	{
 		Socket socket(*it);
-		std::cout << "-------------" << std::endl;
-		exit(0);
 		if (socket.SocketCreate() == false)
 			return (false);
 		socket_array.push_back(socket);
@@ -31,9 +29,10 @@ bool Server::SetMonitoringFd(Socket& socket)
 	event.data.fd = socket._server_fd;
 	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket._server_fd, &event) < 0)
 	{
-		// CloseEpollFd();
+		std::cout << "error" <<std::endl;
 		return (false);
 	}
+	   std::cout << "Listening socket added to epoll: " << socket._server_fd << std::endl;
 	return (true);
 }
 
@@ -63,7 +62,6 @@ bool Server::ServerCreate(void)
 bool Server::SetConnectFd(int listen_fd)
 {
 	Socket socket;
-	// struct sockaddr_in address;
 	struct sockaddr_in address;
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
@@ -77,6 +75,8 @@ bool Server::SetConnectFd(int listen_fd)
 	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket._server_fd, &event) < 0)
 	{
 		// CloseEpollFd();
+		std::cout << "error" <<std::endl;
+
 		return (false);
 	}
 	// socket.SetListenFlag(false);
@@ -102,6 +102,7 @@ bool Server::ExecuteLoop()
 	while (true)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, events, MAX_EVENTS, -1);
+		std::cout<< "-----"<<std::endl;
 		for (int i = 0; i < event_counts; i++)
 		{
 			if (CheckListenFd(events[i].data.fd) == true)
@@ -112,8 +113,14 @@ bool Server::ExecuteLoop()
 					return (false);
 				//clientfdを作成する。
 			}
-			// else
-			// 	_client.AcceptRequest();
+			else
+				_client.AcceptRequest();
 		}
 	}
+}
+
+void Server::debug_server()
+{
+	std::cout << _epoll_fd << std::endl;
+	exit(0);
 }

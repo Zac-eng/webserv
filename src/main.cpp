@@ -5,7 +5,7 @@
 #include "Request.hpp"
 #include "Socket.hpp"
 #include "Client.hpp"
-
+#include "nginx.hpp"
 
 int main()
 {
@@ -18,14 +18,17 @@ int main()
 		// std::string message = av[1];
 		// Class nginx(message);
 		// nginx_parse(nginx);
-		ServerConfig conf(8080, "localhost");
+		ServerConfig conf(8080, "127.0.0.1");
 		std::vector<ServerConfig> confs;
 		confs.push_back(conf);
 		Server server(confs);
-		if (server.ServerCreate() == false);
+		if (server.ServerCreate() == false)
 			return (1);
-		// if (server.ExecuteLoop() == false)
-		// return (false);
+	// debug();
+
+		if (server.ExecuteLoop() == false)
+		return (1);
+
 	}
 	catch (const std::exception &e)
 	{

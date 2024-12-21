@@ -3,6 +3,9 @@
 
 Response::Response() {};
 
+Response::Response(Request& request) : _request(request) {};
+
+
 Response::~Response()
 {
 	std::cout << "Response object destroyed" << std::endl;

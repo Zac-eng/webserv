@@ -15,6 +15,7 @@
 class Response
 {
 	// private:
+		Request _request;
 		std::string _response;
 		std::string _version;
 		unsigned int _status_code;
@@ -25,7 +26,7 @@ class Response
 		std::string _root_path;
 
 	public:
-		Response();
+		Response(Request& request);
 		~Response();
 		bool Get(std::string::const_iterator it, const std::string& request);
 		bool SearchPath(void);
