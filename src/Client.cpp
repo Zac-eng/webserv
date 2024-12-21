@@ -29,7 +29,7 @@ void Client::RestOfBuffer(std::string& buffer, std::string::iterator& it)
 	return ;
 }
 
-void Client::LoopRequest(std::string& buffer)
+bool Client::LoopRequest(std::string& buffer)
 {
 	std::string object;
 	std::string::iterator it = buffer.begin();
@@ -41,7 +41,7 @@ void Client::LoopRequest(std::string& buffer)
 		this->_buffer += object;
 		if (this->_request.ParseRequest(this->_buffer) == false)
 			return (false);
-		//RequestのParse｀ー
+		//RequestのParse
 		this->_buffer.clear();
 	}
 	if (it != buffer.end())
@@ -54,7 +54,7 @@ bool Client::AcceptRequest()
 	char buf[BUFFER_SIZE];
 	std::string buffer;
 	
-	while  (1)
+	while (true)
 	{
 		byte_size = read(_fd, buf, BUFFER_SIZE - 1);
 		if (byte_size < 0)
@@ -70,7 +70,8 @@ bool Client::AcceptRequest()
 		{
 			buf[byte_size] = '\0';
 			buffer = buf;
-			LoopRequest(buffer);
+			if (LoopRequest(buffer) == false)
+				return (false);
 		}
 	}
 	return (true);

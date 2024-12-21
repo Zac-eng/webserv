@@ -21,7 +21,7 @@ class Client
 		Client();
 		bool CheckCarrigereturn(std::string& buffer);
 		void RestOfBuffer(std::string& buffer, std::string::iterator& it);
-		void LoopRequest(std::string& buffer);
+		bool LoopRequest(std::string& buffer);
 		bool AcceptRequest();
 
 };

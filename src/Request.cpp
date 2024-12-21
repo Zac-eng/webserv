@@ -77,6 +77,8 @@ bool Request::ValidMethod(const std::string& method)
 {
 	if (method == "GET" || method == "POST" || method == "DELETE")
 	{
+		// if (ValidAllowMethod() == false)
+		// 	return (false);
 		this->_method = method;
 		return (true);
 	}
@@ -135,6 +137,10 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 		return (false);
 	if (ValidUri(uri) == false)
 		return (false);
+	// if (CheckRootPath(uri) == false)
+	// 	return (false);
+	// if (CheckIndexFile(uri) == false)
+	// 	return (false);
 	return (true);
 }
 
@@ -242,7 +248,7 @@ void Request::InsertHeaderKey(void)
 	_valid_header_key.push_back("Transfer-Enconding");
 }
 
-Request::Request()
+Request::Request() : _parse_flag(false), _post_flag(false), _host_flag(false), _request_flag(false)
 {
 	this->InsertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;

@@ -17,9 +17,12 @@ class Socket
 		int _port;
 		int _max_connect;
 		std::string _host_name;
+		bool _listen_flag;
 
 		Socket();
+		Socket(bool listen_flag);
 		Socket(ServerConfig& conf);
+		Socket(const Socket& other);
 		~Socket();
 bool SocketInit(void);
 bool SetSocket(void);

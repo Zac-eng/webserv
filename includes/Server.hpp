@@ -25,7 +25,7 @@ class Server {
 	// private:
 		std::vector<Socket> _socket;
 		std::vector<ServerConfig> _conf;
-		std::vector<Client> _client;
+		std::map<int, Client> _client;
 		int _epoll_fd;
 		bool _listen_fd;
 		

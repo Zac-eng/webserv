@@ -27,6 +27,7 @@ class Response
 
 	public:
 		Response(Request& request);
+		Response ();
 		~Response();
 		bool Get(std::string::const_iterator it, const std::string& request);
 		bool SearchPath(void);

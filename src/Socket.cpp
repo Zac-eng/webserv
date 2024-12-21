@@ -1,11 +1,20 @@
 #include "Socket.hpp"
 
-Socket::Socket() {};
+Socket::Socket() : _listen_flag(true) {};
 
 Socket::~Socket() {};
 
+Socket::Socket(bool listen_flag) : _listen_flag(listen_flag) {};
 
-Socket::Socket(ServerConfig& conf) : _conf(conf) {};
+Socket::Socket(ServerConfig& conf) : _conf(conf), _listen_flag(true) {};
+
+Socket::Socket(const Socket& other)
+{
+	this->_listen_flag = other._listen_flag;
+	this->_server_fd = other._server_fd;
+	this->_port = other._port;
+
+}
 
 void debug()
 {
