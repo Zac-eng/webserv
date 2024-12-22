@@ -97,6 +97,7 @@ Response::~Response()
 
 void Response::ExecuteResponse(Request& req)
 {
+	std::cout << "Response: coming!!" << std::endl;
 	// (this->ExistUri(req.GetPath()) == false)
 	// 	return (Error::InvalidUri());
 	// this->ExecuteAndGetStatusCode(req);

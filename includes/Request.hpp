@@ -13,7 +13,6 @@ class Request
 {
 	// private:
 	public:
-
 		std::string _request;
 		std::string _method;
 		std::string _path;
@@ -45,6 +44,7 @@ bool ValidMethod(const std::string& method);
 bool ValidUri(const std::string& uri);
 bool ValidVersion(const std::string& version);
 bool ParseBody(const std::string& request);
+bool SkipColon(const std::string& request, std::string::const_iterator& it);
 
 
 

@@ -80,15 +80,16 @@ bool Client::AcceptRequest()
 		{
 			buf[byte_size] = '\0';
 			buffer = buf;
-			std::cout << "----------" <<byte_size<< buffer<< std::endl;
+			// std::cout << "----------" <<byte_size<< buffer<< std::endl;
 			if (LoopRequest(buffer) == false)
 			{
-
 				return (false);
 			}
+			if (_request._parse_flag == true)
+				this->_response.ExecuteResponse(_request);
 			if (buffer.empty())
 				return (true);
-			std::cout << "---------sqaaaaa-------" << std::endl;
+			// std::cout << "---------sqaaaaa-------" << std::endl;
 		}
 	}
 	return (true);

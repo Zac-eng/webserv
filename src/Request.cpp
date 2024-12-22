@@ -52,6 +52,16 @@ bool Request::ParseHeaderValue(const std::string& request, std::string::const_it
 	return (true);
 }
 
+bool Request::SkipColon(const std::string& request, std::string::const_iterator& it)
+{
+	if (it == request.end() || *it != ':')
+		return (false);
+	it++;
+	if (SkipSpaceAndCheckEnd(request, it) == false)
+		return (false);
+	return (true);
+}
+
 bool Request::ParseHeader(const std::string& request)
 {
 	std::string key;
@@ -64,12 +74,18 @@ bool Request::ParseHeader(const std::string& request)
 		// Error::InvalidHeaderKey();
 		return (false);
 	}
+	if (SkipColon(request, it) == false)
+		return (false);
+	std::cout << key << std::endl;
 	if (ParseHeaderValue(request, it, value) == false)
 	{
 		// Error::InvalidHeaderValue();
 		return (false);
 	}
+	std::cout << value << std::endl;
 	this->_header[key] = value;
+	if (key == "Host")
+		this->_host_flag = true;
 	return (true);
 }
 
@@ -229,6 +245,7 @@ bool Request::ParseRequest(const std::string& request)
 			// return (Error::MissingRequestLineAndHost(), false);
 		if (_method == "POST")
 			_post_flag = true;
+		this->_parse_flag = true;
 		return (true);
 	}
 	if (_request_flag == false)
