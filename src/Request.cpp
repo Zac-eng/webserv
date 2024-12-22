@@ -91,7 +91,7 @@ bool Request::ParseMethod(const std::string& request, std::string::const_iterato
 
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-	if (GetSubstringUntilSpace(request, it, _version) == false)
+	if (GetSubstringUntilSpace(request, it, method) == false)
 		return (false);
 	if (ValidMethod(method) == false)
 		return (false);
@@ -116,6 +116,7 @@ bool Request::ValidUri(const std::string& uri)
 	it = uri.begin();
 	if (isSlash(uri, it) == false)
 		return (false);
+
 	for (; it != uri.end(); it++)
 	{
 		if (!std::isalnum(*it))
@@ -137,6 +138,7 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 		return (false);
 	if (ValidUri(uri) == false)
 		return (false);
+	this->_path = uri;
 	// if (CheckRootPath(uri) == false)
 	// 	return (false);
 	// if (CheckIndexFile(uri) == false)
@@ -144,7 +146,7 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 	return (true);
 }
 
-bool Request::VaildVersion(const std::string& version)
+bool Request::ValidVersion(const std::string& version)
 {
 	if (version == "HTTP/1.1")
 		return (true);
@@ -158,10 +160,11 @@ bool Request::ParseVersion(const std::string& request, std::string::const_iterat
 
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-	if (GetSubstringUntilSpace(request, it, version) == false)
+	if (GetSubstringUntilCarriageReturn(request, it, version) == false)
 		return (false);
-	if (ValidUri(version) == false)
+	if (ValidVersion(version) == false)
 		return (false);
+	this->_version = version;
 	return (true);
 }
 
@@ -170,10 +173,16 @@ bool Request::ParseRequestLine(const std::string& request)
 	std::string::const_iterator it = request.begin();
 	if (ParseMethod(request, it) == false)
 		return (false);
+	std::cout << this->_method<<std::endl;
+
 	if (ParseUri(request, it) == false)
 		return (false);
+
+	std::cout << this->_path<<std::endl;
+
 	if (ParseVersion(request, it) == false)
 		return (false);
+	std::cout << this->_version<<std::endl;
 	if (it != request.end())
 	{
 		// Error::InvalidRequestLine();
@@ -226,10 +235,12 @@ bool Request::ParseRequest(const std::string& request)
 	{
 		if (ParseRequestLine(request) == false)
 			return (false);
+		this->_request_flag = true;
 			// return (Error::MissingRequestLineAndHost());
 	}
 	else
 	{
+		// std::cout<<"Header   "<<request<<std::endl;
 		if (ParseHeader(request) == false)
 			return (false);
 			// return (Error::MissingRequestLineAndHost());

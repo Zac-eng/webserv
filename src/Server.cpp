@@ -6,6 +6,20 @@
 
 Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
+bool SetNonBlocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags < 0)
+	{
+		return (false);
+	}
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+		return (false);
+	}
+	return (true);
+}
+
 bool Server::ListenSocketCreate(void)
 {
 	this->_socket.clear();
@@ -14,7 +28,9 @@ bool Server::ListenSocketCreate(void)
 		Socket socket(*it);
 		if (socket.SocketCreate() == false)
 			return (false);
-		this->_socket.push_back(socket);
+		if (SetNonBlocking(socket._server_fd) ==  false)
+			return (false);
+		this->_socket[socket._server_fd] = socket;
 	}
 	return (true);
 }
@@ -40,9 +56,9 @@ bool Server::EpollCreate(void)
 
 	if (this->_epoll_fd < 0)
 		return (false);
-	for (std::vector<Socket>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
+	for (std::map<int, Socket>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
 	{
-		if (SetMonitoringFd(*it) ==  false)
+		if (SetMonitoringFd(it->second) ==  false)
 			return (false);
 	}
 	return (true);
@@ -60,6 +76,7 @@ bool Server::ServerCreate(void)
 bool Server::SetConnectFd(int listen_fd)
 {
 	Socket socket(false);
+	Client client;
 	struct sockaddr_in address;
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
@@ -77,17 +94,21 @@ bool Server::SetConnectFd(int listen_fd)
 		std::cout << "error" <<std::endl;
 		return (false);
 	}
+	this->_client[socket._server_fd] = client;
+	// if (SetNonBlocking(socket._server_fd) ==  false)
+	// 	return (false);
+	// std::cout << "-------socket._server_fd" << listen_fd<<std::endl;
+	this->_client[socket._server_fd]._fd = socket._server_fd;
+	// this->_client[socket._server_fd]._conf = this->_socket[listen_fd]._conf.location;
 	// socket.SetListenFlag(false);
 	return(true);
 }
 
 bool Server::CheckListenFd(int fd)
 {
-	for (std::vector<Socket>::iterator it = _socket.begin(); it != _socket.end(); it++)
-	{
-		if (it->_server_fd == fd && it->_listen_flag == true)
-			return (true);
-	}
+
+	if (this->_socket.count(fd) == 1 && this->_socket[fd]._listen_flag == true)
+		return (true);
 	return (false);
 }
 
@@ -104,18 +125,16 @@ bool Server::ExecuteLoop()
 		{
 			if (CheckListenFd(event[i].data.fd) == true && event[i].events & EPOLLIN)
 			{
-				Client client;
 				//client
-
 				if (SetConnectFd(event[i].data.fd) == false)
 					return (false);
-				this->_client[event[i].data.fd] = client;
 				//clientfdを作成する。
 			}
 			else if (event[i].events == EPOLLIN)
 			{
 				if (_client[event[i].data.fd].AcceptRequest() == false)
 					return (false);
+
 			}
 		}
 	}

@@ -10,6 +10,8 @@
 class Client
 {
 	// private:
+
+	public:
 		int _fd;
 		std::string _buffer;
 		// std::vector<LocationConfig> _location;
@@ -17,7 +19,6 @@ class Client
 		Response _response;
 		bool _buffer_flag;
 
-	public:
 		Client();
 		bool CheckCarrigereturn(std::string& buffer);
 		void RestOfBuffer(std::string& buffer, std::string::iterator& it);
@@ -25,4 +26,5 @@ class Client
 		bool AcceptRequest();
 
 };
-std::string SubstringObject(const std::string& buffer, std::string::iterator& it);
+
+bool SubstringObject(std::string& buffer, std::string::iterator& it,std::string& object);

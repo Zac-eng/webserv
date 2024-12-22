@@ -37,15 +37,19 @@ bool Client::LoopRequest(std::string& buffer)
 	//キャリッジリターンがなく、まだ読み取る必要がない場合。
 	while (CheckCarrigereturn(buffer) == true)
 	{
-		object = SubstringObject(buffer, it);
+		// std::cout<<"Header   "<<buffer<<std::endl;
+		if (SubstringObject(buffer, it, object) == false)
+			return (false);
+		it = buffer.begin();
 		this->_buffer += object;
 		if (this->_request.ParseRequest(this->_buffer) == false)
 			return (false);
 		//RequestのParse
 		this->_buffer.clear();
 	}
-	if (it != buffer.end())
+	if (!buffer.empty())
 		RestOfBuffer(buffer, it);
+	return (true);
 }
 
 bool Client::AcceptRequest()
@@ -56,22 +60,35 @@ bool Client::AcceptRequest()
 	
 	while (true)
 	{
+			// std::cout << "+++++++++++" << std::endl;
 		byte_size = read(_fd, buf, BUFFER_SIZE - 1);
+			// std::cout << "---------ssss-0--------" << std::endl;
 		if (byte_size < 0)
+		{
+			// std::cout << "+++++++++++" << std::endl;
 			return (ReadRequestError(), false);
+		}
 		else if (byte_size == 0)
 		{
+			// std::cout << "---------ssss-0--------" << std::endl;
 			if (_request._parse_flag == true)
 				this->_response.ExecuteResponse(_request);
 			//構文に問題がなく、reaponseの準備が整った場合
-			break;
+			return (true);
 		}
 		else
 		{
 			buf[byte_size] = '\0';
 			buffer = buf;
+			std::cout << "----------" <<byte_size<< buffer<< std::endl;
 			if (LoopRequest(buffer) == false)
+			{
+
 				return (false);
+			}
+			if (buffer.empty())
+				return (true);
+			std::cout << "---------sqaaaaa-------" << std::endl;
 		}
 	}
 	return (true);

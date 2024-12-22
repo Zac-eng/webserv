@@ -23,9 +23,9 @@
 
 class Server {
 	// private:
-		std::vector<Socket> _socket;
+		std::map<int, Socket> _socket; //_listen,fd作成
 		std::vector<ServerConfig> _conf;
-		std::map<int, Client> _client;
+		std::map<int, Client> _client; //clientのコネクト
 		int _epoll_fd;
 		bool _listen_fd;
 		
@@ -62,3 +62,5 @@ namespace Error
 	void InvalidHeaderValue(void);
 	void ReadingBuffer(void);
 }
+
+bool SetNonBlocking(int fd);

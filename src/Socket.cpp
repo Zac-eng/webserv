@@ -14,6 +14,7 @@ Socket::Socket(const Socket& other)
 	this->_server_fd = other._server_fd;
 	this->_port = other._port;
 
+
 }
 
 void debug()

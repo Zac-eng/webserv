@@ -43,7 +43,7 @@ bool HandleHeaderValue(const std::string& request, std::string::const_iterator& 
 bool ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key);
 bool ValidMethod(const std::string& method);
 bool ValidUri(const std::string& uri);
-bool VaildVersion(const std::string& version);
+bool ValidVersion(const std::string& version);
 bool ParseBody(const std::string& request);
 
 
