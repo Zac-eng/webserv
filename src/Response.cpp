@@ -24,6 +24,10 @@ void Response::SetFilename(const std::string& file)
 	this->_filename = file;
 }
 
+void Response::SetPath(const std::string& file)
+{
+	this->_path = file;
+}
 
 bool Response::ExistUri(const std::string& uri)
 {
@@ -63,12 +67,12 @@ bool Response::ExistUri(const std::string& uri)
 // 	return ;
 // }
 
-void Response::GetFileSize(void)
+void Response::GetFileSize()
 {
 	struct stat file;
 	std::stringstream ss;
-
-	if (stat("/Users/yusukesato/Desktop/ytm_webserve/index.html", &file) == -1)
+	
+	if (stat(this->_path.c_str(), &file) == -1)
 	{
 		throw std::runtime_error("stat");
 	}
@@ -82,10 +86,8 @@ bool Response::ReadFile(Request& req)
 	int fd;
 	int byte_size;
 	char buf[BUFFER_SIZE];
-	int count;
-
-	count = 0;
-	fd = open("/Users/yusukesato/Desktop/ytm_webserve/index.html", O_RDONLY);
+	
+	fd = open(this->_path.c_str(), O_RDONLY);
 	if (fd  == -1)
 		return (false);
 	while (1)

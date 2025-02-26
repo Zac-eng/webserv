@@ -209,11 +209,15 @@ bool Client::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, co
 void Client::CombineUriAndLocationRoot(LocationConfig& location)
 {
 	std::string object;
+	std::string path;
 
 	object = location.GetRoot();
 	object += this->_request.GetUri();
 	this->_response.SetDirectory(object);
 	this->_response.SetFilename(location.GetIndex());
+	path = object;
+	path += location.GetIndex();
+	this->_response.SetPath(path);
 	return ;
 }
 
@@ -223,8 +227,10 @@ void Client::ChangeDefaultPath(const std::string& uri)
 
 	object = "/etc/nginx/html";
 	object += uri;
+	this->_response.SetDirectory(object);
+	this->_response.SetFilename("index.html");
 	object += "index.html";
-	this->_request.SetUri(object);
+	this->_response.SetPath(object);
 	return ;
 }
 
@@ -232,14 +238,18 @@ bool Client::CheckAndChangeRootUri(const std::string& uri)
 {
 	std::string object;
 	std::string root;
+	std::string path;
 
 	root = this->_conf.GetRoot();
 	if (root.empty())
 		return (false);
 	object = root;
 	object += uri;
-	object += this->_conf.GetIndex();
-	this->_request.SetUri(object);
+	this->_response.SetDirectory(object);
+	this->_response.SetFilename(this->_conf.GetIndex());
+	path = object;
+	path += this->_conf.GetIndex();
+	this->_response.SetPath(path);
 	return (true);
 }
 

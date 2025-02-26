@@ -28,6 +28,7 @@ class Response
 		unsigned int _status_code;
 		std::string _directory;
 		std::string _filename;
+		std::string _path;
 		std::string _content_length;
 		std::string _response_message;
 		std::map<std::string, std::string> _header;
@@ -55,7 +56,7 @@ void ExecuteAndGetStatusCode(Request& req);
 void HandleMethod(Request& req);
 void ExecuteHeaderResponse(Request& req);
 void GetFileSize(void);
-
+void SetPath(const std::string& path);
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
 };
