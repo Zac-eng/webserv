@@ -8,15 +8,15 @@ Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
 bool SetNonBlocking(int fd)
 {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags < 0)
-	{
-		return (false);
-	}
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-		return (false);
-	}
+	int flag;
+
+	flag = fcntl(fd, F_GETFL);
+	if (flag == -1)
+		throw std::runtime_error("NonBlocking Fd");
+	// 現在の性能にNON_BLOCKを追加。3BIT目がNON_BLOCKのフラグ。
+	flag |= O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, flag) == -1)
+		throw std::runtime_error("NonBlocking Fd");
 	return (true);
 }
 
@@ -64,7 +64,7 @@ bool Server::EpollCreate(void)
 	return (true);
 }
 
-bool Server::ServerCreate(void)
+bool Server::ServerCreate()
 {
 	if (ListenSocketCreate() == false)
 		return (false);
@@ -73,40 +73,40 @@ bool Server::ServerCreate(void)
 	return (true);
 }
 
+void Server::CloseEpollFd(void)
+{
+	for (std::map<int, Socket>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
+		close(it->first);
+	for (std::map<int, Client>::iterator it = this->_client.begin(); it != this->_client.end(); it++)
+		close(it->first);
+}
+
 bool Server::SetConnectFd(int listen_fd)
 {
-	Socket socket(false);
-	Client client;
+	int fd;
+	Client client(this->_socket[listen_fd].GetConf());
 	struct sockaddr_in address;
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
 
 	memset(&address, 0 ,len);
-	socket._server_fd = accept(listen_fd, (struct sockaddr *)&address, &len);
-	if (socket._server_fd < 0)
+	fd = accept(listen_fd, (struct sockaddr *)&address, &len);
+	if (fd < 0)
 		return (false);
 	event.events = EPOLLIN;
-	event.data.fd = socket._server_fd;
+	event.data.fd = fd;
 
-	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket._server_fd, &event) < 0)
-	{
-		// CloseEpollFd();
-		std::cout << "error" <<std::endl;
+	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
+		throw std::runtime_error("epoll_ctl");
+	this->_client[fd] = client;
+	if (SetNonBlocking(fd) ==  false)
 		return (false);
-	}
-	this->_client[socket._server_fd] = client;
-	// if (SetNonBlocking(socket._server_fd) ==  false)
-	// 	return (false);
-	// std::cout << "-------socket._server_fd" << listen_fd<<std::endl;
-	this->_client[socket._server_fd]._fd = socket._server_fd;
-	// this->_client[socket._server_fd]._conf = this->_socket[listen_fd]._conf.location;
-	// socket.SetListenFlag(false);
+	this->_client[fd]._fd = fd;
 	return(true);
 }
 
 bool Server::CheckListenFd(int fd)
 {
-
 	if (this->_socket.count(fd) == 1 && this->_socket[fd]._listen_flag == true)
 		return (true);
 	return (false);
@@ -120,21 +120,20 @@ bool Server::ExecuteLoop()
 
 	while (true)
 	{
-		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, -1);
+		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS + 1, -1);
+		if (event_counts == -1)
+			throw std::runtime_error("epoll_wait");
 		for (int i = 0; i < event_counts; i++)
 		{
 			if (CheckListenFd(event[i].data.fd) == true && event[i].events & EPOLLIN)
 			{
-				//client
 				if (SetConnectFd(event[i].data.fd) == false)
 					return (false);
-				//clientfdを作成する。
 			}
 			else if (event[i].events == EPOLLIN)
 			{
 				if (_client[event[i].data.fd].AcceptRequest() == false)
 					return (false);
-
 			}
 		}
 	}

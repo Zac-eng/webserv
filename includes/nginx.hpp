@@ -1,47 +1,39 @@
 #ifndef NGINX_HPP
 #define NGINX_HPP
 
+#include "location.hpp"
 #include <string>
 #include <vector>
 #include <stdexcept>
 #include <functional>
 #include <map>
-#include <stdlib.h>
-#include <iostream>
 
 
 class ServerConfig
 {
 	public:
 		//ポート番号
-		int _listen_port;
+		int listen_port;
 		//サーバー名
-		std::string _server_name;
+		std::string server_name;
+		std::string index;
+		std::string root;
 
-		ServerConfig(int port, std::string server);
-		ServerConfig();
-		~ServerConfig();
+		std::map<int, std::string> error_pages;
+		// std::vector<LocationConfig> locations;
+		std::vector<LocationConfig> locations;
+		ServerConfig() : listen_port(0) {}
+		//材料チェック
+
+		void validate() const;
+		std::vector<LocationConfig> GetLocation();
+		std::string GetIndex();
+		std::string GetRoot();
 };
 
-
-template <typename T>
-void debug1(const T& value)
-{
-	std::cout << "デバック: " << value << std::endl;
-	exit(0);
-}
-
-template <typename T>
-void debug2(T& value)
-{
-	typename T::iterator it = value.begin();
-	std::cout << "デバック" <<std::endl; 
-	for (; it != value.end(); it++)
-		std::cout << *it << std::endl;
-	exit(0);
-}
-
-
+bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
+std::string trim(const std::string& str);
+std::string	extract_quoted_string(const std::string& str);
 
 
 #endif

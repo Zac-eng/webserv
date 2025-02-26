@@ -45,6 +45,7 @@ bool ServerCreate(void);
 bool ExecuteLoop();
 bool CheckListenFd(int fd);
 bool SetConnectFd(int listen_fd);
+void CloseEpollFd(void);
 
 void debug_server();
 };

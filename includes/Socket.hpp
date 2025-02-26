@@ -29,6 +29,7 @@ bool SetSocket(void);
 bool BindSocket();
 bool ListenSocket();
 bool SocketCreate(void);
+ServerConfig GetConf();
 
 };
 void debug();

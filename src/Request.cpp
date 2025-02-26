@@ -1,5 +1,48 @@
 #include "Request.hpp"
 
+Request::Request() : _post_flag(false), _host_flag(false), _request_flag(false)
+{
+	this->InsertHeaderKey();
+	std::cout << "Request object created argument" << std::endl;
+}
+
+Request::~Request()
+{
+	std::cout << "Request object destroyed" << std::endl;
+}
+
+bool Request::GetRequestFlag()
+{
+	return (this->_request_flag);
+}
+
+std::string Request::GetMethod()
+{
+	return (this->_method);
+}
+
+
+std::string Request::GetUri()
+{
+	return (this->_path);
+}
+
+bool Request::GetHostFlag()
+{
+	return (this->_host_flag);
+}
+
+void Request::SetUri(std::string& object)
+{
+	this->_path = object;
+}
+
+
+bool Request::GetPostFlag()
+{
+	return (this->_post_flag);
+}
+
 bool Request::SearchHeaderKey(std::string &key)
 {
 	for (size_t i = 0; i < _valid_header_key.size(); i++)
@@ -29,6 +72,7 @@ bool Request::ParseHeaderKey(const std::string& request, std::string::const_iter
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
+
 	if (HandleHeaderKey(request, it, key) == false)
 		return (false);
 	return (true);
@@ -62,6 +106,17 @@ bool Request::SkipColon(const std::string& request, std::string::const_iterator&
 	return (true);
 }
 
+void ParseHostValue(std::string& value)
+{
+	std::string object;
+	std::string::iterator it;
+
+	it = value.begin();
+	for (; it != value.end() && *it != ':'; it++)
+		object += *it;
+	value = object;
+}
+
 bool Request::ParseHeader(const std::string& request)
 {
 	std::string key;
@@ -76,16 +131,17 @@ bool Request::ParseHeader(const std::string& request)
 	}
 	if (SkipColon(request, it) == false)
 		return (false);
-	std::cout << key << std::endl;
 	if (ParseHeaderValue(request, it, value) == false)
 	{
 		// Error::InvalidHeaderValue();
 		return (false);
 	}
-	std::cout << value << std::endl;
-	this->_header[key] = value;
 	if (key == "Host")
+	{
+		ParseHostValue(value);
 		this->_host_flag = true;
+	}
+	this->_header[key] = value;
 	return (true);
 }
 
@@ -96,6 +152,8 @@ bool Request::ValidMethod(const std::string& method)
 		// if (ValidAllowMethod() == false)
 		// 	return (false);
 		this->_method = method;
+		if (method == "POST")
+			this->_post_flag = true;
 		return (true);
 	}
 	return (false);
@@ -128,19 +186,39 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 bool Request::ValidUri(const std::string& uri)
 {
 	std::string::const_iterator it;
+	std::string::const_iterator it_tmp;
+	bool index_flag;
 
 	it = uri.begin();
 	if (isSlash(uri, it) == false)
 		return (false);
+	return (true);
 
 	for (; it != uri.end(); it++)
 	{
+		if (*it == '/' || *it == '.')
+			it_tmp = it;
 		if (!std::isalnum(*it))
 		{
 			// Error::InvalidUri();
 			return (false);
 		}
 	}
+	// 最後が/で終わっているか
+	if (*it_tmp == '/')
+	{
+		it_tmp++;
+		if (it_tmp == uri.end())
+			return (true);
+		return (false);
+	}
+	// if (*it == '.')
+	// {
+	// 	//拡張子を確認し、最後の/から、ファイル名を切り取る。
+	// 	CheckExtension();
+	// 	UntilLastSlash();
+	// 	this->filename = Substringfilename();
+	// }
 	return (true);
 }
 
@@ -155,9 +233,9 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 	if (ValidUri(uri) == false)
 		return (false);
 	this->_path = uri;
-	// if (CheckRootPath(uri) == false)
-	// 	return (false);
-	// if (CheckIndexFile(uri) == false)
+	// if (CheckRootPath(uri) == true)
+	// 	ReplaceDirectory(uri);
+	// if (CheckIndexFile(uri) == true)
 	// 	return (false);
 	return (true);
 }
@@ -189,16 +267,10 @@ bool Request::ParseRequestLine(const std::string& request)
 	std::string::const_iterator it = request.begin();
 	if (ParseMethod(request, it) == false)
 		return (false);
-	std::cout << this->_method<<std::endl;
-
 	if (ParseUri(request, it) == false)
 		return (false);
-
-	std::cout << this->_path<<std::endl;
-
 	if (ParseVersion(request, it) == false)
 		return (false);
-	std::cout << this->_version<<std::endl;
 	if (it != request.end())
 	{
 		// Error::InvalidRequestLine();
@@ -228,27 +300,31 @@ bool Request::ParseBody(const std::string& request)
 	return (true);
 }
 
-bool Request::ParseRequest(const std::string& request)
+// bool Request::ValidHeader(void)
+// {
+// 	if (this->_method == "GET")
+// 		return (ValidHeaderGET());
+// 	else if (this->_method == "POST")
+// 		return (ValidHeaderPOST());
+// 	else if (this->_method == "DELETE")
+// 		return (ValidHeaderDELETE());
+// 	return (false);
+// }
+
+bool Request::ParsePostBody(const std::string& request)
 {
-	//終了フラグをつけるか悩み(_complete_flag)
-	if (_post_flag == true)
+	std::cout << "Post Parse" << request <<std::endl;
+	return (true);
+}
+
+bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
+{
+	if (parse_post_flag == true)
 	{
-		if (ParseBody(request) == false)
+		if (ParsePostBody(request) == false)
 			return (false);
-			// return (Error::InvalidBody());
-		return (true);
 	}
-	if (isCarriagereturn(request) == true)
-	{
-		if (_request_flag == false || _host_flag == false)
-			return (false);
-			// return (Error::MissingRequestLineAndHost(), false);
-		if (_method == "POST")
-			_post_flag = true;
-		this->_parse_flag = true;
-		return (true);
-	}
-	if (_request_flag == false)
+	else if (_request_flag == false)
 	{
 		if (ParseRequestLine(request) == false)
 			return (false);
@@ -257,7 +333,6 @@ bool Request::ParseRequest(const std::string& request)
 	}
 	else
 	{
-		// std::cout<<"Header   "<<request<<std::endl;
 		if (ParseHeader(request) == false)
 			return (false);
 			// return (Error::MissingRequestLineAndHost());
@@ -274,15 +349,18 @@ void Request::InsertHeaderKey(void)
 	_valid_header_key.push_back("Content-Type");
 	_valid_header_key.push_back("Content-Length");
 	_valid_header_key.push_back("Transfer-Enconding");
-}
+	_valid_header_key.push_back("Cashe-Control");
+	_valid_header_key.push_back("Connection");
+	_valid_header_key.push_back("Accept-Language");
+	_valid_header_key.push_back("Accept-Encoding");
+	_valid_header_key.push_back("Athorization");
+	_valid_header_key.push_back("sec-ch-ua");
+	_valid_header_key.push_back("sec-ch-ua-mobile");
+	_valid_header_key.push_back("sec-ch-ua-platform");
+	_valid_header_key.push_back("Sec-Fetch-Site");
+	_valid_header_key.push_back("Sec-Fetch-User");
+	_valid_header_key.push_back("Sec-Fetch-Mode");
+	_valid_header_key.push_back("Sec-Fetch-Dest");
+	_valid_header_key.push_back("Upgrade-Insecure-Requests");
 
-Request::Request() : _parse_flag(false), _post_flag(false), _host_flag(false), _request_flag(false)
-{
-	this->InsertHeaderKey();
-	std::cout << "Request object created argument" << std::endl;
-}
-
-Request::~Request()
-{
-	std::cout << "Request object destroyed" << std::endl;
 }

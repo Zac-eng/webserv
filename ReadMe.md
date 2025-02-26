@@ -21,3 +21,12 @@ Request class
 Response class
 レスポンスの情報を保持
 レスポンスを生成
+
+
+POST example
+POST /post HTTP/1.1
+Host: localhost
+Content-Type: application/json
+Content-Length: 19
+
+{"name":"Alice"}

@@ -69,15 +69,16 @@ bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::co
 	return (true);
 }
 
-bool SubstringObject(std::string& buffer, std::string::iterator& it,std::string& object)
+bool SubstringObject(std::string& buffer, std::string::iterator& it, std::string& object)
 {
 	size_t pos = 0;
 
+	//posはbuuferのindexを表す。
 	pos = buffer.find("\r\n", it - buffer.begin());
 	if (pos == std::string::npos)
 		return (false);
 	object = buffer.substr(it - buffer.begin(), pos - (it - buffer.begin()) + 2);
+	it = buffer.begin();
 	it += pos + 2;
-	buffer = std::string(it, buffer.end());
 	return (true);
 }
