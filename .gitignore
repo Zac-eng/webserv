@@ -1,3 +1,17 @@
 webserv
 *.o
 .vscode
+.DS_Store
+a.out
+default.conf
+html/
+includes/
+index.html
+init.sh
+mycgi.py
+output.txt
+request.sh
+test
+test.cpp
+test.hpp
+test.txt
