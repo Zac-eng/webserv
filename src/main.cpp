@@ -12,11 +12,12 @@ int main(int argc, char* argv[]) {
   }
   return 0;
   try {
+    std::vector<ServerConfig> conf;
+    Server server;
     // 設定ファイルの情報をもらう
-    ParseConfig();
-    ASocket listen_socket;
-    CreateListenServer();
-    ExecuteServer();
+    conf = ParseConfig();
+    server.CreateListenServer(conf);
+    server.ExecuteServer();
   }
   catch (std::exception& e)
   {
