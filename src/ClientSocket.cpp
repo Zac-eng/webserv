@@ -1,5 +1,27 @@
 #include "ClientSocket.hpp"
 
+
+bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object)
+{
+	// if (object.compare("\r\n") == 0)
+	// {
+	// 	if (this->_request.GetRequestFlag() == false)
+	// 		return (true);
+	// 	if (CheckCRequestFlag(buffer, it, object) == false)
+	// 		return (false);
+	// }
+	// else
+	// {
+	// 	if (this->_first_post_flag == true)
+	// 		this->_complete_post_flag = true;
+		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
+			return (false);
+	// 	if (this->_complete_post_flag == true)
+	// 		this->_post_body_flag = true;
+	// }
+	return (true);
+}
+
 bool ClientSocket::CheckExecuteResponse(void)
 {
 	std::string buffer = this->_buffer;
