@@ -1,5 +1,9 @@
 #include "ClientSocket.hpp"
 
+ClientSocket::ClientSocket() : _first_post_flag(false),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+
+ClientSocket::ClientSocket(ServerConfig conf) : _response_flag(false) {};
+
 
 bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
@@ -27,6 +31,7 @@ bool ClientSocket::CheckExecuteResponse(void)
 	std::string buffer = this->_buffer;
 	std::string object;
 	std::string::iterator it;
+	struct epoll_event event;
 
 	it = buffer.begin();
 	while (it != buffer.end())
@@ -47,8 +52,11 @@ bool ClientSocket::CheckExecuteResponse(void)
 			if (it != buffer.end())
 				return (false);
 			ChangeConfUri(this->_request.GetUri());
-			this->_response._fd = this->_fd;
-			this->_response.ExecuteResponse(this->_request);
+			this->_response_flag = true;
+			event.events = EPOLLOUT;
+			event.data.fd = this->_fd;
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &event) == -1)
+				return (false);
 			return (true);
 		}
 	}
@@ -80,4 +88,11 @@ void ClientSocket::HandleEpollInEvent(int epoll_fd)
 			return (this->CloseClientFd());
 	}
 	return (true);
+}
+
+void ClientSocket::HandleEpollOutEvent(int epoll_fd)
+{
+	if (this->_request_flag == false)
+		return ;
+	this->_response.ExecuteResponse(this->request);
 }
