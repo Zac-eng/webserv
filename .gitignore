@@ -5,7 +5,6 @@ webserv
 a.out
 default.conf
 html/
-includes/
 index.html
 init.sh
 mycgi.py
