@@ -4,6 +4,12 @@ ClientSocket::ClientSocket() : _first_post_flag(false),  _complete_post_flag(fal
 
 ClientSocket::ClientSocket(ServerConfig conf) : _response_flag(false) {};
 
+ClientSocket::~ClientSocket() {};
+
+bool ClientSocket::CreateSocket(void)
+{
+	return (false);
+}
 
 bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
@@ -26,7 +32,7 @@ bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, 
 	return (true);
 }
 
-bool ClientSocket::CheckExecuteResponse(void)
+bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 {
 	std::string buffer = this->_buffer;
 	std::string object;
@@ -51,12 +57,14 @@ bool ClientSocket::CheckExecuteResponse(void)
 		{
 			if (it != buffer.end())
 				return (false);
-			ChangeConfUri(this->_request.GetUri());
+			// ChangeConfUri(this->_request.GetUri());
 			this->_response_flag = true;
-			event.events = EPOLLOUT;
-			event.data.fd = this->_fd;
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &event) == -1)
-				return (false);
+			// event.events = EPOLLOUT;
+			// event.data.fd = this->_fd;
+			// if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_fd, &event) == -1)
+			// 	return (false);
+			if (this->file == 'php')
+				ExecuteCgi(epoll_fd, this->_request, server_conf);
 			return (true);
 		}
 	}
@@ -66,7 +74,8 @@ bool ClientSocket::CheckExecuteResponse(void)
 }
 
 
-void ClientSocket::HandleEpollInEvent(int epoll_fd)
+
+bool ClientSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
@@ -84,15 +93,15 @@ void ClientSocket::HandleEpollInEvent(int epoll_fd)
 		return (true);
 	else
 	{
-		if (this->CheckExecuteResponse() == false)
-			return (this->CloseClientFd());
+		if (this->CheckExecuteResponse(epoll_fd) == false)
+			return (false);
 	}
 	return (true);
 }
 
-void ClientSocket::HandleEpollOutEvent(int epoll_fd)
+void ClientSocket::HandleEpollOutEvent(void)
 {
-	if (this->_request_flag == false)
+	if (this->_response_flag == false)
 		return ;
-	this->_response.ExecuteResponse(this->request);
+	this->_response.ExecuteResponse(this->_request);
 }

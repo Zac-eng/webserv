@@ -183,6 +183,19 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 	return (false);
 }
 
+bool Request::CheckUriExtension(const std::string& uri, std::string::const_iterator& it_tmp)
+{
+	size_t result;
+
+	it_tmp++;
+	if (it_tmp == uri.end())
+		return (false);
+	result = uri.find('.', it_tmp - uri.begin());
+	if (result == std::string::npos)
+		return (true);
+	return (false);
+}
+
 bool Request::ValidUri(const std::string& uri)
 {
 	std::string::const_iterator it;
@@ -212,15 +225,16 @@ bool Request::ValidUri(const std::string& uri)
 			return (true);
 		return (false);
 	}
-	// if (*it == '.')
-	// {
-	// 	//拡張子を確認し、最後の/から、ファイル名を切り取る。
-	// 	CheckExtension();
-	// 	UntilLastSlash();
-	// 	this->filename = Substringfilename();
-	// }
+	if (*it_tmp == '.')
+	{
+		if (CheckUriExtension(uri, it_tmp) == false)
+			return (false);
+		this->_file = uri.substr(it_tmp - uri.begin());
+	}
 	return (true);
 }
+
+
 
 bool Request::ParseUri(const std::string& request, std::string::const_iterator& it)
 {

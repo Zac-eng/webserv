@@ -1,4 +1,7 @@
+#include "Request.hpp"
 #include "Response.hpp"
+#include "ClientSocket.hpp"
+
 
 Response::Response()
 {
@@ -47,36 +50,36 @@ bool Response::ExistUri(const std::string& uri)
 }
 
 
-bool Response::IsDynamicFileType(const std::string& file)
-{
-	std::string object;
-	for (std::string::iterator it = uri.begin(); it != uri.end(); it++)
-	{
-		if (*it == '.')
-			break ;
-	}
-	if (it == uri.end() || *it != '.')
-		return (false);
-	it++;
-	object = uri.substr(it - uri.begin(), uri.end() - (it - uri.begin()));
-	if (!object.empty() && object = "py")
-		return (true);
-	return (false);
-}
+// bool Response::IsDynamicFileType(const std::string& file)
+// {
+// 	std::string object;
+// 	for (std::string::iterator it = uri.begin(); it != uri.end(); it++)
+// 	{
+// 		if (*it == '.')
+// 			break ;
+// 	}
+// 	if (it == uri.end() || *it != '.')
+// 		return (false);
+// 	it++;
+// 	object = uri.substr(it - uri.begin(), uri.end() - (it - uri.begin()));
+// 	if (!object.empty() && object = "py")
+// 		return (true);
+// 	return (false);
+// }
 
-void Response::GetFileSize()
-{
-	struct stat file;
-	std::stringstream ss;
+// void Response::GetFileSize()
+// {
+// 	struct stat file;
+// 	std::stringstream ss;
 	
-	if (stat(this->_path.c_str(), &file) == -1)
-	{
-		throw std::runtime_error("stat");
-	}
-	ss << file.st_size;
-	this->_content_length = ss.str();
+// 	if (stat(this->_path.c_str(), &file) == -1)
+// 	{
+// 		throw std::runtime_error("stat");
+// 	}
+// 	ss << file.st_size;
+// 	this->_content_length = ss.str();
 
-}
+// }
 
 // おそらくこれもepollに含めなきゃいけない
 bool Response::ReadFile(Request& req)
@@ -145,7 +148,7 @@ void  Response::CreateResponseHeader(Request& req)
 {
 	std::map<std::string, std::string> header;
 
-	header = req.Getheader();
+	// header = req.Getheader();
 	CheckFileType(req.GetFile());
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
 	CheckConnectionHeader(header);
@@ -164,10 +167,10 @@ void Response::HandleMethod(Request& req)
 {
 	if (req.GetMethod() == "GET")
 		HandleGet(req);
-	else if (req.GetMethod() == "POST")
-		HandlePost(req);
-	else if (req.GetMethod() == "DELETE")
-		HandleDelete(req);
+	// else if (req.GetMethod() == "POST")
+	// 	HandlePost(req);
+	// else if (req.GetMethod() == "DELETE")
+	// 	HandleDelete(req);
 	return ;
 }
 
@@ -175,10 +178,10 @@ void Response::ExecuteAndGetStatusCode(Request& req)
 {
 	bool type = false;
 
-	type = IsDynamicFileType(this->_filename);
-	if (type == true)
-		ExecuteCGI(req);
-	else
+	// type = IsDynamicFileType(this->_filename);
+	// if (type == true)
+	// 	ExecuteCGI(req);
+	// else
 		HandleMethod(req);
 	return ;
 }

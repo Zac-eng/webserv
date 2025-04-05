@@ -1,19 +1,21 @@
 NAME = webserv
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS =-std=c++98
 SRCDIR = src
 OBJDIR = object
+INCLUDES = -I ./includes
 
 RM = rm -rf
 
-SRCS = $(wildcard ./src/*.cpp)
+SRCS = $(wildcard ./src/*.cpp) $(wildcard ./src/message/*.cpp)
 OBJS = $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
+
 
 all: $(NAME)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@

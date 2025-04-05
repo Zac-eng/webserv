@@ -6,7 +6,7 @@ ASocket::~ASocket() {};
 
 int ASocket::GetFd(void) const
 {
-	return (this->fd);
+	return (this->_fd);
 }
 
 void ASocket::SetFd(int fd)
