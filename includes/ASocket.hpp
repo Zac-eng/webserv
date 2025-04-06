@@ -19,6 +19,7 @@ class ASocket
 	int _port;
 
 	ASocket();
+	ASocket(ServerConfig& conf);
 	~ASocket();
 	int GetFd(void) const;
 	void SetFd(int fd);

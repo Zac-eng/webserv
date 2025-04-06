@@ -21,7 +21,6 @@ std::string Request::GetMethod()
 	return (this->_method);
 }
 
-
 std::string Request::GetUri()
 {
 	return (this->_path);
@@ -352,6 +351,11 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
+}
+
+std::string Request::GetFile(void)
+{
+	return (this->_file);
 }
 
 void Request::InsertHeaderKey(void)

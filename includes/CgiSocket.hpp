@@ -8,4 +8,4 @@ class CgiSocket : public ASocket
 	// CreateSocket();
 	// HandleEpollInEvent();
 	// HandleEpollOutEvent();
-}
+};

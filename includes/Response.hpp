@@ -23,7 +23,7 @@ class Response
 		int _fd;
 		Request _request;
 		std::string _response;
-		std::string _response_header;
+		std::string _response_body;
 		std::string _version;
 		unsigned int _status_code;
 		std::string _directory;
@@ -58,6 +58,9 @@ void ExecuteHeaderResponse(Request& req);
 void GetFileSize(void);
 void SetPath(const std::string& path);
 void CheckFileType(std::string& file);
+void CheckConnectionHeader(std::map<std::string, std::string> header);
+void CreateResponseHeader(Request& req);
+void CreateResponse();
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
 };

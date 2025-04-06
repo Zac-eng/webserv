@@ -4,6 +4,7 @@
 
 class ListenSocket : public ASocket
 {
+	public:
 	//Listen fdの作成
 	bool CreateSocket();
 	// Client fdの作成
@@ -13,6 +14,7 @@ class ListenSocket : public ASocket
 
 
 ListenSocket();
+ListenSocket(ServerConfig& conf);
 ~ListenSocket();
 bool SocketInit(void);
 bool SetSocket(void);

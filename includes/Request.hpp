@@ -54,6 +54,7 @@ bool ParsePostBody(const std::string& request);
 std::string GetUri(void);
 void SetUri(std::string& object);
 std::string GetMethod();
+std::string GetFile();
 
 
 };

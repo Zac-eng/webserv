@@ -2,6 +2,8 @@
 
 Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
+Server::Server() {};
+
 bool SetNonBlocking(int fd)
 {
 	int flag;
@@ -16,36 +18,60 @@ bool SetNonBlocking(int fd)
 	return (true);
 }
 
+bool Server::SetMonitoringFd(ASocket* socket)
+{
+	struct epoll_event event;
+
+	event.events = EPOLLIN;
+	event.data.fd = socket->_fd;
+	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket->_fd, &event) < 0)
+	{
+		std::cout << "error" <<std::endl;
+		return (false);
+	}
+	   std::cout << "Listening socket added to epoll: " << socket->_fd << std::endl;
+	return (true);
+}
+
+bool Server::EpollCreate(void)
+{
+	this->_epoll_fd = epoll_create1(0);
+
+	if (this->_epoll_fd < 0)
+		return (false);
+	for (std::map<int, ASocket*>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
+	{
+		if (SetMonitoringFd(it->second) ==  false)
+			return (false);
+	}
+	return (true);
+}
+
 // todo、falseが返ってきた時にsocketを全てfreeして終了。
-void Server::CreateListenServer(std::vector<ServerConfig>& conf)
+void Server::CreateListenServer(void)
 {
 	std::vector<ServerConfig>::iterator it;
 
-	for (; conf.end() != it; it++)
+	it = this->_conf.begin();
+	for (; this->_conf.end() != it; it++)
 	{
-		ASocket *socket = new ListenSocket();
-		if (socket->CreateSocket(*it) == false)
+		ASocket *socket = new ListenSocket(*it);
+		if (socket->CreateSocket() == false)
 			return ;
-		if (SetNonBlocking(socket._server_fd) ==  false)
+		if (SetNonBlocking(socket->_fd) ==  false)
 			return ;
 		this->_socket.insert(std::make_pair(socket->GetFd(), socket));
 	}
+	if (EpollCreate() == false)
+		return ;
 }
-
-void Server::CloseEpollFd(void)
-{
-	for (std::map<int, Socket>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
-		close(it->first);
-	for (std::map<int, Client>::iterator it = this->_client.begin(); it != this->_client.end(); it++)
-		close(it->first);
-}
-
 
 void Server::ExecuteServer(void)
 {
 	int event_counts;
 	struct epoll_event event[MAX_EVENTS];
 
+	
 	while (true)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS + 1, -1);
@@ -55,13 +81,13 @@ void Server::ExecuteServer(void)
 		{
 			if (event[i].events == EPOLLIN)
 			{
-				if (this->_socket[event[i].data.fd].HandleEpollInEvent(this->_epoll_fd, this->_socket) == false)
-					return (false);
+				if (this->_socket[event[i].data.fd]->HandleEpollInEvent(this->_epoll_fd, this->_socket) == false)
+					return ;
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
-				if (this->_socket[event[i].data.fd].HandleEpollOutEvent() == false)
-					return (false);
+				this->_socket[event[i].data.fd]->HandleEpollOutEvent();
+					return ;
 			}
 		}
 	}
