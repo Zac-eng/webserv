@@ -10,6 +10,8 @@ ServerConfig ListenSocket::GetConf()
 
 ListenSocket::ListenSocket() {}
 
+ListenSocket::ListenSocket(ServerConfig& conf) : ASocket(conf) {};
+
 ListenSocket::~ListenSocket() {}
 
 bool ListenSocket::SocketInit(void)

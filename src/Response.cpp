@@ -67,19 +67,19 @@ bool Response::ExistUri(const std::string& uri)
 // 	return (false);
 // }
 
-// void Response::GetFileSize()
-// {
-// 	struct stat file;
-// 	std::stringstream ss;
+void Response::GetFileSize()
+{
+	struct stat file;
+	std::stringstream ss;
 	
-// 	if (stat(this->_path.c_str(), &file) == -1)
-// 	{
-// 		throw std::runtime_error("stat");
-// 	}
-// 	ss << file.st_size;
-// 	this->_content_length = ss.str();
+	if (stat(this->_path.c_str(), &file) == -1)
+	{
+		throw std::runtime_error("stat");
+	}
+	ss << file.st_size;
+	this->_content_length = ss.str();
 
-// }
+}
 
 // おそらくこれもepollに含めなきゃいけない
 bool Response::ReadFile(Request& req)
@@ -106,14 +106,14 @@ bool Response::ReadFile(Request& req)
 			break;
 		}
 		else
-			this->_response.append(buf, byte_size);
+			this->_response_body.append(buf, byte_size);
 	}
 	return (true);
 }
 
 void Response::CheckFileType(std::string& file)
 {
-	if (req.GetFile() == "html")
+	if (this->_request.GetFile() == "html")
 		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
 }
 
@@ -133,26 +133,28 @@ void Response::CheckConnectionHeader(std::map<std::string, std::string> header)
 
 void Response::CreateResponse()
 {
-	std::vector<std::string> it;
+	std::vector<std::string>::iterator it;
 
 	it = this->_header.begin();
-	this->_response_header = "HTTP/1.1 200 OK\r\n";
+	this->_response = "HTTP/1.1 200 OK\r\n";
 	for (; it != this->_header.end(); it++)
-		this->_response_header += *it;
-	this->_response_header += "\r\n";
-	this->_response_header += this->_response;
-	write(this->_fd, this->_response_header.c_str(); this->_response_header.length());
+		this->_response += *it;
+	this->_response += "\r\n";
+	this->_response += this->_response_body;
+	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
 void  Response::CreateResponseHeader(Request& req)
 {
 	std::map<std::string, std::string> header;
+	std::string file;
 
+	file = req.GetFile();
 	// header = req.Getheader();
-	CheckFileType(req.GetFile());
+	CheckFileType(file);
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
 	CheckConnectionHeader(header);
-	CreateResponse()
+	CreateResponse();
 }
 
 void Response::HandleGet(Request& req)

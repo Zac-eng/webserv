@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include <sstream>
 #include <ctime>
+#include <netdb.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -20,7 +21,13 @@ struct Auth {
 struct CgiPath {
 	std::string script_name;
 	std::string path_info;
-	std::string query_parameter;
+	std::string translated;
+	std::string query_string;
+};
+
+struct RemoteInfo {
+	std::string remote_addr;
+	std::string remote_host;
 };
 
 class CgiSocket : public ASocket
@@ -48,15 +55,13 @@ public:
 namespace CgiMetaProcessors {
 	Auth get_auth_info(const Request& req);
 	CgiPath get_path_info(const Request& req);
+	RemoteInfo get_remote_info(const sockaddr_in& client_addr);
 	std::string get_content_length(const Request& req);
 	std::string get_content_type(const Request& req);
 	std::string get_gateway_interface(void);
 	std::string get_path_info(const Request& req, const ServerConfig& conf);
 	std::string get_path_translated(const Request& req, const ServerConfig& conf);
 	std::string get_query_string(const Request& req);
-	std::string get_remote_addr(const Request& req);
-	std::string get_remote_host(const Request& req);
-	// std::string get_remote_user(const Request& req);
 	std::string get_request_method(const Request& req);
 	std::string get_script_name(const Request& req, const ServerConfig& conf);
 	std::string get_server_name(const ServerConfig& conf);

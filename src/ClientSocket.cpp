@@ -32,6 +32,154 @@ bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, 
 	return (true);
 }
 
+// bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location)
+// {
+// 	if (new_location.length() > before_location.length())
+// 		return (false);
+// 	return (true);
+// }
+
+// bool LoopCheckPath(std::string& uri, std::string& location_uri, bool& location_flag)
+// {
+// 	std::string tmp_location;
+// 	std::string tmp_uri;
+// 	std::string object;
+// 	std::string::iterator it;
+// 	int index;
+
+// 	it = location_uri.begin();
+// 	it++;
+// 	index = 1;
+// 	while (it != location_uri.end())
+// 	{
+// 		for (; it != location_uri.end() && *it != '/'; it++)
+// 		{
+// 			tmp_location = *it;
+// 			tmp_uri += uri[index++];
+// 		}
+// 		if (tmp_location != tmp_uri)
+// 			return (false);
+// 		object += tmp_location;
+// 		tmp_location.clear();
+// 		tmp_uri.clear();
+// 		if (it == location_uri.end())
+// 			break ;
+// 		index++;
+// 		it++;
+// 	}
+// 	location_flag = true;
+// 	return (true);
+// }
+
+// void ClientSocket::ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag)
+// {
+// 	std::string uri;
+// 	std::string location_uri;
+
+// 	uri = this->_request.GetUri();
+// 	location_uri = location.GetPath();
+// 	if (uri.length() < location_uri.length())
+// 		return ;
+// 	if (LoopCheckPath(uri, location_uri, location_flag) == false)
+// 		return ;
+// 	if (location_tmp.GetPath() == location.GetPath())
+// 		return ;
+// 	else if (CompareLocationAndUri(location_tmp.GetPath(), location_uri) == false)
+// 		return ;
+// 	location_tmp = location;
+// 	location_flag = true;
+// 	return ;
+// }
+
+// bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri)
+// {
+// 	LocationConfig location_tmp;
+// 	std::vector<LocationConfig>::iterator it;
+// 	bool location_flag;
+
+// 	location_flag = false;
+// 	it = location.begin();
+// 	location_tmp = *it;
+// 	for (; it != location.end(); it++)
+// 	{
+
+// 		if (this->_request.GetUri() == it->GetPath())
+// 		{
+// 			location_flag = true;
+// 			location_tmp = *it;
+// 			break ;
+// 		}
+		
+// 		ValidLocation(*it, location_tmp, location_flag);
+// 	}
+// 	if (location_flag == false)
+// 		return (false);
+// 	CombineUriAndLocationRoot(location_tmp);
+// 	return (true);
+// }
+
+
+// void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
+// {
+// 	std::string object;
+// 	std::string path;
+
+// 	object = location.GetRoot();
+// 	object += this->_request.GetUri();
+// 	this->_response.SetDirectory(object);
+// 	this->_response.SetFilename(location.GetIndex());
+// 	path = object;
+// 	path += location.GetIndex();
+// 	this->_response.SetPath(path);
+// 	return ;
+// }
+
+// void ClientSocket::ChangeDefaultPath(const std::string& uri)
+// {
+// 	std::string object;
+
+// 	object = "/etc/nginx/html";
+// 	object += uri;
+// 	this->_response.SetDirectory(object);
+// 	this->_response.SetFilename("index.html");
+// 	object += "index.html";
+// 	this->_response.SetPath(object);
+// 	return ;
+// }
+
+// bool ClientSocket::CheckAndChangeRootUri(const std::string& uri)
+// {
+// 	std::string object;
+// 	std::string root;
+// 	std::string path;
+
+// 	root = this->_conf.GetRoot();
+// 	if (root.empty())
+// 		return (false);
+// 	object = root;
+// 	object += uri;
+// 	this->_response.SetDirectory(object);
+// 	this->_response.SetFilename(this->_conf.GetIndex());
+// 	path = object;
+// 	path += this->_conf.GetIndex();
+// 	this->_response.SetPath(path);
+// 	return (true);
+// }
+
+
+// void ClientSocket::ChangeConfUri(const std::string& uri)
+// {
+// 	std::vector<LocationConfig> location;
+
+// 	location = this->_conf.GetLocation();
+// 	if (CheckAndChangeLocationUri(location, uri) == true)
+// 		return ;
+// 	if (CheckAndChangeRootUri(uri) == true)
+// 		return ;
+// 	ChangeDefaultPath(uri);
+// }
+
+
 bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 {
 	std::string buffer = this->_buffer;
@@ -59,12 +207,8 @@ bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 				return (false);
 			// ChangeConfUri(this->_request.GetUri());
 			this->_response_flag = true;
-			// event.events = EPOLLOUT;
-			// event.data.fd = this->_fd;
-			// if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_fd, &event) == -1)
-			// 	return (false);
-			if (this->file == 'php')
-				ExecuteCgi(epoll_fd, this->_request, server_conf);
+			// if (this->_file == "php")
+			// 	ExecuteCgi(epoll_fd, this->_request, server_conf);
 			return (true);
 		}
 	}

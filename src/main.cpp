@@ -7,20 +7,48 @@
 #include "Response.hpp"
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    return 1;
-  }
-  return 0;
-  try {
-    std::vector<ServerConfig> conf;
-    Server server;
-    // 設定ファイルの情報をもらう
-    conf = ParseConfig();
-    server.CreateListenServer(conf);
+
+    std::string config_filename = "nginx.conf"; // 設定ファイル名
+    std::vector<ServerConfig> configs;
+    if (parse_config(config_filename, configs))
+    {
+        std::cout << "Config file parsed successfully!" << std::endl;
+
+        for (size_t i = 0; i < configs.size(); ++i)
+        {
+            const ServerConfig& server = configs[i];
+            std::cout << "Server " << i + 1 << ":" << std::endl;
+            std::cout << "  Listen Port: " << server.listen_port << std::endl;
+            std::cout << "  Server Name: " << server.server_name << std::endl;
+
+            for (std::map<int, std::string>::const_iterator it = server.error_pages.begin(); it != server.error_pages.end(); ++it)
+            {
+                std::cout << "  Error Page: " << it->first << " -> " << it->second << std::endl;
+            }
+
+            std::cout << "  Locations:" << std::endl;
+            for (size_t j = 0; j < server.locations.size(); ++j)
+            {
+                const LocationConfig& loc = server.locations[j];
+                std::cout << "    Location " << j + 1 << ":" << std::endl;
+                std::cout << "      Path: " << loc.path << std::endl;
+                std::cout << "      Root: " << loc.root << std::endl;
+                std::cout << "      Index: " << loc.index << std::endl;
+                std::cout << "      Allow Methods: ";
+                for (size_t k = 0; k < loc.allow_methods.size(); ++k)
+                {
+                    std::cout << loc.allow_methods[k] << " ";
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to parse config file." << std::endl;
+    }
+    
+    Server server(configs);
+    server.CreateListenServer();
     server.ExecuteServer();
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << "エラーが発生しました。"<< e.what() << std::endl;
-  }
 }

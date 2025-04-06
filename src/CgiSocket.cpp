@@ -122,18 +122,19 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req) {
   std::vector<std::string> meta_vars;
   Auth auth_info = CgiMetaProcessors::get_auth_info(req);
   CgiPath cgi_path = CgiMetaProcessors::get_path_info(req);
+  RemoteInfo remote_info = CgiMetaProcessors::get_remote_info();
   meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
   meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
   meta_vars.push_back("GATEWAY_INTERFACE=" + CgiMetaProcessors::get_gateway_interface());
-  // meta_vars.push_back("PATH_INFO=" + CgiMetaProcessors::get_path_info(req));
-  // meta_vars.push_back("PATH_TRANSLATED=" + CgiMetaProcessors::get_path_translated(req));
-  // meta_vars.push_back("QUERY_STRING=" + CgiMetaProcessors::get_query_string(req));
-  meta_vars.push_back("REMOTE_ADDR=" + CgiMetaProcessors::get_remote_addr(req));
-  meta_vars.push_back("REMOTE_HOST=" + CgiMetaProcessors::get_remote_host(req));
+  meta_vars.push_back("PATH_INFO=" + cgi_path.path_info);
+  meta_vars.push_back("PATH_TRANSLATED=" + cgi_path.translated);
+  meta_vars.push_back("QUERY_STRING=" + cgi_path.query_string);
+  meta_vars.push_back("REMOTE_ADDR=" + remote_info.remote_addr);
+  meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
   meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
   meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
-  // meta_vars.push_back("SCRIPT_NAME=" + CgiMetaProcessors::get_script_name(req));
+  meta_vars.push_back("SCRIPT_NAME=" + cgi_path.script_name);
   meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(conf));
   meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(conf));
   meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol());
@@ -161,6 +162,24 @@ Auth CgiMetaProcessors::get_auth_info(const Request& req) {
 
 CgiPath CgiMetaProcessors::get_path_info(const Request& req) {
   // if ()
+}
+
+RemoteInfo CgiMetaProcessors::get_remote_info(const sockaddr_in& client_addr) {
+  char hostname[NI_MAXHOST];
+  const char* ip_addr = inet_ntoa(client_addr.sin_addr);
+  int status = getnameinfo((struct sockaddr*)&client_addr, sizeof(client_addr),
+                             hostname, sizeof(hostname),
+                             NULL, 0, NI_NAMEREQD);
+  if (status != 0) {
+    return RemoteInfo {
+      remote_addr: ip_addr,
+      remote_host: ""
+    };
+  }
+  return RemoteInfo {
+    remote_addr: ip_addr,
+    remote_host: hostname
+  };
 }
 
 std::string CgiMetaProcessors::get_content_length(const Request& req) {
@@ -195,13 +214,13 @@ std::string CgiMetaProcessors::get_gateway_interface(void) {
 
 // }
 
-std::string CgiMetaProcessors::get_remote_addr(const sockaddr_in& client_addr) {
+// std::string CgiMetaProcessors::get_remote_addr(const sockaddr_in& client_addr) {
+//   return inet_ntoa(client_addr.sin_addr);
+// }
 
-}
-
-std::string CgiMetaProcessors::get_remote_host(const sockaddr_in& client_addr) {
+// std::string CgiMetaProcessors::get_remote_host(const sockaddr_in& client_addr) {
   
-}
+// }
 
 std::string CgiMetaProcessors::get_request_method(const Request& req) {
   return req._method;
