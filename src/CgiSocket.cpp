@@ -1,5 +1,7 @@
 #include "CgiSocket.hpp"
 
+#define CGI_EXTENTION ".php"
+
 CgiSocket::CgiSocket(
   pid_t cgi_pid,
   int read_fd,
@@ -41,6 +43,7 @@ CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
 CgiSocket* CgiSocket::createCgiSocket(
   const ServerConfig& conf,
   const Request& req,
+  const sockaddr_in& client_addr,
   std::string& response_buf
 ) {
   int ptc_pipe[2];
@@ -67,7 +70,7 @@ CgiSocket* CgiSocket::createCgiSocket(
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(1);
     }
-    const char **meta_vars = create_meta_vars(conf, req);
+    const char **meta_vars = create_meta_vars(conf, req, client_addr);
     if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0)
       std::exit(1);
   }
@@ -118,11 +121,11 @@ void CgiSocket::handleEpollOutEvent() {
     return ;
 }
 
-const char **create_meta_vars(const ServerConfig& conf, const Request& req) {
+const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr) {
   std::vector<std::string> meta_vars;
   Auth auth_info = CgiMetaProcessors::get_auth_info(req);
-  CgiPath cgi_path = CgiMetaProcessors::get_path_info(req);
-  RemoteInfo remote_info = CgiMetaProcessors::get_remote_info();
+  CgiPath cgi_path = CgiMetaProcessors::get_path_info(conf, req);
+  RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
   meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
   meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
@@ -160,8 +163,47 @@ Auth CgiMetaProcessors::get_auth_info(const Request& req) {
   return Auth {auth_type: "", remote_user: ""};
 }
 
-CgiPath CgiMetaProcessors::get_path_info(const Request& req) {
-  // if ()
+CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request& req) {
+  std::string path = req.GetUri();
+  std::string script_name = "";
+  std::string path_info = "";
+  std::string translated = "";
+  std::string query_string = "";
+  std::vector<LocationConfig>::const_iterator it = conf.locations.begin();
+  std::vector<LocationConfig>::const_iterator matched_location = conf.locations.end();
+  int matching_prefix_len = 0;
+
+  if (!path.empty()) {
+    size_t question_pos = path.find('?');
+    if (question_pos != std::string::npos) {
+      query_string = path.substr(question_pos + 1, path.length());
+    }
+    std::string filepath = path.substr(0, question_pos);
+    size_t script_path_pos = filepath.find(CGI_EXTENTION, 0);
+    if (script_path_pos != std::string::npos) {
+      size_t border_pos = script_path_pos + sizeof(CGI_EXTENTION) / sizeof(char);
+      script_name = filepath.substr(0, border_pos);
+      path_info = filepath.substr(border_pos + 1, filepath.length());
+    }
+    for (it; it != conf.locations.end(); ++it) {
+      if (it->path.length() < matching_prefix_len)
+        continue;
+      if (filepath.find(it->path, 0) == 0) {
+        matched_location = it;
+        matching_prefix_len = it->path.length();
+      }
+    }
+    if (matched_location != conf.locations.end()) {
+      translated = script_name;
+      translated.replace(0, matching_prefix_len, matched_location->root);
+    }
+  }
+  return CgiPath {
+    script_name,
+    path_info,
+    translated,
+    query_string
+  };
 }
 
 RemoteInfo CgiMetaProcessors::get_remote_info(const sockaddr_in& client_addr) {
@@ -224,10 +266,6 @@ std::string CgiMetaProcessors::get_gateway_interface(void) {
 
 std::string CgiMetaProcessors::get_request_method(const Request& req) {
   return req._method;
-}
-
-std::string CgiMetaProcessors::get_script_name(const Request& req, const ServerConfig& conf) {
-  // return 
 }
 
 std::string CgiMetaProcessors::get_server_name(const ServerConfig& conf) {

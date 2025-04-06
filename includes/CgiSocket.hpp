@@ -54,7 +54,7 @@ public:
 
 namespace CgiMetaProcessors {
 	Auth get_auth_info(const Request& req);
-	CgiPath get_path_info(const Request& req);
+	CgiPath get_path_info(const ServerConfig& conf, const Request& req);
 	RemoteInfo get_remote_info(const sockaddr_in& client_addr);
 	std::string get_content_length(const Request& req);
 	std::string get_content_type(const Request& req);
