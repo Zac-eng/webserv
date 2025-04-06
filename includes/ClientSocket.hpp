@@ -17,8 +17,6 @@
 #include <map>
 #include <sys/epoll.h>
 
-#define BUFFER_SIZE 100
-
 class ASocket;
 
 class ClientSocket : public ASocket

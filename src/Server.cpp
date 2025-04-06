@@ -2,7 +2,7 @@
 
 Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
-bool SetNonBlocking(int fd)
+bool set_non_blocking(int fd)
 {
 	int flag;
 

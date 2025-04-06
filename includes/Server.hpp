@@ -13,4 +13,4 @@ void ExecuteServer(void);
 void CloseEpollFd(void);
 };
 
-bool SetNonBlocking(int fd);
+bool set_non_blocking(int fd);
