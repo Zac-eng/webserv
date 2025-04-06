@@ -12,7 +12,7 @@
 class Request
 {
 	// private:
-	public:
+public:
 		std::string _request;
 		std::string _method;
 		std::string _path;
@@ -51,12 +51,12 @@ bool GetRequestFlag();
 bool GetHostFlag();
 bool GetPostFlag();
 bool ParsePostBody(const std::string& request);
-std::string GetUri(void);
+std::string GetUri(void) const;
 void SetUri(std::string& object);
 std::string GetMethod();
 
-
 };
+
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);
 bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object);

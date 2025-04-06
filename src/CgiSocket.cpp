@@ -4,9 +4,9 @@ CgiSocket::CgiSocket(
   pid_t cgi_pid,
   int read_fd,
   int write_fd,
-  std::string& request_body,
+  const std::string& request_body,
   std::string& response
-) :_request_body(request_body), _response_body(response) {
+): _request_body(request_body), _response_body(response) {
   this->_cgi_pid = cgi_pid;
   this->_pipe_fds[READ] = read_fd;
   this->_pipe_fds[WRITE] = write_fd;
@@ -33,13 +33,14 @@ CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
   this->_pipe_fds[READ] = obj._pipe_fds[READ];
   this->_pipe_fds[WRITE] = obj._pipe_fds[WRITE];
   this->_response_body = obj._response_body;
-  this->_request_body = obj._request_body;
+  // this->_request_body = obj._request_body;
   time(&this->_created_at);
   return *this;
 }
 
 CgiSocket* CgiSocket::createCgiSocket(
-  Request& req,
+  const ServerConfig& conf,
+  const Request& req,
   std::string& response_buf
 ) {
   int ptc_pipe[2];
@@ -66,7 +67,7 @@ CgiSocket* CgiSocket::createCgiSocket(
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(1);
     }
-    const char **meta_vars = create_meta_vars(req);
+    const char **meta_vars = create_meta_vars(conf, req);
     if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0)
       std::exit(1);
   }
@@ -117,9 +118,11 @@ void CgiSocket::handleEpollOutEvent() {
     return ;
 }
 
-const char **create_meta_vars(const Request& req) {
+const char **create_meta_vars(const ServerConfig& conf, const Request& req) {
   std::vector<std::string> meta_vars;
-  meta_vars.push_back("AUTH_TYPE=" + CgiMetaProcessors::get_auth_type(req));
+  Auth auth_info = CgiMetaProcessors::get_auth_info(req);
+  CgiPath cgi_path = CgiMetaProcessors::get_path_info(req);
+  meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
   meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
   meta_vars.push_back("GATEWAY_INTERFACE=" + CgiMetaProcessors::get_gateway_interface());
@@ -128,13 +131,12 @@ const char **create_meta_vars(const Request& req) {
   // meta_vars.push_back("QUERY_STRING=" + CgiMetaProcessors::get_query_string(req));
   meta_vars.push_back("REMOTE_ADDR=" + CgiMetaProcessors::get_remote_addr(req));
   meta_vars.push_back("REMOTE_HOST=" + CgiMetaProcessors::get_remote_host(req));
-  meta_vars.push_back("REMOTE_IDENT=" + CgiMetaProcessors::get_remote_ident(req));
-  meta_vars.push_back("REMOTE_USER=" + CgiMetaProcessors::get_remote_user(req));
+  meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
   meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
   // meta_vars.push_back("SCRIPT_NAME=" + CgiMetaProcessors::get_script_name(req));
-  // meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(req));
-  // meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(req));
-  // meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol(req));
+  meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(conf));
+  meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(conf));
+  meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol());
   meta_vars.push_back("SERVER_SOFTWARE=" + CgiMetaProcessors::get_server_software());
 
   int meta_var_num = meta_vars.size();
@@ -145,16 +147,20 @@ const char **create_meta_vars(const Request& req) {
   return meta_var_array;
 }
 
-std::string CgiMetaProcessors::get_auth_type(const Request& req) {
+Auth CgiMetaProcessors::get_auth_info(const Request& req) {
   auto auth_iter = req._header.find("Authorization");
   if (auth_iter != req._header.end()) {
     std::string auth = auth_iter->second;
     size_t colon_pos = auth.find(':');
     if (colon_pos != std::string::npos) {
-      return auth.substr(0, colon_pos);
+      return Auth {auth.substr(0, colon_pos), auth.substr(colon_pos + 1, auth.length())};
     }
   }
-  return "";
+  return Auth {auth_type: "", remote_user: ""};
+}
+
+CgiPath CgiMetaProcessors::get_path_info(const Request& req) {
+  // if ()
 }
 
 std::string CgiMetaProcessors::get_content_length(const Request& req) {
@@ -189,44 +195,38 @@ std::string CgiMetaProcessors::get_gateway_interface(void) {
 
 // }
 
-std::string CgiMetaProcessors::get_remote_addr(const Request& req) {
+std::string CgiMetaProcessors::get_remote_addr(const sockaddr_in& client_addr) {
+
+}
+
+std::string CgiMetaProcessors::get_remote_host(const sockaddr_in& client_addr) {
   
 }
 
-std::string CgiMetaProcessors::get_remote_host(const Request& req) {
-
-}
-
-std::string CgiMetaProcessors::get_remote_ident(const Request& req) {
-
-}
-
-std::string CgiMetaProcessors::get_remote_user(const Request& req) {
-
-}
-
 std::string CgiMetaProcessors::get_request_method(const Request& req) {
-
+  return req._method;
 }
 
 std::string CgiMetaProcessors::get_script_name(const Request& req, const ServerConfig& conf) {
-
+  // return 
 }
 
 std::string CgiMetaProcessors::get_server_name(const ServerConfig& conf) {
-
+  return conf.server_name;
 }
 
 std::string CgiMetaProcessors::get_server_port(const ServerConfig& conf) {
-
+  std::stringstream ss;
+  ss << conf.listen_port;
+  return ss.str();
 }
 
-std::string CgiMetaProcessors::get_server_protocol(const ServerConfig& conf) {
-
+std::string CgiMetaProcessors::get_server_protocol(void) {
+  return "http/1.1";
 }
 
 std::string CgiMetaProcessors::get_server_software(void) {
-
+  return "webserv/1.1";
 }
 
 

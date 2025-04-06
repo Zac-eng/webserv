@@ -93,6 +93,7 @@ bool ListenSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	socket.insert(std::make_pair(client->GetFd(), client));
 	if (SetNonBlocking(client->GetFd()) == false)
 		return (false);
+	client->setClinetAddr(address);
 	return(true);
 }
 

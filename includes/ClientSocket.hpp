@@ -32,6 +32,7 @@ class ClientSocket : public ASocket
 	bool _complete_parse_flag;
 	bool _post_body_flag;
 	std::string _buffer;
+	sockaddr_in _client_addr;
 
 	ClientSocket();
 	~ClientSocket();
@@ -41,6 +42,8 @@ class ClientSocket : public ASocket
 	// Requestパース
 	bool HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// CgiSocket作成、レスポンス作成
+	void setClientAddr(sockaddr_in client_addr);
+	
 	void HandleEpollOutEvent();
 	bool ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object);
 	void ReadClientFd();
