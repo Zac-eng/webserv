@@ -26,7 +26,7 @@ class ClientSocket : public ASocket
 	public:
 	Request _request;
 	Response _response;
-	LocationConfig _location;
+	ServerConfig _conf;
 	bool _carrige_return_flag;
 	bool _response_flag;
 	bool _first_post_flag;
@@ -37,7 +37,7 @@ class ClientSocket : public ASocket
 
 	ClientSocket();
 	~ClientSocket();
-	ClientSocket(ServerConfig conf);
+	ClientSocket(ServerConfig& conf);
 	// 何もない
 	bool CreateSocket();
 	// Requestパース
@@ -48,6 +48,9 @@ class ClientSocket : public ASocket
 	void ReadClientFd();
 	void ParseLocation();
 	bool CheckExecuteResponse(int epoll_fd);
+bool CheckPostFlag();
+bool CloseClientFd();
+bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
 };
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);

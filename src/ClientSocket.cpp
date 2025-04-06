@@ -2,7 +2,7 @@
 
 ClientSocket::ClientSocket() : _first_post_flag(false),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig conf) : _response_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _first_post_flag(false),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _response_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -11,24 +11,68 @@ bool ClientSocket::CreateSocket(void)
 	return (false);
 }
 
+bool ClientSocket::CloseClientFd()
+{
+	if (close(this->_fd) == -1)
+		throw std::runtime_error("close fd");
+	return (true);
+}
+
+bool ClientSocket::CheckPostFlag()
+{
+	if (this->_complete_post_flag == true)
+		return (false);
+	if (this->_first_post_flag == false)
+	{
+		this->_first_post_flag = true;
+		return (true);
+	}
+	if (this->_complete_post_flag == false)
+		this->_complete_post_flag = true;
+	return (true);
+}
+
+bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object)
+{
+	if (this->_post_body_flag == true)
+	{
+		if (it != buffer.end())
+			return (false);
+		this->_complete_parse_flag = true;
+		return (true);
+	}
+	if (this->_request.GetRequestFlag() == true && this->_request.GetHostFlag() == false)
+		return (false);
+	if (this->_request.GetPostFlag() == true)
+	{
+		if (CheckPostFlag() == false)
+			return (false);
+		return (true);
+	}
+	if (it != buffer.end())
+		return (false);
+	this->_complete_parse_flag = true;
+	return (true);
+}
+
 bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
-	// if (object.compare("\r\n") == 0)
-	// {
-	// 	if (this->_request.GetRequestFlag() == false)
-	// 		return (true);
-	// 	if (CheckCRequestFlag(buffer, it, object) == false)
-	// 		return (false);
-	// }
-	// else
-	// {
-	// 	if (this->_first_post_flag == true)
-	// 		this->_complete_post_flag = true;
+	if (object.compare("\r\n") == 0)
+	{
+		if (this->_request.GetRequestFlag() == false)
+			return (true);
+		if (CheckCRequestFlag(buffer, it, object) == false)
+			return (false);
+	}
+	else
+	{
+		if (this->_first_post_flag == true)
+			this->_complete_post_flag = true;
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
 			return (false);
-	// 	if (this->_complete_post_flag == true)
-	// 		this->_post_body_flag = true;
-	// }
+		if (this->_complete_post_flag == true)
+			this->_post_body_flag = true;
+	}
 	return (true);
 }
 
@@ -206,6 +250,13 @@ bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 			if (it != buffer.end())
 				return (false);
 			// ChangeConfUri(this->_request.GetUri());
+			struct epoll_event ev;
+			ev.events = EPOLLOUT;
+			ev.data.fd = this->_fd;
+
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+				perror("epoll_ctl: mod");
+			}
 			this->_response_flag = true;
 			// if (this->_file == "php")
 			// 	ExecuteCgi(epoll_fd, this->_request, server_conf);
