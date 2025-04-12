@@ -51,7 +51,16 @@ class ClientSocket : public ASocket
 bool CheckPostFlag();
 bool CloseClientFd();
 bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
+void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
+bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
+void CombineUriAndLocationRoot(LocationConfig& location);
+void ChangeDefaultPath(const std::string& uri);
+void ChangeConfUri(const std::string& uri);
+bool CheckAndChangeRootUri(const std::string& uri);
+
 };
+bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
+bool LoopCheckPath(std::string& uri, std::string& location_uri, bool& location_flag);
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);

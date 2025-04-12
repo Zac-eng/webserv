@@ -16,6 +16,11 @@ Response::~Response()
 	std::cout << "Response object destroyed" << std::endl;
 }
 
+void Response::setFd(int fd)
+{
+	this->_fd = fd;
+}
+
 void Response::SetDirectory(const std::string& dir)
 {
 	this->_directory = dir;
@@ -43,9 +48,13 @@ bool Response::ExistUri(const std::string& uri)
 	while (entry != NULL)
 	{
 		if (strcmp(entry->d_name, this->_filename.c_str()) == 0)
+		{
+			closedir(dir);
 			return (true);
+		}
 		entry = readdir(dir);
 	}
+	closedir(dir);
 	return (false);
 }
 
@@ -121,6 +130,7 @@ void Response::CheckConnectionHeader(std::map<std::string, std::string> header)
 {
 	std::map<std::string, std::string>::iterator it;
 
+	it = header.begin();
 	for (; it != header.end(); it++)
 	{
 		if (it->first == "Connection")
@@ -149,8 +159,7 @@ void  Response::CreateResponseHeader(Request& req)
 	std::map<std::string, std::string> header;
 	std::string file;
 
-	file = req.GetFile();
-	// header = req.Getheader();
+	file = this->_filename;
 	CheckFileType(file);
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
 	CheckConnectionHeader(header);
@@ -159,7 +168,7 @@ void  Response::CreateResponseHeader(Request& req)
 
 void Response::HandleGet(Request& req)
 {
-	if (ReadFile(req) ==  false)
+	if (ReadFile(req) == false)
 		return ;
 	CreateResponseHeader(req);
 	// return (StatusMessage::OK())
@@ -193,8 +202,12 @@ void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
+
+	std::cout << this->_path << std::endl;
 	if (this->ExistUri(req.GetUri()) == false)
+	{
 		return ;
+	}
 		// return (Error::InvalidUri());
 	this->ExecuteAndGetStatusCode(req);
 	// Createresponse(req);

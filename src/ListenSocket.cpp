@@ -78,7 +78,7 @@ bool ListenSocket::CreateSocket(void)
 bool ListenSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	int fd;
-	ASocket *client = new ClientSocket();
+	ASocket *client = new ClientSocket(this->_conf);
 	struct sockaddr_in address;
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
@@ -87,7 +87,6 @@ bool ListenSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	fd = accept(this->_fd, (struct sockaddr *)&address, &len);
 	if (fd < 0)
 		return (false);
-	std::cout << "1111111" << std::endl;
 	event.events = EPOLLIN;
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
