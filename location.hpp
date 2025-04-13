@@ -10,16 +10,23 @@
 
 class LocationConfig
 {
-public:
-	std::string path;
-	std::string root;
-	std::string index;
-	std::vector<std::string> allow_methods;
+	public:
+		std::string path;
+		std::string root;
+		std::string index;
+		// std::vector<std::string> allow_methods;
+		std::string method;
+		std::vector<int> index_count;
+		std::vector<int> index_push_count;
+		void setPath(const std::string& p) { path = p; }
+		// void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
+		bool check_location(std::istream& config_file, LocationConfig& location_config);
+		void setIndex(const std::vector<std::string>& indexes);
+		std::vector<std::string> index_files;
+	private:
 
-	void setPath(const std::string& p) { path = p; }
-	void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
 };
-
+bool check_location(std::istream& config_file, LocationConfig& location_config);
 
 // class LocationConfig
 // {
@@ -58,7 +65,6 @@ public:
 // 		}
 // };
 
-bool check_location(std::istream& config_file, LocationConfig& location_config);
 
 
 #endif
