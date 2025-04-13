@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _post_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
 	this->InsertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
@@ -76,7 +76,6 @@ bool Request::ParseHeaderKey(const std::string& request, std::string::const_iter
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-
 	if (HandleHeaderKey(request, it, key) == false)
 		return (false);
 	return (true);
@@ -121,6 +120,39 @@ void ParseHostValue(std::string& value)
 	value = object;
 }
 
+void Request::SearchChunkValue(std::string& value)
+{
+	std::string::iterator it;
+	std::string tmp;
+
+	it = value.begin();
+	for (; it != value.end(); it++)
+	{
+		if (*it == ',')
+		{
+			if (tmp.empty())
+				continue ;
+			if (tmp == "chunked")
+			{
+				this->_chunk_flag = true;
+				return ;
+			}
+			else
+				tmp.clear();			
+		}
+		tmp += *it;
+	}
+	if (!tmp.empty())
+	{
+		if (tmp == "chunked")
+		{
+			this->_chunk_flag = true;
+			return ;
+		}
+	}
+	return ;
+}
+
 bool Request::ParseHeader(const std::string& request)
 {
 	std::string key;
@@ -146,6 +178,8 @@ bool Request::ParseHeader(const std::string& request)
 		this->_host_flag = true;
 	}
 	this->_header[key] = value;
+	if (key == "Transfer-Enconding")
+		SearchChunkValue(value);
 	return (true);
 }
 
@@ -242,7 +276,6 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 	if (ValidUri(uri) == false)
 		return (false);
 	this->_path = uri;
-	std::cout <<this->_path<<std::endl;
 	// if (CheckRootPath(uri) == true)
 	// 	ReplaceDirectory(uri);
 	// if (CheckIndexFile(uri) == true)
@@ -321,9 +354,86 @@ bool Request::ParseBody(const std::string& request)
 // 	return (false);
 // }
 
+bool Request::checkHexadecimal(char object)
+{
+	if (isdigit(object) == 0 && object != 'A' && object != 'B' &&
+		object != 'C' && object != 'D' && object != 'E' && object != 'F')
+		return (false);
+	return (true);
+}
+
+bool Request::parseChunkSize(const std::string& request)
+{
+	std::string::iterator it;
+
+	it = request.begin();
+	if (checkHexadecimal(*it) == false)
+		return (false);
+	if (*it == '0')
+		return (false);
+	for (; it != request.end() && *it != '\r'; it++)
+	{
+		if (checkHexadecimal(*it) == false)
+			return (false);
+	}
+	if (it == request.end())
+		return (false);
+	it++;
+	if (it == request.end() || *it != '\n')
+		return (false);
+	it++;
+	if (it != request.end())
+		return (false);
+	return (true);
+}
+
+bool parseChunkValue(const std::string& request)
+{
+	std::string object;
+	std::string::iterator it;
+
+	it = request.begin();
+	if (GetSubstringUntilCarriageReturn(request, it, object) == false)
+		return (false);
+	if (object.length() != this->_chunk_size)
+		return (false);
+	object += '\r\n';
+	if (request != object)
+		return (false);
+	this->_body += request;
+	return (true);
+}
+
+bool Request::executeChunk(const std::string& request)
+{
+	if (this->_chunk_size == 0)
+	{
+		if (parseChunkSize(request) == false)
+			return (false);
+		this->_chunk_size = convertDecimal(request);
+		return (true);
+	}
+	if (parseChunkValue(request) == false)
+		return (false);
+	return (true);
+}
+
+bool Request::parseChunk(const std::string& request)
+{
+	if (this->_chunk_finish_flag == true)
+		return (false);
+	if (request == "0\r\n")
+		this->_chunk_finish_flag = true;
+	if (ExecuteChunk(request) == false)
+		return (false);
+	return (true);
+}
+
 bool Request::ParsePostBody(const std::string& request)
 {
-	std::cout << "Post Parse" << request <<std::endl;
+	if (this->_chunk_flag == true)
+		return (ParseChunk(request));
+	this->_body += request;
 	return (true);
 }
 

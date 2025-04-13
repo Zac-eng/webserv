@@ -24,6 +24,8 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 	{
 		if (it != buffer.end())
 			return (false);
+		if (this->_request._chunk_finish_flag == false)
+			return (false);
 		this->_complete_parse_flag = true;
 		return (true);
 	}
@@ -207,6 +209,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 		}
 		if (this->_complete_parse_flag == true)
 		{
+			if 
 			if (it != buffer.end())
 				return (false);
 

@@ -24,7 +24,11 @@ class Request
 		bool _request_flag;
 		bool _host_flag;
 		bool _post_flag;
+		bool _chunk_flag;
+		bool _chunk_finish_flag;
+		size_t _chunk_size;
 		std::vector<std::string> _valid_header_key;
+
 		// LocationConfig _conf;
 
 		Request();
@@ -57,7 +61,7 @@ std::string getPath(void);
 void SetUri(std::string& object);
 std::string GetMethod();
 std::string getFile();
-
+void SearchChunkValue(std::string& value);
 
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
