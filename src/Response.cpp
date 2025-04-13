@@ -21,17 +21,17 @@ void Response::setFd(int fd)
 	this->_fd = fd;
 }
 
-void Response::SetDirectory(const std::string& dir)
+void Response::setDirectory(const std::string& dir)
 {
 	this->_directory = dir;
 }
 
-void Response::SetFilename(const std::string& file)
+void Response::setFilename(const std::string& file)
 {
 	this->_filename = file;
 }
 
-void Response::SetPath(const std::string& file)
+void Response::setPath(const std::string& file)
 {
 	this->_path = file;
 }
@@ -47,6 +47,7 @@ bool Response::ExistUri(const std::string& uri)
 	entry = readdir(dir);
 	while (entry != NULL)
 	{
+		std::cout << this->_filename.c_str()<<std::endl;
 		if (strcmp(entry->d_name, this->_filename.c_str()) == 0)
 		{
 			closedir(dir);
@@ -122,7 +123,7 @@ bool Response::ReadFile(Request& req)
 
 void Response::CheckFileType(std::string& file)
 {
-	if (this->_request.GetFile() == "html")
+	if (this->_request.getFile() == "html")
 		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
 }
 
@@ -203,11 +204,11 @@ void Response::ExecuteResponse(Request& req)
 	//404 Not Foundを返す
 	//Uriがあるかの確認
 
-	std::cout << this->_path << std::endl;
-	if (this->ExistUri(req.GetUri()) == false)
+	if (this->ExistUri(req.getPath()) == false)
 	{
 		return ;
 	}
+	std::cout << this->_path << std::endl;
 		// return (Error::InvalidUri());
 	this->ExecuteAndGetStatusCode(req);
 	// Createresponse(req);

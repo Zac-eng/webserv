@@ -46,9 +46,16 @@ int main(int argc, char* argv[]) {
     else
     {
         std::cerr << "Failed to parse config file." << std::endl;
+        return (0);
     }
-    
-    Server server(configs);
-    server.CreateListenServer();
-    server.ExecuteServer();
+    try
+    {
+        Server server(configs);
+        server.createListenServer();
+        server.executeServer();
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }

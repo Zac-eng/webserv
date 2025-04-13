@@ -16,6 +16,7 @@ class Request
 		std::string _request;
 		std::string _method;
 		std::string _path;
+		std::string _directory;
 		std::string _file;
 		std::string _version;
 		std::map<std::string, std::string> _header;
@@ -50,11 +51,12 @@ bool ValidHeader(void);
 bool GetRequestFlag();
 bool GetHostFlag();
 bool GetPostFlag();
+std::string getDirectory(void);
 bool ParsePostBody(const std::string& request);
-std::string GetUri(void);
+std::string getPath(void);
 void SetUri(std::string& object);
 std::string GetMethod();
-std::string GetFile();
+std::string getFile();
 
 
 };

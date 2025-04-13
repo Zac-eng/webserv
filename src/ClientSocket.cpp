@@ -1,12 +1,12 @@
 #include "ClientSocket.hpp"
 
-ClientSocket::ClientSocket() : _first_post_flag(false),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket() : _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _first_post_flag(false),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _response_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _response_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
-bool ClientSocket::CreateSocket(void)
+bool ClientSocket::createSocket(void)
 {
 	return (false);
 }
@@ -14,21 +14,7 @@ bool ClientSocket::CreateSocket(void)
 bool ClientSocket::CloseClientFd()
 {
 	if (close(this->_fd) == -1)
-		throw std::runtime_error("close fd");
-	return (true);
-}
-
-bool ClientSocket::CheckPostFlag()
-{
-	if (this->_complete_post_flag == true)
 		return (false);
-	if (this->_first_post_flag == false)
-	{
-		this->_first_post_flag = true;
-		return (true);
-	}
-	if (this->_complete_post_flag == false)
-		this->_complete_post_flag = true;
 	return (true);
 }
 
@@ -45,8 +31,7 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 		return (false);
 	if (this->_request.GetPostFlag() == true)
 	{
-		if (CheckPostFlag() == false)
-			return (false);
+		this->_complete_post_flag = true;
 		return (true);
 	}
 	if (it != buffer.end())
@@ -55,7 +40,7 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 	return (true);
 }
 
-bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object)
+bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
 	if (object.compare("\r\n") == 0)
 	{
@@ -66,8 +51,6 @@ bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, 
 	}
 	else
 	{
-		if (this->_first_post_flag == true)
-			this->_complete_post_flag = true;
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
 			return (false);
 		if (this->_complete_post_flag == true)
@@ -76,93 +59,70 @@ bool ClientSocket::ValidRequest(std::string& buffer, std::string::iterator& it, 
 	return (true);
 }
 
-bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location)
+void ClientSocket::ChangeDefaultPath(const std::string& uri)
 {
-	if (new_location.length() > before_location.length())
-		return (false);
-	return (true);
-}
-
-bool LoopCheckPath(std::string& uri, std::string& location_uri, bool& location_flag)
-{
-	std::string tmp_location;
-	std::string tmp_uri;
 	std::string object;
-	std::string::iterator it;
-	int index;
 
-	it = location_uri.begin();
-	it++;
-	index = 1;
-	while (it != location_uri.end())
-	{
-		for (; it != location_uri.end() && *it != '/'; it++)
-		{
-			tmp_location = *it;
-			tmp_uri += uri[index++];
-		}
-		if (tmp_location != tmp_uri)
-			return (false);
-		object += tmp_location;
-		tmp_location.clear();
-		tmp_uri.clear();
-		if (it == location_uri.end())
-			break ;
-		index++;
-		it++;
-	}
-	location_flag = true;
-	return (true);
-}
-
-void ClientSocket::ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag)
-{
-	std::string uri;
-	std::string location_uri;
-
-	uri = this->_request.GetUri();
-	location_uri = location.GetPath();
-	if (uri.length() < location_uri.length())
-		return ;
-	if (LoopCheckPath(uri, location_uri, location_flag) == false)
-		return ;
-	if (location_tmp.GetPath() == location.GetPath())
-		return ;
-	else if (CompareLocationAndUri(location_tmp.GetPath(), location_uri) == false)
-		return ;
-	location_tmp = location;
-	location_flag = true;
+	object = "/etc/nginx/html";
+	object += uri;
+	if (object[object.length() - 1] != '/')
+		object += '/';
+	this->_response.setDirectory(object);
+	this->_response.setFilename("index.html");
+	object += "index.html";
+	this->_response.setPath(object);
 	return ;
 }
 
-bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri)
-{
-	LocationConfig location_tmp;
-	std::vector<LocationConfig>::iterator it;
-	bool location_flag;
+// bool ClientSocket::CheckAndChangeRootUri(const std::string& uri)
+// {
+// 	std::string object;
+// 	std::string root;
+// 	std::string path;
 
-	location_flag = false;
-	it = location.begin();
-	location_tmp = *it;
-	// todo  conf / uri /wtmの時、一部でも一致してたらOKにしないと
-	for (; it != location.end(); it++)
-	{
-	std::cout << this->_request._path<< std::endl;
-		if (this->_request.GetUri() == it->GetPath())
-		{
-			location_flag = true;
-			location_tmp = *it;
-			break ;
-		}
-		
-		ValidLocation(*it, location_tmp, location_flag);
-	}
-	// if (location_flag == false)
-	// 	return (false);
-	CombineUriAndLocationRoot(location_tmp);
-	return (true);
+// 	root = this->_conf.GetRoot();
+// 	if (root.empty())
+// 		return (false);
+// 	object = root;
+// 	object += uri;
+// 	if (object[object.length() - 1] != '/')
+// 		object += '/';
+// 	this->_response.setDirectory(object);
+// 	this->_response.setFilename(this->_conf.GetIndex());
+// 	path = object;
+// 	path += this->_conf.GetIndex();
+// 	this->_response.SetPath(path);
+// 	return (true);
+// }
+
+size_t MatchPathLength(const std::string& uri, LocationConfig& location)
+{
+	size_t i;
+	size_t result;
+	std::string path;
+
+	i = 0;
+	result = 0;
+	path = location.path;
+	if (uri.empty() || path.empty())
+		return (0);
+	while (uri[i] != '\0' && path[i] != '\0' && uri[i] == path[i])
+		i++;
+	return (i);
 }
 
+bool ClientSocket::CheckFileAndCombainLocation(LocationConfig& location, std::string& object)
+{
+	std::string file;
+
+	file = this->_request.getFile();
+	if (file.empty())
+		return (false);
+	this->_response.setDirectory(object);
+	this->_response.setFilename(file);
+	this->_response.setPath(object);
+	return (true);
+}
 
 void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 {
@@ -170,46 +130,45 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::string path;
 
 	object = location.GetRoot();
-	object += this->_request.GetUri();
-	this->_response.SetDirectory(object);
-	this->_response.SetFilename(location.GetIndex());
+	object += this->_request.getDirectory();
+	if (CheckFileAndCombainLocation(location, object) == true)
+		return ;
+	if (object[object.length() - 1] != '/')
+		object += '/';
+	this->_response.setDirectory(object);
+	this->_response.setFilename(location.GetIndex());
 	path = object;
 	path += location.GetIndex();
-	this->_response.SetPath(path);
+	this->_response.setPath(path);
 	return ;
 }
 
-void ClientSocket::ChangeDefaultPath(const std::string& uri)
+bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri)
 {
-	std::string object;
+	LocationConfig location_tmp;
+	size_t length;
+	size_t result;
+	std::vector<LocationConfig>::iterator it;
+	bool location_flag;
 
-	object = "/etc/nginx/html";
-	object += uri;
-	this->_response.SetDirectory(object);
-	this->_response.SetFilename("index.html");
-	object += "index.html";
-	this->_response.SetPath(object);
-	return ;
-}
-
-bool ClientSocket::CheckAndChangeRootUri(const std::string& uri)
-{
-	std::string object;
-	std::string root;
-	std::string path;
-
-	root = this->_conf.GetRoot();
-				
-				std::cout <<root << std::endl;
-	if (root.empty())
+	location_flag = false;
+	it = location.begin();
+	length = 0;
+	result = 0;
+	// todo  conf / uri /wtmの時、一部でも一致してたらOKにしないと
+	for (; it != location.end(); it++)
+	{
+		result = MatchPathLength(uri, *it);
+		if (result > length)
+		{
+			length = result;
+			location_tmp = *it;
+		}
+		// ValidLocation(*it, location_tmp, location_flag);
+	}
+	if (length == 0)
 		return (false);
-	object = root;
-	object += uri;
-	this->_response.SetDirectory(object);
-	this->_response.SetFilename(this->_conf.GetIndex());
-	path = object;
-	path += this->_conf.GetIndex();
-	this->_response.SetPath(path);
+	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
 
@@ -220,13 +179,13 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	location = this->_conf.GetLocation();
 	if (CheckAndChangeLocationUri(location, uri) == true)
 		return ;
-	if (CheckAndChangeRootUri(uri) == true)
-		return ;
+	// if (CheckAndChangeRootUri(uri) == true)
+	// 	return ;
 	ChangeDefaultPath(uri);
 }
 
 
-bool ClientSocket::CheckExecuteResponse(int epoll_fd)
+bool ClientSocket::checkExecuteResponse(int epoll_fd)
 {
 	std::string buffer = this->_buffer;
 	std::string object;
@@ -236,23 +195,22 @@ bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 	it = buffer.begin();
 	while (it != buffer.end())
 	{
-		if (SubstringObject(buffer, it, object) == false)
+		if (substring_object_until_carrige_return(buffer, it, object) == false)
 		{
 			this->_buffer = std::string(it, buffer.end());
 			return (true);
 		}
 		else
 		{
-			if (this->ValidRequest(buffer, it, object) == false)
+			if (this->validRequest(buffer, it, object) == false)
 				return (false);
-
 		}
 		if (this->_complete_parse_flag == true)
 		{
 			if (it != buffer.end())
 				return (false);
 
-			ChangeConfUri(this->_request.GetUri());
+			ChangeConfUri(this->_request.getPath());
 			struct epoll_event ev;
 			ev.events = EPOLLOUT;
 			ev.data.fd = this->_fd;
@@ -274,7 +232,7 @@ bool ClientSocket::CheckExecuteResponse(int epoll_fd)
 
 
 
-bool ClientSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
@@ -282,23 +240,20 @@ bool ClientSocket::HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	
 	byte_size = read(this->_fd, buf, BUFFER_SIZE);
 	if (byte_size < 0)
-	{
-		close(this->_fd);
-		throw std::runtime_error("close fd");
-	}
+		return (false);
 	this->_buffer.append(buf, byte_size);
 	pos = this->_buffer.find("\r\n");
 	if (pos == std::string::npos)
 		return (true);
 	else
 	{
-		if (this->CheckExecuteResponse(epoll_fd) == false)
+		if (this->checkExecuteResponse(epoll_fd) == false)
 			return (false);
 	}
 	return (true);
 }
 
-void ClientSocket::HandleEpollOutEvent(void)
+void ClientSocket::handleEpollOutEvent(void)
 {
 	if (this->_response_flag == false)
 		return ;

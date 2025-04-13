@@ -21,9 +21,13 @@ std::string Request::GetMethod()
 	return (this->_method);
 }
 
-std::string Request::GetUri()
+std::string Request::getPath()
 {
 	return (this->_path);
+}
+std::string Request::getDirectory()
+{
+	return (this->_directory);
 }
 
 bool Request::GetHostFlag()
@@ -35,6 +39,7 @@ void Request::SetUri(std::string& object)
 {
 	this->_path = object;
 }
+
 
 
 bool Request::GetPostFlag()
@@ -174,10 +179,7 @@ bool Request::ParseMethod(const std::string& request, std::string::const_iterato
 bool isSlash(const std::string& uri, std::string::const_iterator& it)
 {
 	if (it != uri.end() && *it == '/')
-	{
-		it++;
 		return (true);
-	}
 	// Error::InvalidUri();
 	return (false);
 }
@@ -200,37 +202,31 @@ bool Request::ValidUri(const std::string& uri)
 	std::string::const_iterator it;
 	std::string::const_iterator it_tmp;
 	bool index_flag;
-
 	it = uri.begin();
+
 	if (isSlash(uri, it) == false)
 		return (false);
-	return (true);
-
+	
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '/' || *it == '.')
 			it_tmp = it;
-		if (!std::isalnum(*it))
-		{
-			// Error::InvalidUri();
-			return (false);
-		}
 	}
+	// std::cout <<"bbbb"<<this->_directory<<std::endl;
 	// 最後が/で終わっているか
 	if (*it_tmp == '/')
 	{
-		it_tmp++;
-		if (it_tmp == uri.end())
-			return (true);
-		return (false);
+		this->_directory = uri;
+		return (true);
 	}
 	if (*it_tmp == '.')
 	{
 		if (CheckUriExtension(uri, it_tmp) == false)
 			return (false);
+		this->_directory = uri.substr(0, it_tmp - uri.begin());
 		this->_file = uri.substr(it_tmp - uri.begin());
 	}
-	return (true);
+	return (false);
 }
 
 
@@ -354,7 +350,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 	return (true);
 }
 
-std::string Request::GetFile(void)
+std::string Request::getFile(void)
 {
 	return (this->_file);
 }
