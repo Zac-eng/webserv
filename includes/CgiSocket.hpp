@@ -4,6 +4,8 @@
 #include "Request.hpp"
 #include <sstream>
 #include <ctime>
+#include <cstdlib>
+#include <sys/wait.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <signal.h>
@@ -40,13 +42,13 @@ private:
 	const std::string& _request_body;
 	std::string& _response_body;
 	CgiSocket(void);
-	
+
 public:
-	CgiSocket(pid_t cgi_pid, int read_fd, int write_fd, const std::string& request_body, std::string& response);
+	CgiSocket(ServerConfig& conf, pid_t cgi_pid, int read_fd, int write_fd, const std::string& request_body, std::string& response);
 	~CgiSocket();
 	CgiSocket(const CgiSocket& obj);
 	CgiSocket& operator = (const CgiSocket& obj);
-	CgiSocket* createCgiSocket(const ServerConfig& conf, const Request& req, const sockaddr_in& client_addr, std::string& response_buf);
+	CgiSocket* createCgiSocket(ServerConfig& conf, const Request& req, const sockaddr_in& client_addr, std::string& response_buf);
 	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void handleEpollOutEvent();
 	
@@ -71,4 +73,4 @@ namespace CgiMetaProcessors {
 }
 
 void close_pipes(int ptc_pipe[], int ctp_pipe[]);
-const char **create_meta_vars(const Request& req);
+const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr);
