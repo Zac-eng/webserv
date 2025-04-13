@@ -24,7 +24,7 @@ class ClientSocket : public ASocket
 	public:
 	Request _request;
 	Response _response;
-	LocationConfig _location;
+	ServerConfig _conf;
 	bool _carrige_return_flag;
 	bool _response_flag;
 	bool _first_post_flag;
@@ -36,7 +36,7 @@ class ClientSocket : public ASocket
 
 	ClientSocket();
 	~ClientSocket();
-	ClientSocket(ServerConfig conf);
+	ClientSocket(ServerConfig& conf);
 	// 何もない
 	bool CreateSocket();
 	// Requestパース
@@ -49,7 +49,19 @@ class ClientSocket : public ASocket
 	void ReadClientFd();
 	void ParseLocation();
 	bool CheckExecuteResponse(int epoll_fd);
+bool CheckPostFlag();
+bool CloseClientFd();
+bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
+void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
+bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
+void CombineUriAndLocationRoot(LocationConfig& location);
+void ChangeDefaultPath(const std::string& uri);
+void ChangeConfUri(const std::string& uri);
+bool CheckAndChangeRootUri(const std::string& uri);
+
 };
+bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
+bool LoopCheckPath(std::string& uri, std::string& location_uri, bool& location_flag);
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);

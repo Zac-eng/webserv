@@ -246,6 +246,7 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 	if (ValidUri(uri) == false)
 		return (false);
 	this->_path = uri;
+	std::cout <<this->_path<<std::endl;
 	// if (CheckRootPath(uri) == true)
 	// 	ReplaceDirectory(uri);
 	// if (CheckIndexFile(uri) == true)

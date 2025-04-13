@@ -71,7 +71,6 @@ void Server::ExecuteServer(void)
 	int event_counts;
 	struct epoll_event event[MAX_EVENTS];
 
-	
 	while (true)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS + 1, -1);
