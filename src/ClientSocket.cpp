@@ -49,12 +49,12 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 		if (this->_request.GetRequestFlag() == false)
 			return (true);
 		if (CheckCRequestFlag(buffer, it, object) == false)
-			return (false);
+			throw (RequestException(400));
 	}
 	else
 	{
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
-			return (false);
+			throw (RequestException(400));
 		if (this->_complete_post_flag == true)
 			this->_post_body_flag = true;
 	}
@@ -195,38 +195,59 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 	struct epoll_event event;
 
 	it = buffer.begin();
-	while (it != buffer.end())
+	try
 	{
-		if (substring_object_until_carrige_return(buffer, it, object) == false)
+		while (it != buffer.end())
 		{
-			this->_buffer = std::string(it, buffer.end());
-			return (true);
-		}
-		else
-		{
-			if (this->validRequest(buffer, it, object) == false)
-				return (false);
-		}
-		if (this->_complete_parse_flag == true)
-		{
-			if 
-			if (it != buffer.end())
-				return (false);
-
-			ChangeConfUri(this->_request.getPath());
-			struct epoll_event ev;
-			ev.events = EPOLLOUT;
-			ev.data.fd = this->_fd;
-
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-				perror("epoll_ctl: mod");
+			if (substring_object_until_carrige_return(buffer, it, object) == false)
+			{
+				this->_buffer = std::string(it, buffer.end());
+				return (true);
 			}
-			this->_response_flag = true;
-			this->_response.setFd(this->_fd);
+			else
+			{
+				if (this->validRequest(buffer, it, object) == 	false)
+					return (false);
+			}
+			if (this->_complete_parse_flag == true)
+			{
+				std::cout <<"aa"<<std::endl;
+
+				if (it != buffer.end())
+					return (false);
+				ChangeConfUri(this->_request.getPath());
+				struct epoll_event ev;
+				ev.events = EPOLLOUT;
+				ev.data.fd = this->_fd;
+
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+					perror("epoll_ctl: mod");
+				}
+				this->_response_flag = true;
+				this->_response.setFd(this->_fd);
 			// if (this->_file == "php")
 			// 	ExecuteCgi(epoll_fd, this->_request, server_conf);
 			return (true);
 		}
+	}
+	}
+	catch (const RequestException& e)
+	{
+		struct epoll_event ev;
+		ev.events = EPOLLOUT;
+		ev.data.fd = this->_fd;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+				perror("epoll_ctl: mod");
+			}
+		this->_request._status_number = e.getStatus();
+		this->_response_flag = true;
+		this->_response.setFd(this->_fd);
+		return (true);
+	}
+	catch (std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+		return (false);
 	}
 	if (it == buffer.end())
 		this->_buffer.clear();

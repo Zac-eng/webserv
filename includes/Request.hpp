@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include "RequestException.hpp"
+#include <cstdlib>
 
 class Request
 {
@@ -27,6 +29,7 @@ class Request
 		bool _chunk_flag;
 		bool _chunk_finish_flag;
 		size_t _chunk_size;
+		size_t _status_number;
 		std::vector<std::string> _valid_header_key;
 
 		// LocationConfig _conf;
@@ -36,16 +39,16 @@ class Request
 		bool ParseMethod(const std::string& request, std::string::const_iterator& it);
 		bool ParseUri(const std::string& request, std::string::const_iterator& it);
 		bool ParseVersion(const std::string& request, std::string::const_iterator& it);
-		bool ParseHeader(const std::string& request);
+		bool parseHeader(const std::string& request);
 		bool ParseRequestLine(const std::string& request);
 		bool ParseRequest(const std::string& request, bool parse_post_flag);
-		void InsertHeaderKey(void);
+		void insertHeaderKey(void);
 bool CheckUriExtension(const std::string& uri, std::string::const_iterator& it_tmp);
 bool SearchHeaderKey(std::string &key);
 bool HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
-bool ParseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
+bool parseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
 bool HandleHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& value);
-bool ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key);
+bool parseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key);
 bool ValidMethod(const std::string& method);
 bool ValidUri(const std::string& uri);
 bool ValidVersion(const std::string& version);
@@ -56,13 +59,17 @@ bool GetRequestFlag();
 bool GetHostFlag();
 bool GetPostFlag();
 std::string getDirectory(void);
-bool ParsePostBody(const std::string& request);
+bool parsePostBody(const std::string& request);
 std::string getPath(void);
 void SetUri(std::string& object);
 std::string GetMethod();
 std::string getFile();
 void SearchChunkValue(std::string& value);
-
+bool checkHexadecimal(char object);
+bool parseChunkSize(const std::string& request);
+bool parseChunkValue(const std::string& request);
+bool executeChunk(const std::string& request);
+bool parseChunk(const std::string& request);
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);

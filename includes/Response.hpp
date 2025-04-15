@@ -62,6 +62,7 @@ void CheckConnectionHeader(std::map<std::string, std::string> header);
 void CreateResponseHeader(Request& req);
 void CreateResponse();
 void setFd(int fd);
+void ResponseError(Request& req);
 
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);

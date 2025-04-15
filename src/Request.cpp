@@ -1,8 +1,8 @@
 #include "Request.hpp"
 
-Request::Request() : _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
-	this->InsertHeaderKey();
+	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
 }
 
@@ -72,7 +72,7 @@ bool Request::HandleHeaderKey(const std::string& request, std::string::const_ite
 	return (true);
 }
 
-bool Request::ParseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
+bool Request::parseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
@@ -90,7 +90,7 @@ bool Request::HandleHeaderValue(const std::string& request, std::string::const_i
 	return (true);
 }
 
-bool Request::ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key)
+bool Request::parseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
@@ -153,24 +153,24 @@ void Request::SearchChunkValue(std::string& value)
 	return ;
 }
 
-bool Request::ParseHeader(const std::string& request)
+bool Request::parseHeader(const std::string& request)
 {
 	std::string key;
 	std::string value;
 	std::string::const_iterator it;
 
 	it = request.begin();
-	if (ParseHeaderKey(request, it, key) == false)
+	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
-		return (false);
+		throw (RequestException(400));
 	}
 	if (SkipColon(request, it) == false)
-		return (false);
-	if (ParseHeaderValue(request, it, value) == false)
+		throw (RequestException(400));
+	if (parseHeaderValue(request, it, value) == false)
 	{
 		// Error::InvalidHeaderValue();
-		return (false);
+		throw (RequestException(400));
 	}
 	if (key == "Host")
 	{
@@ -309,15 +309,15 @@ bool Request::ParseRequestLine(const std::string& request)
 {
 	std::string::const_iterator it = request.begin();
 	if (ParseMethod(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (ParseUri(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (ParseVersion(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (it != request.end())
 	{
 		// Error::InvalidRequestLine();
-		return (false);
+		throw (RequestException(400));
 	}
 	return (true);
 }
@@ -364,7 +364,7 @@ bool Request::checkHexadecimal(char object)
 
 bool Request::parseChunkSize(const std::string& request)
 {
-	std::string::iterator it;
+	std::string::const_iterator it;
 
 	it = request.begin();
 	if (checkHexadecimal(*it) == false)
@@ -387,21 +387,40 @@ bool Request::parseChunkSize(const std::string& request)
 	return (true);
 }
 
-bool parseChunkValue(const std::string& request)
+bool Request::parseChunkValue(const std::string& request)
 {
 	std::string object;
-	std::string::iterator it;
+	std::string::const_iterator it;
 
 	it = request.begin();
 	if (GetSubstringUntilCarriageReturn(request, it, object) == false)
 		return (false);
 	if (object.length() != this->_chunk_size)
 		return (false);
-	object += '\r\n';
+	object += "\r\n";
 	if (request != object)
 		return (false);
 	this->_body += request;
+	this->_chunk_size = 0;
 	return (true);
+}
+
+size_t convertDecimal(const std::string& request)
+{
+	char * end;
+	long result;
+	std::string object;
+	std::string::const_iterator it;
+	
+	it = request.begin();
+	for (; it != request.end() && *it != '\r'; it++)
+		object += *it;
+	// requestを16進数から10進数に変換
+	result = strtol(object.c_str(), &end, 16);
+	//endのポインタの位置が文字列の終端ではない。
+	if (*end != '\0')
+		throw RequestException(400);
+	return (result);
 }
 
 bool Request::executeChunk(const std::string& request)
@@ -421,18 +440,18 @@ bool Request::executeChunk(const std::string& request)
 bool Request::parseChunk(const std::string& request)
 {
 	if (this->_chunk_finish_flag == true)
-		return (false);
-	if (request == "0\r\n")
+		throw (RequestException(400));
+	if (request == "\r\n")
 		this->_chunk_finish_flag = true;
-	if (ExecuteChunk(request) == false)
-		return (false);
+	if (executeChunk(request) == false)
+		throw (RequestException(400));
 	return (true);
 }
 
-bool Request::ParsePostBody(const std::string& request)
+bool Request::parsePostBody(const std::string& request)
 {
 	if (this->_chunk_flag == true)
-		return (ParseChunk(request));
+		return (parseChunk(request));
 	this->_body += request;
 	return (true);
 }
@@ -441,7 +460,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
 	if (parse_post_flag == true)
 	{
-		if (ParsePostBody(request) == false)
+		if (parsePostBody(request) == false)
 			return (false);
 	}
 	else if (_request_flag == false)
@@ -453,7 +472,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 	}
 	else
 	{
-		if (ParseHeader(request) == false)
+		if (parseHeader(request) == false)
 			return (false);
 			// return (Error::MissingRequestLineAndHost());
 	}
@@ -465,7 +484,7 @@ std::string Request::getFile(void)
 	return (this->_file);
 }
 
-void Request::InsertHeaderKey(void)
+void Request::insertHeaderKey(void)
 {
 	_valid_header_key.clear();
 	_valid_header_key.push_back("Host");

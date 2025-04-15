@@ -198,12 +198,35 @@ void Response::ExecuteAndGetStatusCode(Request& req)
 	return ;
 }
 
+void Response::ResponseError(Request& req)
+{
+        std::ostringstream response;
+        
+        // HTTP ヘッダーとエラーメッセージのフォーマット
+        response << "HTTP/1.1 " << req._status_number << " Bad Request\r\n";
+        response << "Content-Type: text/html\r\n";
+        response << "Connection: close\r\n";
+        response << "\r\n";
+        
+        // レスポンスボディ
+        response << "<html><body>";
+        response << "<h1>" << req._status_number << " Bad Request</h1>";
+        response << "<p>Your request could not be understood by the server.</p>";
+        response << "</body></html>";
+
+        // レスポンスボディとヘッダーをソケットに書き込む
+        std::string response_str = response.str();
+        write(this->_fd, response_str.c_str(), response_str.length());
+}
+
 
 void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
 
+	if (req._status_number != 0)
+		return (ResponseError(req));
 	if (this->ExistUri(req.getPath()) == false)
 	{
 		return ;
