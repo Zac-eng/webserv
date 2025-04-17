@@ -69,7 +69,7 @@ bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::co
 	return (true);
 }
 
-bool SubstringObject(std::string& buffer, std::string::iterator& it, std::string& object)
+bool substring_object_until_carrige_return(std::string& buffer, std::string::iterator& it, std::string& object)
 {
 	size_t pos = 0;
 

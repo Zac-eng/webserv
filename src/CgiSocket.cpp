@@ -29,6 +29,11 @@ CgiSocket::CgiSocket(
   *this = obj;
 }
 
+bool CgiSocket::createSocket(void)
+{
+	return (false);
+}
+
 CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
   if (this == &obj)
     return *this;
@@ -39,6 +44,14 @@ CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
   // this->_request_body = obj._request_body;
   time(&this->_created_at);
   return *this;
+}
+
+int CgiSocket::getReadPipe() const {
+  return this->_pipe_fds[READ];
+}
+
+int CgiSocket::getWritePipe() const {
+  return this->_pipe_fds[WRITE];
 }
 
 CgiSocket* CgiSocket::createCgiSocket(
@@ -63,7 +76,7 @@ CgiSocket* CgiSocket::createCgiSocket(
     return NULL;
   }
   else if (pid == 0) {
-    const char *args[] = {CMD_PATH, req.GetUri().c_str(), NULL};
+    const char *args[] = {CMD_PATH, req._path.c_str(), NULL};
     if (close(ptc_pipe[WRITE]) != 0 \
     || close(ctp_pipe[READ]) != 0 \
     || dup2(ptc_pipe[READ], 0) != 0 \
@@ -112,9 +125,32 @@ bool CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socke
     if (current_time > this->_created_at + CGI_TIMEOUT)
       kill(this->_cgi_pid, SIGINT);
   }
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
+    perror("epoll_ctl: del");
+  }
+  delete this;
+  return true;
 }
 
-void CgiSocket::handleEpollOutEvent() {
+void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
+  struct epoll_event ev;
+  ev.events = EPOLLIN;
+  ev.data.fd = this->_pipe_fds[READ];
+
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
+    perror("epoll_ctl: del");
+    return ;
+  }
+  std::map<int, ASocket*>::iterator write_epoll = socket.find(this->_pipe_fds[WRITE]);
+  if (write_epoll != socket.end()) {
+    socket.erase(write_epoll);
+    return ;
+  }
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
+    perror("epoll_ctl: add");
+    return ;
+  }
+  socket.insert(std::make_pair(this->_pipe_fds[READ], this));
   if (this->_request_body.empty())
     return ;
   if (write(this->_pipe_fds[WRITE], this->_request_body.c_str(), this->_request_body.length()) < 0)
@@ -175,7 +211,7 @@ CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request
   ret_val.translated = "";
   ret_val.query_string = "";
 
-  std::string path = req.GetUri();
+  std::string path = req._path;
 
   std::vector<LocationConfig>::const_iterator it = conf.locations.begin();
   std::vector<LocationConfig>::const_iterator matched_location = conf.locations.end();

@@ -9,6 +9,7 @@
 #include "nginx.hpp"
 #include <cstring>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 
 #define BUFFER_SIZE 100
 
@@ -25,7 +26,7 @@ class ASocket
 	~ASocket();
 	int GetFd(void) const;
 	void SetFd(int fd);
-	// virtual bool CreateSocket() = 0;
+	virtual bool createSocket() = 0;
 	virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
-	virtual void handleEpollOutEvent() = 0;
+	virtual void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 };

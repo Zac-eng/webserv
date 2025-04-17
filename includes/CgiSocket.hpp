@@ -49,8 +49,11 @@ public:
 	CgiSocket(const CgiSocket& obj);
 	CgiSocket& operator = (const CgiSocket& obj);
 	CgiSocket* createCgiSocket(ServerConfig& conf, const Request& req, const sockaddr_in& client_addr, std::string& response_buf);
-	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
-	void handleEpollOutEvent();
+	int		getReadPipe() const;
+	int		getWritePipe() const;
+	bool	createSocket(void);
+	bool	handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket);
 	
 };
 

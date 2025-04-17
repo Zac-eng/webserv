@@ -15,7 +15,6 @@
 #include <fstream>
 #include <sstream>
 #include <map>
-#include <sys/epoll.h>
 
 class ASocket;
 
@@ -27,7 +26,6 @@ class ClientSocket : public ASocket
 	ServerConfig _conf;
 	bool _carrige_return_flag;
 	bool _response_flag;
-	bool _first_post_flag;
 	bool _complete_post_flag;
 	bool _complete_parse_flag;
 	bool _post_body_flag;
@@ -36,37 +34,32 @@ class ClientSocket : public ASocket
 
 	ClientSocket();
 	~ClientSocket();
-	ClientSocket(ServerConfig& conf);
+	ClientSocket(ServerConfig& conf, const sockaddr_in& addr);
 	// 何もない
-	bool CreateSocket();
+	bool createSocket();
 	// Requestパース
-	bool HandleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// CgiSocket作成、レスポンス作成
-	void setClientAddr(sockaddr_in client_addr);
-	
-	void HandleEpollOutEvent();
-	bool ValidRequest(std::string& buffer, std::string::iterator& it, std::string& object);
-	void ReadClientFd();
-	void ParseLocation();
-	bool CheckExecuteResponse(int epoll_fd);
-bool CheckPostFlag();
-bool CloseClientFd();
-bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
-void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
-bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
-void CombineUriAndLocationRoot(LocationConfig& location);
-void ChangeDefaultPath(const std::string& uri);
-void ChangeConfUri(const std::string& uri);
-bool CheckAndChangeRootUri(const std::string& uri);
-
+	void handleEpollOutEvent();
+	bool validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
+	bool checkExecuteResponse(int epoll_fd);
+	bool CheckPostFlag();
+	bool CloseClientFd();
+	bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
+	void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
+	bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
+	void CombineUriAndLocationRoot(LocationConfig& location);
+	void ChangeDefaultPath(const std::string& uri);
+	void ChangeConfUri(const std::string& uri);
+	bool CheckAndChangeRootUri(const std::string& uri);
+	bool CheckFileAndCombainLocation(LocationConfig& location, std::string& object);
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
-bool LoopCheckPath(std::string& uri, std::string& location_uri, bool& location_flag);
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);
 bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object);
 bool isCarriagereturn(const std::string& request);
-bool SubstringObject(std::string& buffer, std::string::iterator& it,std::string& object);
+bool substring_object_until_carrige_return(std::string& buffer, std::string::iterator& it,std::string& object);
 
 #endif

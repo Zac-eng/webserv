@@ -1,8 +1,8 @@
 #include "Request.hpp"
 
-Request::Request() : _post_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
-	this->InsertHeaderKey();
+	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
 }
 
@@ -21,9 +21,13 @@ std::string Request::GetMethod()
 	return (this->_method);
 }
 
-std::string Request::GetUri()
+std::string Request::getPath()
 {
 	return (this->_path);
+}
+std::string Request::getDirectory()
+{
+	return (this->_directory);
 }
 
 bool Request::GetHostFlag()
@@ -35,6 +39,7 @@ void Request::SetUri(std::string& object)
 {
 	this->_path = object;
 }
+
 
 
 bool Request::GetPostFlag()
@@ -67,11 +72,10 @@ bool Request::HandleHeaderKey(const std::string& request, std::string::const_ite
 	return (true);
 }
 
-bool Request::ParseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
+bool Request::parseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-
 	if (HandleHeaderKey(request, it, key) == false)
 		return (false);
 	return (true);
@@ -86,7 +90,7 @@ bool Request::HandleHeaderValue(const std::string& request, std::string::const_i
 	return (true);
 }
 
-bool Request::ParseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key)
+bool Request::parseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
@@ -116,24 +120,57 @@ void ParseHostValue(std::string& value)
 	value = object;
 }
 
-bool Request::ParseHeader(const std::string& request)
+void Request::SearchChunkValue(std::string& value)
+{
+	std::string::iterator it;
+	std::string tmp;
+
+	it = value.begin();
+	for (; it != value.end(); it++)
+	{
+		if (*it == ',')
+		{
+			if (tmp.empty())
+				continue ;
+			if (tmp == "chunked")
+			{
+				this->_chunk_flag = true;
+				return ;
+			}
+			else
+				tmp.clear();			
+		}
+		tmp += *it;
+	}
+	if (!tmp.empty())
+	{
+		if (tmp == "chunked")
+		{
+			this->_chunk_flag = true;
+			return ;
+		}
+	}
+	return ;
+}
+
+bool Request::parseHeader(const std::string& request)
 {
 	std::string key;
 	std::string value;
 	std::string::const_iterator it;
 
 	it = request.begin();
-	if (ParseHeaderKey(request, it, key) == false)
+	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
-		return (false);
+		throw (RequestException(400));
 	}
 	if (SkipColon(request, it) == false)
-		return (false);
-	if (ParseHeaderValue(request, it, value) == false)
+		throw (RequestException(400));
+	if (parseHeaderValue(request, it, value) == false)
 	{
 		// Error::InvalidHeaderValue();
-		return (false);
+		throw (RequestException(400));
 	}
 	if (key == "Host")
 	{
@@ -141,6 +178,8 @@ bool Request::ParseHeader(const std::string& request)
 		this->_host_flag = true;
 	}
 	this->_header[key] = value;
+	if (key == "Transfer-Enconding")
+		SearchChunkValue(value);
 	return (true);
 }
 
@@ -174,10 +213,7 @@ bool Request::ParseMethod(const std::string& request, std::string::const_iterato
 bool isSlash(const std::string& uri, std::string::const_iterator& it)
 {
 	if (it != uri.end() && *it == '/')
-	{
-		it++;
 		return (true);
-	}
 	// Error::InvalidUri();
 	return (false);
 }
@@ -200,37 +236,31 @@ bool Request::ValidUri(const std::string& uri)
 	std::string::const_iterator it;
 	std::string::const_iterator it_tmp;
 	bool index_flag;
-
 	it = uri.begin();
+
 	if (isSlash(uri, it) == false)
 		return (false);
-	return (true);
-
+	
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '/' || *it == '.')
 			it_tmp = it;
-		if (!std::isalnum(*it))
-		{
-			// Error::InvalidUri();
-			return (false);
-		}
 	}
+	// std::cout <<"bbbb"<<this->_directory<<std::endl;
 	// 最後が/で終わっているか
 	if (*it_tmp == '/')
 	{
-		it_tmp++;
-		if (it_tmp == uri.end())
-			return (true);
-		return (false);
+		this->_directory = uri;
+		return (true);
 	}
 	if (*it_tmp == '.')
 	{
 		if (CheckUriExtension(uri, it_tmp) == false)
 			return (false);
+		this->_directory = uri.substr(0, it_tmp - uri.begin());
 		this->_file = uri.substr(it_tmp - uri.begin());
 	}
-	return (true);
+	return (false);
 }
 
 
@@ -246,7 +276,6 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 	if (ValidUri(uri) == false)
 		return (false);
 	this->_path = uri;
-	std::cout <<this->_path<<std::endl;
 	// if (CheckRootPath(uri) == true)
 	// 	ReplaceDirectory(uri);
 	// if (CheckIndexFile(uri) == true)
@@ -280,15 +309,15 @@ bool Request::ParseRequestLine(const std::string& request)
 {
 	std::string::const_iterator it = request.begin();
 	if (ParseMethod(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (ParseUri(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (ParseVersion(request, it) == false)
-		return (false);
+		throw (RequestException(400));
 	if (it != request.end())
 	{
 		// Error::InvalidRequestLine();
-		return (false);
+		throw (RequestException(400));
 	}
 	return (true);
 }
@@ -325,9 +354,105 @@ bool Request::ParseBody(const std::string& request)
 // 	return (false);
 // }
 
-bool Request::ParsePostBody(const std::string& request)
+bool Request::checkHexadecimal(char object)
 {
-	std::cout << "Post Parse" << request <<std::endl;
+	if (isdigit(object) == 0 && object != 'A' && object != 'B' &&
+		object != 'C' && object != 'D' && object != 'E' && object != 'F')
+		return (false);
+	return (true);
+}
+
+bool Request::parseChunkSize(const std::string& request)
+{
+	std::string::const_iterator it;
+
+	it = request.begin();
+	if (checkHexadecimal(*it) == false)
+		return (false);
+	if (*it == '0')
+		return (false);
+	for (; it != request.end() && *it != '\r'; it++)
+	{
+		if (checkHexadecimal(*it) == false)
+			return (false);
+	}
+	if (it == request.end())
+		return (false);
+	it++;
+	if (it == request.end() || *it != '\n')
+		return (false);
+	it++;
+	if (it != request.end())
+		return (false);
+	return (true);
+}
+
+bool Request::parseChunkValue(const std::string& request)
+{
+	std::string object;
+	std::string::const_iterator it;
+
+	it = request.begin();
+	if (GetSubstringUntilCarriageReturn(request, it, object) == false)
+		return (false);
+	if (object.length() != this->_chunk_size)
+		return (false);
+	object += "\r\n";
+	if (request != object)
+		return (false);
+	this->_body += request;
+	this->_chunk_size = 0;
+	return (true);
+}
+
+size_t convertDecimal(const std::string& request)
+{
+	char * end;
+	long result;
+	std::string object;
+	std::string::const_iterator it;
+	
+	it = request.begin();
+	for (; it != request.end() && *it != '\r'; it++)
+		object += *it;
+	// requestを16進数から10進数に変換
+	result = strtol(object.c_str(), &end, 16);
+	//endのポインタの位置が文字列の終端ではない。
+	if (*end != '\0')
+		throw RequestException(400);
+	return (result);
+}
+
+bool Request::executeChunk(const std::string& request)
+{
+	if (this->_chunk_size == 0)
+	{
+		if (parseChunkSize(request) == false)
+			return (false);
+		this->_chunk_size = convertDecimal(request);
+		return (true);
+	}
+	if (parseChunkValue(request) == false)
+		return (false);
+	return (true);
+}
+
+bool Request::parseChunk(const std::string& request)
+{
+	if (this->_chunk_finish_flag == true)
+		throw (RequestException(400));
+	if (request == "\r\n")
+		this->_chunk_finish_flag = true;
+	if (executeChunk(request) == false)
+		throw (RequestException(400));
+	return (true);
+}
+
+bool Request::parsePostBody(const std::string& request)
+{
+	if (this->_chunk_flag == true)
+		return (parseChunk(request));
+	this->_body += request;
 	return (true);
 }
 
@@ -335,7 +460,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
 	if (parse_post_flag == true)
 	{
-		if (ParsePostBody(request) == false)
+		if (parsePostBody(request) == false)
 			return (false);
 	}
 	else if (_request_flag == false)
@@ -347,19 +472,19 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 	}
 	else
 	{
-		if (ParseHeader(request) == false)
+		if (parseHeader(request) == false)
 			return (false);
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
 }
 
-std::string Request::GetFile(void)
+std::string Request::getFile(void)
 {
 	return (this->_file);
 }
 
-void Request::InsertHeaderKey(void)
+void Request::insertHeaderKey(void)
 {
 	_valid_header_key.clear();
 	_valid_header_key.push_back("Host");

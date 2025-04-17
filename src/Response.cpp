@@ -21,17 +21,17 @@ void Response::setFd(int fd)
 	this->_fd = fd;
 }
 
-void Response::SetDirectory(const std::string& dir)
+void Response::setDirectory(const std::string& dir)
 {
 	this->_directory = dir;
 }
 
-void Response::SetFilename(const std::string& file)
+void Response::setFilename(const std::string& file)
 {
 	this->_filename = file;
 }
 
-void Response::SetPath(const std::string& file)
+void Response::setPath(const std::string& file)
 {
 	this->_path = file;
 }
@@ -62,16 +62,19 @@ bool Response::ExistUri(const std::string& uri)
 // bool Response::IsDynamicFileType(const std::string& file)
 // {
 // 	std::string object;
-// 	for (std::string::iterator it = uri.begin(); it != uri.end(); it++)
+// 	std::string::const_iterator it;
+
+// 	it = file.begin();
+// 	for (;it != file.end(); it++)
 // 	{
 // 		if (*it == '.')
 // 			break ;
 // 	}
-// 	if (it == uri.end() || *it != '.')
+// 	if (it == file.end() || *it != '.')
 // 		return (false);
 // 	it++;
-// 	object = uri.substr(it - uri.begin(), uri.end() - (it - uri.begin()));
-// 	if (!object.empty() && object = "py")
+// 	object = file.substr(it - file.begin(), file.end() - (it - file.begin()));
+// 	if (!object.empty() && object = "")
 // 		return (true);
 // 	return (false);
 // }
@@ -122,7 +125,7 @@ bool Response::ReadFile(Request& req)
 
 void Response::CheckFileType(std::string& file)
 {
-	if (this->_request.GetFile() == "html")
+	if (this->_request.getFile() == "html")
 		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
 }
 
@@ -166,7 +169,7 @@ void  Response::CreateResponseHeader(Request& req)
 	CreateResponse();
 }
 
-void Response::HandleGet(Request& req)
+void Response::handleGet(Request& req)
 {
 	if (ReadFile(req) == false)
 		return ;
@@ -174,14 +177,25 @@ void Response::HandleGet(Request& req)
 	// return (StatusMessage::OK())
 }
 
+void Response::handlePost(Request& req)
+{
+	if (!this->_cgi_buffer.empty())
+	{
+		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+		return ;
+	}
+	// executeFileUpload();
+}
+
+
 void Response::HandleMethod(Request& req)
 {
 	if (req.GetMethod() == "GET")
-		HandleGet(req);
-	// else if (req.GetMethod() == "POST")
-	// 	HandlePost(req);
+		handleGet(req);
+	else if (req.GetMethod() == "POST")
+		handlePost(req);
 	// else if (req.GetMethod() == "DELETE")
-	// 	HandleDelete(req);
+	// 	handleDelete(req);
 	return ;
 }
 
@@ -197,18 +211,37 @@ void Response::ExecuteAndGetStatusCode(Request& req)
 	return ;
 }
 
+void Response::ResponseError(Request& req)
+{
+        std::ostringstream response;
+        
+        // HTTP ヘッダーとエラーメッセージのフォーマット
+        response << "HTTP/1.1 " << req._status_number << " Bad Request\r\n";
+        response << "Content-Type: text/html\r\n";
+        response << "Connection: close\r\n";
+        response << "\r\n";
+        
+        // レスポンスボディ
+        response << "<html><body>";
+        response << "<h1>" << req._status_number << " Bad Request</h1>";
+        response << "<p>Your request could not be understood by the server.</p>";
+        response << "</body></html>";
+
+        // レスポンスボディとヘッダーをソケットに書き込む
+        std::string response_str = response.str();
+        write(this->_fd, response_str.c_str(), response_str.length());
+}
+
 
 void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
 
-	std::cout << this->_path << std::endl;
-	if (this->ExistUri(req.GetUri()) == false)
-	{
-		return ;
-	}
-		// return (Error::InvalidUri());
-	this->ExecuteAndGetStatusCode(req);
-	// Createresponse(req);
+	if (req._status_number != 0)
+		return (ResponseError(req));
+		if (this->ExistUri(req.getPath()) == false)
+			return (ResponseError(req));
+		this->ExecuteAndGetStatusCode(req);
+		// Createresponse(req);
 }
