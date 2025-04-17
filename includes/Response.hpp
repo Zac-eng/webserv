@@ -35,6 +35,7 @@ class Response
 		std::string _body;
 		bool eroor_flag;
 		std::string _root_path;
+		std::string _cgi_buffer;
 
 
 		Response(Request& request);
@@ -51,7 +52,9 @@ bool ReadUri(Request& req);
 void setDirectory(const std::string& dir);
 void setFilename(const std::string& file);
 bool ReadFile(Request& req);
-void HandleGet(Request& req);
+void handleGet(Request& req);
+void handlePost(Request& req);
+void handleDelete(Request& req);
 void ExecuteAndGetStatusCode(Request& req);
 void HandleMethod(Request& req);
 void ExecuteHeaderResponse(Request& req);
@@ -63,7 +66,7 @@ void CreateResponseHeader(Request& req);
 void CreateResponse();
 void setFd(int fd);
 void ResponseError(Request& req);
-
+bool IsDynamicFileType(const std::string& file);
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
 };

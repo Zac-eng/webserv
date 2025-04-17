@@ -47,7 +47,6 @@ bool Response::ExistUri(const std::string& uri)
 	entry = readdir(dir);
 	while (entry != NULL)
 	{
-		std::cout << this->_filename.c_str()<<std::endl;
 		if (strcmp(entry->d_name, this->_filename.c_str()) == 0)
 		{
 			closedir(dir);
@@ -63,16 +62,19 @@ bool Response::ExistUri(const std::string& uri)
 // bool Response::IsDynamicFileType(const std::string& file)
 // {
 // 	std::string object;
-// 	for (std::string::iterator it = uri.begin(); it != uri.end(); it++)
+// 	std::string::const_iterator it;
+
+// 	it = file.begin();
+// 	for (;it != file.end(); it++)
 // 	{
 // 		if (*it == '.')
 // 			break ;
 // 	}
-// 	if (it == uri.end() || *it != '.')
+// 	if (it == file.end() || *it != '.')
 // 		return (false);
 // 	it++;
-// 	object = uri.substr(it - uri.begin(), uri.end() - (it - uri.begin()));
-// 	if (!object.empty() && object = "py")
+// 	object = file.substr(it - file.begin(), file.end() - (it - file.begin()));
+// 	if (!object.empty() && object = "")
 // 		return (true);
 // 	return (false);
 // }
@@ -167,7 +169,7 @@ void  Response::CreateResponseHeader(Request& req)
 	CreateResponse();
 }
 
-void Response::HandleGet(Request& req)
+void Response::handleGet(Request& req)
 {
 	if (ReadFile(req) == false)
 		return ;
@@ -175,14 +177,25 @@ void Response::HandleGet(Request& req)
 	// return (StatusMessage::OK())
 }
 
+void Response::handlePost(Request& req)
+{
+	if (!this->_cgi_buffer.empty())
+	{
+		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+		return ;
+	}
+	// executeFileUpload();
+}
+
+
 void Response::HandleMethod(Request& req)
 {
 	if (req.GetMethod() == "GET")
-		HandleGet(req);
-	// else if (req.GetMethod() == "POST")
-	// 	HandlePost(req);
+		handleGet(req);
+	else if (req.GetMethod() == "POST")
+		handlePost(req);
 	// else if (req.GetMethod() == "DELETE")
-	// 	HandleDelete(req);
+	// 	handleDelete(req);
 	return ;
 }
 
@@ -227,12 +240,8 @@ void Response::ExecuteResponse(Request& req)
 
 	if (req._status_number != 0)
 		return (ResponseError(req));
-	if (this->ExistUri(req.getPath()) == false)
-	{
-		return ;
-	}
-	std::cout << this->_path << std::endl;
-		// return (Error::InvalidUri());
-	this->ExecuteAndGetStatusCode(req);
-	// Createresponse(req);
+		if (this->ExistUri(req.getPath()) == false)
+			return (ResponseError(req));
+		this->ExecuteAndGetStatusCode(req);
+		// Createresponse(req);
 }
