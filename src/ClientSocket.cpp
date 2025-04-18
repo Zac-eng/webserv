@@ -256,7 +256,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 
 
 
-bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+bool ClientSocket::handleEpollInEvent()
 {
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
@@ -271,7 +271,7 @@ bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		return (true);
 	else
 	{
-		if (this->checkExecuteResponse(epoll_fd) == false)
+		if (this->checkExecuteResponse(Server::_epoll_fd) == false)
 			return (false);
 	}
 	return (true);

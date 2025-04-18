@@ -12,10 +12,10 @@
 
 class Server
 {
-	public:
-	std::map<int, ASocket*> _socket;
+public:
+	static int _epoll_fd;
+	static std::map<int, ASocket*> _socket;
 	std::vector<ServerConfig> _conf;
-	int _epoll_fd;
 
 	Server();
 	void createListenServer(void);

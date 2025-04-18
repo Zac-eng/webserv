@@ -8,7 +8,7 @@ class ListenSocket : public ASocket
 	//Listen fdの作成
 	bool createSocket();
 	// Client fdの作成
-	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleEpollInEvent();
 	// 何もなし
 	void handleEpollOutEvent();
 

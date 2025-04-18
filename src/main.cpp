@@ -6,10 +6,13 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
-int main(int argc, char* argv[]) {
+int Server::_epoll_fd;
+std::map<int, ASocket*> Server::_socket;
 
+int main(int argc, char* argv[]) {
     std::string config_filename = "nginx.conf"; // 設定ファイル名
     std::vector<ServerConfig> configs;
+
     if (parse_config(config_filename, configs))
     {
         std::cout << "Config file parsed successfully!" << std::endl;
