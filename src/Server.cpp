@@ -99,8 +99,7 @@ void Server::executeServer(void)
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
-				this->_socket[event[i].data.fd]->handleEpollOutEvent();
-					return (closeFdAndFree());
+				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
 			}
 		}
 	}

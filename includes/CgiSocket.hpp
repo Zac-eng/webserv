@@ -7,5 +7,5 @@ class CgiSocket : public ASocket
 
 	// createSocket();
 	// handleEpollInEvent();
-	// handleEpollOutEvent();
+	// handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 };

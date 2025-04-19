@@ -25,5 +25,5 @@ class ASocket
 	void SetFd(int fd);
 	virtual bool createSocket() = 0;
 	virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
-	virtual void handleEpollOutEvent() = 0;
+	virtual void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 };

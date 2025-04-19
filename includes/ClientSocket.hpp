@@ -42,7 +42,7 @@ class ClientSocket : public ASocket
 	// Requestパース
 	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// CgiSocket作成、レスポンス作成
-	void handleEpollOutEvent();
+	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	bool validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
 	bool checkExecuteResponse(int epoll_fd);
 	bool CheckPostFlag();
@@ -55,6 +55,7 @@ class ClientSocket : public ASocket
 	void ChangeConfUri(const std::string& uri);
 	bool CheckAndChangeRootUri(const std::string& uri);
 	bool CheckFileAndCombainLocation(LocationConfig& location, std::string& object);
+	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
 

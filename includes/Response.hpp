@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sstream>
+#include "ResponseException.hpp"
 
 class Response
 {

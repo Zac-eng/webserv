@@ -237,7 +237,6 @@ void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
-
 	if (req._status_number != 0)
 		return (ResponseError(req));
 		if (this->ExistUri(req.getPath()) == false)
