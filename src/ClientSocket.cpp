@@ -288,29 +288,39 @@ bool ClientSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
 	return (true);
 }
 
-void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
+bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	if (this->_response_flag == false)
-		return ;
+		return (false);
 	try
 	{
 		this->_response.ExecuteResponse(this->_request);
+		struct epoll_event ev;
+		ev.events = EPOLLIN;
+		ev.data.fd = this->_fd;
+
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+			perror("epoll_ctl: mod");
+		}
+		std::cout << "-----"<<std::endl;
+		return (true);
 	}
 	catch (const ResponseException& e)
 	{
 		struct epoll_event ev;
-		ev.events = EPOLLOUT;
+		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				return ;
+				return (false);
 			}
 		if (clposeAndDeleteSocket(socket) == false)
-			return ;
-		return ;
+			return (false);
+		std::cout << "qq"<<std::endl;
+		return (true);
 	}
 	catch (std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
-		return ;
+				std::cout <<"22"<<std::endl;
+		return (false);
 	}
 }

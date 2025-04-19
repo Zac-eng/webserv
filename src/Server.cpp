@@ -4,6 +4,19 @@ Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
 Server::Server() {};
 
+Server::~Server()
+{
+	std::map<int, ASocket*>::iterator it;
+
+	it = this->_socket.begin();
+	for (; it != this->_socket.end(); it++)
+	{
+		close(it->first);
+		delete it->second;
+	}
+}
+
+
 bool set_nonblocking(int fd)
 {
 	int flag;
@@ -16,11 +29,6 @@ bool set_nonblocking(int fd)
 	if (fcntl(fd, F_SETFL, flag) == -1)
 		throw std::runtime_error("NonBlocking Fd");
 	return (true);
-}
-
-const char* Server::ServerException::what() const throw()
-{
-	return ("Error Server Exception");
 }
 
 bool Server::setMonitoringFd(ASocket* socket)
@@ -48,19 +56,6 @@ bool Server::epollCreate(void)
 	return (true);
 }
 
-void Server::closeFdAndFree(void)
-{
-	std::map<int, ASocket*>::iterator it;
-
-	it = this->_socket.begin();
-	for (; it != this->_socket.end(); it++)
-	{
-		close(it->first);
-		delete it->second;
-	}
-	throw ServerException();
-}
-
 // todo、falseが返ってきた時にsocketを全てfreeして終了。
 void Server::createListenServer(void)
 {
@@ -71,13 +66,13 @@ void Server::createListenServer(void)
 	{
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
-			return (closeFdAndFree());
+			throw ServerException();
 		if (set_nonblocking(socket->_fd) == false)
-			return (closeFdAndFree());
+			throw ServerException();
 		this->_socket.insert(std::make_pair(socket->GetFd(), socket));
 	}
 	if (epollCreate() == false)
-		return (closeFdAndFree());
+		throw ServerException();
 }
 
 void Server::executeServer(void)
@@ -89,17 +84,18 @@ void Server::executeServer(void)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS + 1, -1);
 		if (event_counts == -1)
-			return (closeFdAndFree());
+			throw ServerException();
 		for (int i = 0; i < event_counts; i++)
 		{
 			if (event[i].events == EPOLLIN)
 			{
 				if (this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket) == false)
-					return (closeFdAndFree());
+					throw ServerException();
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
-				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
+				if (this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket) == false)
+					throw ServerException();
 			}
 		}
 	}

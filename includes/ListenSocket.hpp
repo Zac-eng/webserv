@@ -10,7 +10,7 @@ class ListenSocket : public ASocket
 	// Client fdの作成
 	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// 何もなし
-	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 
 
 	ListenSocket();

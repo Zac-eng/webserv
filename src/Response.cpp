@@ -230,6 +230,7 @@ void Response::ResponseError(Request& req)
         // レスポンスボディとヘッダーをソケットに書き込む
         std::string response_str = response.str();
         write(this->_fd, response_str.c_str(), response_str.length());
+		throw ResponseException(400);
 }
 
 
@@ -239,8 +240,8 @@ void Response::ExecuteResponse(Request& req)
 	//Uriがあるかの確認
 	if (req._status_number != 0)
 		return (ResponseError(req));
-		if (this->ExistUri(req.getPath()) == false)
-			return (ResponseError(req));
-		this->ExecuteAndGetStatusCode(req);
+	if (this->ExistUri(req.getPath()) == false)
+		return (ResponseError(req));
+	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }

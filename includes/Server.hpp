@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include "ListenSocket.hpp"
 #include <unistd.h>
+#include "ServerException.hpp"
 
 #define MAX_EVENTS 10
 
@@ -18,17 +19,12 @@ class Server
 	int _epoll_fd;
 
 	Server();
+	~Server();
 	void createListenServer(void);
 	void executeServer(void);
 	Server(std::vector<ServerConfig>& conf);
 	bool epollCreate(void);
 	bool setMonitoringFd(ASocket* socket);
-	void closeFdAndFree(void);
-
-	class ServerException : public std::exception {
-		const char* what() const throw();
-	};
-
 };
 
 bool set_nonblocking(int fd);

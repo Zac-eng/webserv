@@ -98,7 +98,7 @@ bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	return(true);
 }
 
-void ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+bool ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
-	return ;
+	return (false);
 }
