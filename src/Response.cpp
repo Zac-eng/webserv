@@ -177,25 +177,40 @@ void Response::handleGet(Request& req)
 	// return (StatusMessage::OK())
 }
 
+
+void Response::handleDelete(Request& req)
+{
+	if (remove(this->_path.c_str()) != 0)
+		throw ResponseException(400);
+	this->_status_code = 200;
+	return ;
+}
+
 void Response::handlePost(Request& req)
+{
+	std::ofstream file(this->_path.c_str());
+
+	if (!file.is_open())
+		throw std::runtime_error("error");
+	file << req._body;
+	file.close();
+	this->_status_code = 200;
+	return ;
+}
+
+void Response::HandleMethod(Request& req)
 {
 	if (!this->_cgi_buffer.empty())
 	{
 		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 		return ;
 	}
-	// executeFileUpload();
-}
-
-
-void Response::HandleMethod(Request& req)
-{
 	if (req.GetMethod() == "GET")
 		handleGet(req);
 	else if (req.GetMethod() == "POST")
 		handlePost(req);
-	// else if (req.GetMethod() == "DELETE")
-	// 	handleDelete(req);
+	else if (req.GetMethod() == "DELETE")
+		handleDelete(req);
 	return ;
 }
 
@@ -230,6 +245,7 @@ void Response::ResponseError(Request& req)
         // レスポンスボディとヘッダーをソケットに書き込む
         std::string response_str = response.str();
         write(this->_fd, response_str.c_str(), response_str.length());
+		throw ResponseException(400);
 }
 
 
@@ -237,11 +253,10 @@ void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
-
 	if (req._status_number != 0)
 		return (ResponseError(req));
-		if (this->ExistUri(req.getPath()) == false)
-			return (ResponseError(req));
-		this->ExecuteAndGetStatusCode(req);
+	if (this->ExistUri(req.getPath()) == false)
+		return (ResponseError(req));
+	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }

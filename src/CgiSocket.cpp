@@ -132,29 +132,30 @@ bool CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socke
   return true;
 }
 
-void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
+bool CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
   struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.fd = this->_pipe_fds[READ];
 
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
-    return ;
+    return false;
   }
   std::map<int, ASocket*>::iterator write_epoll = socket.find(this->_pipe_fds[WRITE]);
   if (write_epoll != socket.end()) {
     socket.erase(write_epoll);
-    return ;
+    return false;
   }
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
     perror("epoll_ctl: add");
-    return ;
+    return false;
   }
   socket.insert(std::make_pair(this->_pipe_fds[READ], this));
   if (this->_request_body.empty())
-    return ;
+    return true;
   if (write(this->_pipe_fds[WRITE], this->_request_body.c_str(), this->_request_body.length()) < 0)
-    return ;
+    return false;
+  return true;
 }
 
 const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr) {

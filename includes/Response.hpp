@@ -11,10 +11,12 @@
 #include <sstream>
 #include <map>
 #include <cstring>
+#include <fstream>
 #include "Request.hpp"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sstream>
+#include "ResponseException.hpp"
 
 class Response
 {
@@ -25,7 +27,7 @@ class Response
 		std::string _response;
 		std::string _response_body;
 		std::string _version;
-		unsigned int _status_code;
+		size_t _status_code;
 		std::string _directory;
 		std::string _filename;
 		std::string _path;

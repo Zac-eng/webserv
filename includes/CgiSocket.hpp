@@ -53,7 +53,7 @@ public:
 	int		getWritePipe() const;
 	bool	createSocket(void);
 	bool	handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
-	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket);
+	bool	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket);
 	
 };
 

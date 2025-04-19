@@ -54,6 +54,10 @@ int main(int argc, char* argv[]) {
         server.createListenServer();
         server.executeServer();
     }
+    catch (const ServerException& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
     catch (std::exception& e)
     {
         std::cout << e.what() << std::endl;
