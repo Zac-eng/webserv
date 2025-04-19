@@ -1,15 +1,13 @@
 #include "CgiSocket.hpp"
 
-#define CGI_EXTENTION ".php"
-
 CgiSocket::CgiSocket(
   ServerConfig& conf,
   pid_t cgi_pid,
   int read_fd,
   int write_fd,
-  const std::string& request_body,
+  Request& req,
   std::string& response
-): _request_body(request_body), _response_body(response) {
+): _request_body(req._body), _response_body(response), _status_code(req._status_number) {
   this->_cgi_pid = cgi_pid;
   this->_pipe_fds[READ] = read_fd;
   this->_pipe_fds[WRITE] = write_fd;
@@ -25,13 +23,8 @@ CgiSocket::~CgiSocket() {
 
 CgiSocket::CgiSocket(
   const CgiSocket& obj
-) : _request_body(obj._request_body), _response_body(obj._response_body) {
+) : _request_body(obj._request_body), _response_body(obj._response_body), _status_code(obj._status_code) {
   *this = obj;
-}
-
-bool CgiSocket::createSocket(void)
-{
-	return (false);
 }
 
 CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
@@ -40,73 +33,70 @@ CgiSocket& CgiSocket::operator = (const CgiSocket& obj) {
   this->_cgi_pid = obj._cgi_pid;
   this->_pipe_fds[READ] = obj._pipe_fds[READ];
   this->_pipe_fds[WRITE] = obj._pipe_fds[WRITE];
-  this->_response_body = obj._response_body;
-  // this->_request_body = obj._request_body;
+  this->_status_code = obj._status_code;
   time(&this->_created_at);
   return *this;
 }
 
-int CgiSocket::getReadPipe() const {
-  return this->_pipe_fds[READ];
-}
-
-int CgiSocket::getWritePipe() const {
-  return this->_pipe_fds[WRITE];
+bool CgiSocket::createSocket(void)
+{
+	return (false);
 }
 
 CgiSocket* CgiSocket::createCgiSocket(
   ServerConfig& conf,
-  const Request& req,
+  Request& req,
   const sockaddr_in& client_addr,
   std::string& response_buf
 ) {
   int ptc_pipe[2];
   int ctp_pipe[2];
 
-  if (pipe(ptc_pipe) != 0)
-    return NULL;
-  if (pipe(ctp_pipe) != 0) {
-    close(ptc_pipe[READ]);
-    close(ptc_pipe[WRITE]);
+  if (!initPipes(ptc_pipe, ctp_pipe)) {
+    req._status_number = 500;
     return NULL;
   }
   pid_t pid = fork();
   if (pid < 0) {
+    req._status_number = 500;
     close_pipes(ptc_pipe, ctp_pipe);
     return NULL;
   }
   else if (pid == 0) {
     const char *args[] = {CMD_PATH, req._path.c_str(), NULL};
-    if (close(ptc_pipe[WRITE]) != 0 \
-    || close(ctp_pipe[READ]) != 0 \
-    || dup2(ptc_pipe[READ], 0) != 0 \
-    || dup2(ctp_pipe[WRITE], 1) != 0) {
+    if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       close_pipes(ptc_pipe, ctp_pipe);
-      std::exit(1);
+      std::exit(500);
     }
     const char **meta_vars = create_meta_vars(conf, req, client_addr);
-    if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0)
-      std::exit(1);
+    if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0) {
+      switch (errno) {
+        case ENOENT:
+          std::exit(404);
+        default:
+          std::exit(502);
+      }
+    }
     std::exit(0);
   }
-  if (close(ptc_pipe[READ]) != 0 || close(ctp_pipe[WRITE]) != 0) {
+  if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
+    req._status_number = 500;
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
     return NULL;
   }
-  return new CgiSocket(conf, pid, ctp_pipe[READ], ptc_pipe[WRITE], req._body, response_buf);
+  // if (waitpid(pid, &status, WNOHANG))
+  return new CgiSocket(conf, pid, ctp_pipe[READ], ptc_pipe[WRITE], req, response_buf);
 }
 
-bool CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) {
+bool CgiSocket::handleEpollInEvent() {
   std::string response_body;
   char read_buf[BUFFER_SIZE];
   int read_count;
-  time_t current_time;
   int status;
 
   while (true) {
-    time(&current_time);
-    if (current_time > this->_created_at + CGI_TIMEOUT) {
+    if (isTimeout()) {
       kill(this->_cgi_pid, SIGINT);
       return false;
     }
@@ -116,41 +106,41 @@ bool CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socke
     read_buf[read_count] = '\0';
     response_body += read_buf;
     if (read_count < BUFFER_SIZE - 1)
-      break ;
+      break;
   }
   this->_response_body = response_body;
   while (true) {
-    waitpid(this->_cgi_pid, &status, WNOHANG);
-    time(&current_time);
-    if (current_time > this->_created_at + CGI_TIMEOUT)
+    if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
+      break;
+    }
+    if (isTimeout())
       kill(this->_cgi_pid, SIGINT);
   }
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
+  if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
     perror("epoll_ctl: del");
   }
   delete this;
   return true;
 }
 
-bool CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
+bool CgiSocket::handleEpollOutEvent() {
   struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.fd = this->_pipe_fds[READ];
 
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
+  if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
     return false;
   }
-  std::map<int, ASocket*>::iterator write_epoll = socket.find(this->_pipe_fds[WRITE]);
-  if (write_epoll != socket.end()) {
-    socket.erase(write_epoll);
-    return false;
+  std::map<int, ASocket*>::iterator write_epoll = Server::_socket.find(this->_pipe_fds[WRITE]);
+  if (write_epoll != Server::_socket.end()) {
+    Server::_socket.erase(write_epoll);
   }
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
+  if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
     perror("epoll_ctl: add");
     return false;
   }
-  socket.insert(std::make_pair(this->_pipe_fds[READ], this));
+  Server::_socket.insert(std::make_pair(this->_pipe_fds[READ], this));
   if (this->_request_body.empty())
     return true;
   if (write(this->_pipe_fds[WRITE], this->_request_body.c_str(), this->_request_body.length()) < 0)
@@ -158,155 +148,38 @@ bool CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   return true;
 }
 
-const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr) {
-  std::vector<std::string> meta_vars;
-  Auth auth_info = CgiMetaProcessors::get_auth_info(req);
-  CgiPath cgi_path = CgiMetaProcessors::get_path_info(conf, req);
-  RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
-  meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
-  meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
-  meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
-  meta_vars.push_back("GATEWAY_INTERFACE=" + CgiMetaProcessors::get_gateway_interface());
-  meta_vars.push_back("PATH_INFO=" + cgi_path.path_info);
-  meta_vars.push_back("PATH_TRANSLATED=" + cgi_path.translated);
-  meta_vars.push_back("QUERY_STRING=" + cgi_path.query_string);
-  meta_vars.push_back("REMOTE_ADDR=" + remote_info.remote_addr);
-  meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
-  meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
-  meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
-  meta_vars.push_back("SCRIPT_NAME=" + cgi_path.script_name);
-  meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(conf));
-  meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(conf));
-  meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol());
-  meta_vars.push_back("SERVER_SOFTWARE=" + CgiMetaProcessors::get_server_software());
-
-  int meta_var_num = meta_vars.size();
-  const char **meta_var_array = new const char*[meta_var_num];
-  for (int i = 0; i < meta_var_num; ++i) {
-    meta_var_array[i] = meta_vars[i].c_str();
+bool CgiSocket::initPipes(int ptc[], int ctp[]) {
+  if (pipe(ptc) != 0) {
+    return false;
   }
-  return meta_var_array;
-}
-
-Auth CgiMetaProcessors::get_auth_info(const Request& req) {
-  Auth ret_val;
-  ret_val.auth_type = "";
-  ret_val.remote_user = "";
-
-  std::map<std::string, std::string>::const_iterator auth_iter = req._header.find("Authorization");
-  if (auth_iter != req._header.end()) {
-    std::string auth = auth_iter->second;
-    size_t colon_pos = auth.find(':');
-    if (colon_pos != std::string::npos) {
-      ret_val.auth_type = auth.substr(0, colon_pos);
-      ret_val.remote_user = auth.substr(colon_pos + 1, auth.length());
-    }
+  if (pipe(ctp) != 0) {
+    close(ptc[READ]);
+    close(ptc[WRITE]);
+    return false;
   }
-  return ret_val;
+  return true;
 }
 
-CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request& req) {
-  CgiPath ret_val;
-  ret_val.script_name = "";
-  ret_val.path_info = "";
-  ret_val.translated = "";
-  ret_val.query_string = "";
-
-  std::string path = req._path;
-
-  std::vector<LocationConfig>::const_iterator it = conf.locations.begin();
-  std::vector<LocationConfig>::const_iterator matched_location = conf.locations.end();
-  int matching_prefix_len = 0;
-
-  if (!path.empty()) {
-    size_t question_pos = path.find('?');
-    if (question_pos != std::string::npos) {
-      ret_val.query_string = path.substr(question_pos + 1, path.length());
-    }
-    std::string filepath = path.substr(0, question_pos);
-    size_t script_path_pos = filepath.find(CGI_EXTENTION, 0);
-    if (script_path_pos != std::string::npos) {
-      size_t border_pos = script_path_pos + sizeof(CGI_EXTENTION) / sizeof(char);
-      ret_val.script_name = filepath.substr(0, border_pos);
-      ret_val.path_info = filepath.substr(border_pos + 1, filepath.length());
-    }
-    for (it; it != conf.locations.end(); ++it) {
-      if (it->path.length() < matching_prefix_len)
-        continue;
-      if (filepath.find(it->path, 0) == 0) {
-        matched_location = it;
-        matching_prefix_len = it->path.length();
-      }
-    }
-    if (matched_location != conf.locations.end()) {
-      ret_val.translated = ret_val.script_name;
-      ret_val.translated.replace(0, matching_prefix_len, matched_location->root);
-    }
+bool CgiSocket::prepareChildPipes(int ptc[], int ctp[]) {
+  if (close(ptc[WRITE]) != 0 || close(ctp[READ]) != 0 || \
+    dup2(ptc[READ], 0) != 0 || dup2(ctp[WRITE], 1) != 0) {
+    return false;
   }
-  return ret_val;
+  return true;
 }
 
-RemoteInfo CgiMetaProcessors::get_remote_info(const sockaddr_in& client_addr) {
-  RemoteInfo ret_val;
-  ret_val.remote_addr = "";
-  ret_val.remote_host = "";
-
-  char hostname[NI_MAXHOST];
-  const char* ip_addr = inet_ntoa(client_addr.sin_addr);
-  ret_val.remote_addr = ip_addr;
-  int status = getnameinfo((struct sockaddr*)&client_addr, sizeof(client_addr),
-                             hostname, sizeof(hostname),
-                             NULL, 0, NI_NAMEREQD);
-  if (status == 0)
-    ret_val.remote_host = hostname;
-  return ret_val;
+bool CgiSocket::prepareParentPipes(int ptc[], int ctp[]) {
+  if (close(ptc[READ]) != 0 || close(ctp[WRITE]) != 0 ||\
+      set_nonblocking(ptc[WRITE]) == false || set_nonblocking(ctp[READ]) == false)
+      return false;
+  return true;
 }
 
-std::string CgiMetaProcessors::get_content_length(const Request& req) {
-  std::map<std::string, std::string>::const_iterator cl_iter = req._header.find("Content-Length");
-  if (cl_iter != req._header.end()) {
-    return cl_iter->second;
-  }
-  return "";
+bool CgiSocket::isTimeout() {
+  time_t current_time;
+
+  time(&current_time);
+  return (current_time > this->_created_at + CGI_TIMEOUT);
 }
 
-std::string CgiMetaProcessors::get_content_type(const Request& req) {
-  std::map<std::string, std::string>::const_iterator ct_iter = req._header.find("Content-Type");
-  if (ct_iter != req._header.end()) {
-    return ct_iter->second;
-  }
-  return "";
-}
 
-std::string CgiMetaProcessors::get_gateway_interface(void) {
-  return "CGI/1.1";
-}
-
-std::string CgiMetaProcessors::get_request_method(const Request& req) {
-  return req._method;
-}
-
-std::string CgiMetaProcessors::get_server_name(const ServerConfig& conf) {
-  return conf.server_name;
-}
-
-std::string CgiMetaProcessors::get_server_port(const ServerConfig& conf) {
-  std::stringstream ss;
-  ss << conf.listen_port;
-  return ss.str();
-}
-
-std::string CgiMetaProcessors::get_server_protocol(void) {
-  return "http/1.1";
-}
-
-std::string CgiMetaProcessors::get_server_software(void) {
-  return "webserv/1.1";
-}
-
-void close_pipes(int ptc_pipe[], int ctp_pipe[]) {
-  close(ptc_pipe[READ]);
-  close(ptc_pipe[WRITE]);
-  close(ctp_pipe[READ]);
-  close(ctp_pipe[WRITE]);
-}

@@ -7,6 +7,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "ASocket.hpp"
+#include "Server.hpp"
 #include <iostream>
 #include <string>
 #include <sys/types.h>
@@ -38,9 +39,9 @@ class ClientSocket : public ASocket
 	// 何もない
 	bool createSocket();
 	// Requestパース
-	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleEpollInEvent();
 	// CgiSocket作成、レスポンス作成
-	bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleEpollOutEvent();
 	bool validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
 	bool checkExecuteResponse(int epoll_fd);
 	bool CheckPostFlag();

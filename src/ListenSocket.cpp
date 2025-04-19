@@ -75,7 +75,7 @@ bool ListenSocket::createSocket(void)
 	return (true);
 }
 
-bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket)
+bool ListenSocket::handleEpollInEvent()
 {
 	int fd;
 	struct sockaddr_in address;
@@ -90,16 +90,16 @@ bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	client = new ClientSocket(this->_conf, address);
 	event.events = EPOLLIN;
 	event.data.fd = fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
+	if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
 		return (false, std::cout <<"epoll_ctl" << std::endl);
 	client->SetFd(fd);
-	socket.insert(std::make_pair(client->GetFd(), client));
+	Server::_socket.insert(std::make_pair(client->GetFd(), client));
 	if (set_nonblocking(client->GetFd()) == false)
 		return (false);
 	return(true);
 }
 
-bool ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+bool ListenSocket::handleEpollOutEvent()
 {
 	return (false);
 }

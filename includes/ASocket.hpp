@@ -6,7 +6,6 @@
 #include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "nginx.hpp"
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
@@ -15,7 +14,8 @@
 
 class ASocket
 {
-	public:
+	
+public:
 	ServerConfig _conf;
 	int _fd;
 	std::string _host_name;
@@ -27,6 +27,6 @@ class ASocket
 	int GetFd(void) const;
 	void SetFd(int fd);
 	virtual bool createSocket() = 0;
-	virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
-	virtual bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
+	virtual bool handleEpollInEvent() = 0;
+	virtual bool handleEpollOutEvent() = 0;
 };

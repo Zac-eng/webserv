@@ -254,7 +254,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 
 
 
-bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+bool ClientSocket::handleEpollInEvent()
 {
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
@@ -269,7 +269,7 @@ bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		return (true);
 	else
 	{
-		if (this->checkExecuteResponse(epoll_fd) == false)
+		if (this->checkExecuteResponse(Server::_epoll_fd) == false)
 			return (false);
 	}
 	return (true);
@@ -288,7 +288,7 @@ bool ClientSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
 	return (true);
 }
 
-bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
+bool ClientSocket::handleEpollOutEvent()
 {
 	if (this->_response_flag == false)
 		return (false);
@@ -299,7 +299,7 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
 
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+		if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			perror("epoll_ctl: mod");
 		}
 		std::cout << "-----"<<std::endl;
@@ -310,10 +310,10 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		struct epoll_event ev;
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+		if (epoll_ctl(Server::_epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 				return (false);
 			}
-		if (clposeAndDeleteSocket(socket) == false)
+		if (clposeAndDeleteSocket(Server::_socket) == false)
 			return (false);
 		std::cout << "qq"<<std::endl;
 		return (true);
