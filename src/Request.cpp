@@ -163,14 +163,14 @@ bool Request::parseHeader(const std::string& request)
 	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
-		throw (RequestException(400));
+		throw (RequestException(400,"header_key_error"));
 	}
 	if (SkipColon(request, it) == false)
-		throw (RequestException(400));
+		throw (RequestException(400,"header_colon_error"));
 	if (parseHeaderValue(request, it, value) == false)
 	{
 		// Error::InvalidHeaderValue();
-		throw (RequestException(400));
+		throw (RequestException(400,"header_error"));
 	}
 	if (key == "Host")
 	{
@@ -309,15 +309,15 @@ bool Request::ParseRequestLine(const std::string& request)
 {
 	std::string::const_iterator it = request.begin();
 	if (ParseMethod(request, it) == false)
-		throw (RequestException(400));
+		throw (RequestException(400, "method_error"));
 	if (ParseUri(request, it) == false)
-		throw (RequestException(400));
+		throw (RequestException(400, "uri_error"));
 	if (ParseVersion(request, it) == false)
-		throw (RequestException(400));
+		throw (RequestException(400, "version_error"));
 	if (it != request.end())
 	{
 		// Error::InvalidRequestLine();
-		throw (RequestException(400));
+		throw (RequestException(400, "request_line"));
 	}
 	return (true);
 }
@@ -419,7 +419,7 @@ size_t convertDecimal(const std::string& request)
 	result = strtol(object.c_str(), &end, 16);
 	//endのポインタの位置が文字列の終端ではない。
 	if (*end != '\0')
-		throw RequestException(400);
+		throw RequestException(400, "convert_error");
 	return (result);
 }
 
@@ -440,11 +440,11 @@ bool Request::executeChunk(const std::string& request)
 bool Request::parseChunk(const std::string& request)
 {
 	if (this->_chunk_finish_flag == true)
-		throw (RequestException(400));
+		throw (RequestException(400, "chunk_finish"));
 	if (request == "\r\n")
 		this->_chunk_finish_flag = true;
 	if (executeChunk(request) == false)
-		throw (RequestException(400));
+		throw (RequestException(400,"chunk_error"));
 	return (true);
 }
 

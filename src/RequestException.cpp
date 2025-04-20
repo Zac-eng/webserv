@@ -1,13 +1,15 @@
 #include "RequestException.hpp"
 
-RequestException::RequestException(size_t status) : _status(status) {}
+RequestException::RequestException(size_t status, const std::string& message) : _status(status), _message(message) {}
 
 const char* RequestException::what() const throw()
 {
-	return ("status code error");
+	return (this->_message.c_str());
 }
 
 int RequestException::getStatus(void) const
 {
 	return (this->_status);
 }
+
+RequestException::~RequestException() throw() {}

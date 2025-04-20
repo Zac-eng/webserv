@@ -49,12 +49,12 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 		if (this->_request.GetRequestFlag() == false)
 			return (true);
 		if (CheckCRequestFlag(buffer, it, object) == false)
-			throw (RequestException(400));
+			throw (RequestException(400, "request_flag"));
 	}
 	else
 	{
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
-			throw (RequestException(400));
+			throw (RequestException(400, "location_error"));
 		if (this->_complete_post_flag == true)
 			this->_post_body_flag = true;
 	}
@@ -232,6 +232,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 	catch (const RequestException& e)
 	{
 		struct epoll_event ev;
+		std::cout << e.what() << std::endl;
 		ev.events = EPOLLOUT;
 		ev.data.fd = this->_fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
@@ -302,7 +303,6 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			perror("epoll_ctl: mod");
 		}
-		std::cout << "-----"<<std::endl;
 		return (true);
 	}
 	catch (const ResponseException& e)
@@ -315,7 +315,6 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 			}
 		if (clposeAndDeleteSocket(socket) == false)
 			return (false);
-		std::cout << "qq"<<std::endl;
 		return (true);
 	}
 	catch (std::exception& e)
