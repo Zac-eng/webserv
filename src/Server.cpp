@@ -90,12 +90,12 @@ void Server::executeServer(void)
 			if (event[i].events == EPOLLIN)
 			{
 				if (this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket) == false)
-					throw ServerException();
+					std::cout <<"error" <<std::endl;
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
 				if (this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket) == false)
-					throw ServerException();
+					std::cout <<"error" <<std::endl;
 			}
 		}
 	}

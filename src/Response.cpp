@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "Response.hpp"
+#include "Server.hpp"
 #include "ClientSocket.hpp"
 
 
@@ -103,8 +104,12 @@ bool Response::ReadFile(Request& req)
 	fd = open(this->_path.c_str(), O_RDONLY);
 	if (fd  == -1)
 		return (false);
+	if (set_nonblocking(fd) == false)
+		return (false);
 	while (1)
 	{
+				std::cout << "---" <<std::endl;
+
 		byte_size = read(fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 		{
@@ -136,7 +141,7 @@ void Response::CheckConnectionHeader(std::map<std::string, std::string> header)
 	it = header.begin();
 	for (; it != header.end(); it++)
 	{
-		if (it->first == "Connection")
+		if (it->first == "connection")
 		{
 			if (it->second == "keep-alive")
 				this->_header.push_back("Connection: keep-alive\r\n");
@@ -157,6 +162,22 @@ void Response::CreateResponse()
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
+void Response::createDateHeader(void)
+{
+	time_t now;
+	struct tm n_time;
+	char buf[80];
+	std::string date;
+
+	now = time(0);
+	n_time = *gmtime(&now);
+	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
+	date = "Date: ";
+	date += buf;
+	date += "\r\n";
+	this->_header.push_back(date);
+}
+
 void  Response::CreateResponseHeader(Request& req)
 {
 	std::map<std::string, std::string> header;
@@ -164,13 +185,18 @@ void  Response::CreateResponseHeader(Request& req)
 
 	file = this->_filename;
 	CheckFileType(file);
+	this->_header.push_back("Server: webserv/1.0\r\n");
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
-	CheckConnectionHeader(header);
+	createDateHeader();
+	// CheckConnectionHeader(header);
+	if (req._connection_flag == true)
+		this->_header.push_back("Connection: close\r\n");
 	CreateResponse();
 }
 
 void Response::handleGet(Request& req)
 {
+
 	if (ReadFile(req) == false)
 		return ;
 	CreateResponseHeader(req);

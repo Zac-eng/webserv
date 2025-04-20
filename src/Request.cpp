@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
 	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
@@ -161,6 +161,39 @@ void Request::SearchChunkValue(std::string& value)
 	return ;
 }
 
+void Request::searchConnectionClose(std::string& value)
+{
+	std::string::iterator it;
+	std::string tmp;
+
+	it = value.begin();
+	for (; it != value.end(); it++)
+	{
+		if (*it == ',')
+		{
+			if (tmp.empty())
+				continue ;
+			if (tmp == "close")
+			{
+				this->_connection_flag = true;
+				return ;
+			}
+			else
+				tmp.clear();			
+		}
+		tmp += *it;
+	}
+	if (!tmp.empty())
+	{
+		if (tmp == "close")
+		{
+			this->_connection_flag = true;
+			return ;
+		}
+	}
+	return ;
+}
+
 bool Request::parseHeader(const std::string& request)
 {
 	std::string key;
@@ -187,13 +220,15 @@ bool Request::parseHeader(const std::string& request)
 	}
 	if (this->_header.count(key) > 0)
 	{
-		if (key == "content-length" || key == "transfer-enconding")
+		if (key == "content-length" || key == "transfer-enconding" || key == "host")
 			throw (RequestException(400, "重複があります。"));
 	}
 	convertLower(key);
 	this->_header[key] = value;
 	if (key == "transfer-enconding")
 		SearchChunkValue(value);
+	if (key == "connection")
+		searchConnectionClose(value);
 	return (true);
 }
 

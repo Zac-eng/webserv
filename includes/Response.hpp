@@ -17,6 +17,9 @@
 #include <fcntl.h>
 #include <sstream>
 #include "ResponseException.hpp"
+#include <ctime>
+#include <sstream>
+#include <iomanip>
 
 class Response
 {
@@ -69,6 +72,7 @@ void CreateResponse();
 void setFd(int fd);
 void ResponseError(Request& req);
 bool IsDynamicFileType(const std::string& file);
+void createDateHeader(void);
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
 };
