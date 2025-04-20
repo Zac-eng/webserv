@@ -10,6 +10,7 @@
 #include <map>
 #include "RequestException.hpp"
 #include <cstdlib>
+#include <cctype>
 
 class Request
 {

@@ -202,6 +202,7 @@ void Response::HandleMethod(Request& req)
 {
 	if (!this->_cgi_buffer.empty())
 	{
+		// ReaponseHeader(req);
 		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 		return ;
 	}

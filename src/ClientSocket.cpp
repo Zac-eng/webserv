@@ -24,7 +24,7 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 	{
 		if (it != buffer.end())
 			return (false);
-		if (this->_request._chunk_finish_flag == false)
+		if (this->_request._chunk_flag == true && this->_request._chunk_finish_flag == false)
 			return (false);
 		this->_complete_parse_flag = true;
 		return (true);
@@ -223,7 +223,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 				}
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
-			// if (this->_file == "php")
+			// if (this->_file == "php" || this->_request._method != "GET")
 			// 	ExecuteCgi(epoll_fd, this->_request, server_conf);
 			return (true);
 		}

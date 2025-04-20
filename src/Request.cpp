@@ -57,6 +57,13 @@ bool Request::SearchHeaderKey(std::string &key)
 	return (false);
 }
 
+void convertLower(std::string& key)
+{
+	for (size_t i = 0; i < key.size(); i++)
+		key[i] = std::tolower(key[i]);
+	return ;
+}
+
 bool Request::HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key)
 {
 	for (; it != request.end() && *it != ':'; it++)
@@ -67,6 +74,7 @@ bool Request::HandleHeaderKey(const std::string& request, std::string::const_ite
 	}
 	if (it == request.end())
 		return (false);
+	convertLower(key);
 	if (SearchHeaderKey(key) == false)
 		return (false);
 	return (true);
@@ -172,13 +180,19 @@ bool Request::parseHeader(const std::string& request)
 		// Error::InvalidHeaderValue();
 		throw (RequestException(400,"header_error"));
 	}
-	if (key == "Host")
+	if (key == "host")
 	{
 		ParseHostValue(value);
 		this->_host_flag = true;
 	}
+	if (this->_header.count(key) > 0)
+	{
+		if (key == "content-length" || key == "transfer-enconding")
+			throw (RequestException(400, "重複があります。"));
+	}
+	convertLower(key);
 	this->_header[key] = value;
-	if (key == "Transfer-Enconding")
+	if (key == "transfer-enconding")
 		SearchChunkValue(value);
 	return (true);
 }
@@ -487,23 +501,24 @@ std::string Request::getFile(void)
 void Request::insertHeaderKey(void)
 {
 	_valid_header_key.clear();
-	_valid_header_key.push_back("Host");
-	_valid_header_key.push_back("User-Agent");
-	_valid_header_key.push_back("Accept");
-	_valid_header_key.push_back("Content-Type");
-	_valid_header_key.push_back("Content-Length");
-	_valid_header_key.push_back("Transfer-Enconding");
-	_valid_header_key.push_back("Cashe-Control");
-	_valid_header_key.push_back("Connection");
-	_valid_header_key.push_back("Accept-Language");
-	_valid_header_key.push_back("Accept-Encoding");
-	_valid_header_key.push_back("Athorization");
+	_valid_header_key.push_back("host");
+	_valid_header_key.push_back("date");
+	_valid_header_key.push_back("user-agent");
+	_valid_header_key.push_back("accept");
+	_valid_header_key.push_back("content-type");
+	_valid_header_key.push_back("content-length");
+	_valid_header_key.push_back("transfer-enconding");
+	_valid_header_key.push_back("cashe-control");
+	_valid_header_key.push_back("connection");
+	_valid_header_key.push_back("accept-language");
+	_valid_header_key.push_back("accept-encoding");
+	_valid_header_key.push_back("athorization");
 	_valid_header_key.push_back("sec-ch-ua");
 	_valid_header_key.push_back("sec-ch-ua-mobile");
 	_valid_header_key.push_back("sec-ch-ua-platform");
-	_valid_header_key.push_back("Sec-Fetch-Site");
-	_valid_header_key.push_back("Sec-Fetch-User");
-	_valid_header_key.push_back("Sec-Fetch-Mode");
-	_valid_header_key.push_back("Sec-Fetch-Dest");
-	_valid_header_key.push_back("Upgrade-Insecure-Requests");
+	_valid_header_key.push_back("sec-fetch-site");
+	_valid_header_key.push_back("sec-fetch-user");
+	_valid_header_key.push_back("sec-fetch-mode");
+	_valid_header_key.push_back("sec-fetch-dest");
+	_valid_header_key.push_back("upgrade-insecure-requests");
 }
