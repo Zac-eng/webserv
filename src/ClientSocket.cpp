@@ -113,18 +113,18 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 	return (i);
 }
 
-bool ClientSocket::CheckFileAndCombainLocation(LocationConfig& location, std::string& object)
-{
-	std::string file;
+// bool ClientSocket::CheckFileAndCombainLocation(LocationConfig& location, std::string& object)
+// {
+// 	std::string file;
 
-	file = this->_request.getFile();
-	if (file.empty())
-		return (false);
-	this->_response.setDirectory(object);
-	this->_response.setFilename(file);
-	this->_response.setPath(object);
-	return (true);
-}
+// 	file = this->_request.getFile();
+// 	if (file.empty())
+// 		return (false);
+// 	this->_response.setDirectory(object);
+// 	this->_response.setFilename(file);
+// 	this->_response.setPath(object);
+// 	return (true);
+// }
 
 void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 {
@@ -133,15 +133,22 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
-	if (CheckFileAndCombainLocation(location, object) == true)
-		return ;
+	// if (CheckFileAndCombainLocation(location, object) == true)
+	// 	return ;
 	if (object[object.length() - 1] != '/')
 		object += '/';
 	this->_response.setDirectory(object);
-	this->_response.setFilename(location.GetIndex());
+	if (!this->_request._file.empty())
+		this->_response.setFilename(this->_request._file);
+	else
+		this->_response.setFilename(location.GetIndex());
 	path = object;
-	path += location.GetIndex();
+	path += this->_response._filename;
 	this->_response.setPath(path);
+	std::cout <<this->_response._filename<<std::endl;
+	std::cout <<this->_response._directory<<std::endl;
+	std::cout <<this->_response._path<<std::endl;
+
 	return ;
 }
 
@@ -170,6 +177,7 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	}
 	if (length == 0)
 		return (false);
+
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
@@ -179,6 +187,7 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	std::vector<LocationConfig> location;
 
 	location = this->_conf.GetLocation();
+
 	if (CheckAndChangeLocationUri(location, uri) == true)
 		return ;
 	// if (CheckAndChangeRootUri(uri) == true)

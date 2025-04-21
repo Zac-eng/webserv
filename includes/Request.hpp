@@ -21,6 +21,7 @@ class Request
 		std::string _path;
 		std::string _directory;
 		std::string _file;
+		std::string _extension;
 		std::string _version;
 		std::map<std::string, std::string> _header;
 		std::string _body;

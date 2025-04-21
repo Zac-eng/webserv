@@ -101,9 +101,12 @@ bool Response::ReadFile(Request& req)
 	int byte_size;
 	char buf[BUFFER_SIZE];
 	
+	std::cout <<this->_path<<std::endl;
 	fd = open(this->_path.c_str(), O_RDONLY);
 	if (fd  == -1)
 		return (false);
+				std::cout << 'Q'<<std::endl;
+
 	if (set_nonblocking(fd) == false)
 		return (false);
 	while (1)
@@ -197,6 +200,7 @@ void  Response::CreateResponseHeader(Request& req)
 void Response::handleGet(Request& req)
 {
 
+	std::cout << 'Q'<<std::endl;
 	if (ReadFile(req) == false)
 		return ;
 	CreateResponseHeader(req);
@@ -282,6 +286,7 @@ void Response::ExecuteResponse(Request& req)
 	//Uriがあるかの確認
 	if (req._status_number != 0)
 		return (ResponseError(req));
+
 	if (this->ExistUri(req.getPath()) == false)
 		return (ResponseError(req));
 	this->ExecuteAndGetStatusCode(req);

@@ -84,6 +84,7 @@ bool Request::parseHeaderKey(const std::string& request, std::string::const_iter
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
+	std::cout <<"rrr"<<std::endl;
 	if (HandleHeaderKey(request, it, key) == false)
 		return (false);
 	return (true);
@@ -204,6 +205,7 @@ bool Request::parseHeader(const std::string& request)
 	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
+		std::cout <<request<<std::endl;
 		throw (RequestException(400,"header_key_error"));
 	}
 	if (SkipColon(request, it) == false)
@@ -284,33 +286,86 @@ bool Request::ValidUri(const std::string& uri)
 {
 	std::string::const_iterator it;
 	std::string::const_iterator it_tmp;
-	bool index_flag;
+	bool index_flag = false;
 	it = uri.begin();
 
 	if (isSlash(uri, it) == false)
 		return (false);
-	
 	for (; it != uri.end(); it++)
 	{
-		if (*it == '/' || *it == '.')
+		if (*it == '/')
 			it_tmp = it;
+		if (*it == '.')
+			index_flag = true;
 	}
-	// std::cout <<"bbbb"<<this->_directory<<std::endl;
-	// 最後が/で終わっているか
-	if (*it_tmp == '/')
+	if (index_flag == false)
 	{
 		this->_directory = uri;
+		this->_path = uri;
 		return (true);
 	}
-	if (*it_tmp == '.')
+	if (*it_tmp == '/')
+		it_tmp++;
+	this->_directory = uri.substr(0, it_tmp - uri.begin());
+	if (it_tmp == uri.end())
 	{
-		if (CheckUriExtension(uri, it_tmp) == false)
-			return (false);
-		this->_directory = uri.substr(0, it_tmp - uri.begin());
-		this->_file = uri.substr(it_tmp - uri.begin());
+		this->_path = this->_directory;
+		return (true);
 	}
-	return (false);
+	it = it_tmp;
+	if (index_flag == true)
+		this->_file = uri.substr(it_tmp - uri.begin());
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '.')
+			it_tmp = it;
+	}
+	if (CheckUriExtension(uri, it_tmp) == false)
+		return (false);
+	this->_extension = uri.substr(it_tmp - uri.begin());
+	this->_path = uri;
+		// 	std::cout <<this->_directory<<std::endl;
+		// std::cout <<this->_file<<std::endl;
+		// std::cout <<this->_extension<<std::endl;
+		// std::cout <<this->_path<<std::endl;
+	return (true);
 }
+
+// bool Request::ValidUri(const std::string& uri)
+// {
+// 	std::string::const_iterator it;
+// 	std::string::const_iterator it_tmp;
+// 	bool index_flag;
+// 	it = uri.begin();
+
+// 	if (isSlash(uri, it) == false)
+// 		return (false);
+	
+// 	for (; it != uri.end(); it++)
+// 	{
+// 		if (*it == '/' || *it == '.')
+// 			it_tmp = it;
+// 	}
+// 	// std::cout <<"bbbb"<<this->_directory<<std::endl;
+// 	// 最後が/で終わっているか
+// 	if (*it_tmp == '/')
+// 	{
+// 		this->_directory = uri;
+// 		return (true);
+// 	}
+// 	this->_file = uri.substr(it_tmp - uri.begin());
+// 	if (*it_tmp == '.')
+// 	{
+// 		if (CheckUriExtension(uri, it_tmp) == false)
+// 			return (false);
+// 		this->_directory = uri.substr(0, it_tmp - uri.begin());
+// 		this->_extension = uri.substr(it_tmp - uri.begin());
+// 		// this->_file = 
+// 		std::cout <<this->_directory<<std::endl;
+// 		std::cout <<this->_file<<std::endl;
+// 	}
+// 	return (false);
+// }
 
 
 
