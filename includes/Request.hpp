@@ -74,6 +74,7 @@ bool parseChunkValue(const std::string& request);
 bool executeChunk(const std::string& request);
 bool parseChunk(const std::string& request);
 void searchConnectionClose(std::string& value);
+bool CheckMethodAndHeader(void);
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);

@@ -560,6 +560,23 @@ bool Request::parsePostBody(const std::string& request)
 	return (true);
 }
 
+bool Request::CheckMethodAndHeader(void)
+{
+	std::string type;
+	std::string length;
+
+	type = "content-type";
+	length = "content-length";
+	if (this->_post_flag == true)
+	{
+		if (this->_header.find(length.c_str()) != this->_header.end() &&
+			this->_header.find(type.c_str()) != this->_header.end())
+			return (true);
+		return (false);
+	}
+	return (true);
+}
+
 bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
 	if (parse_post_flag == true)

@@ -223,6 +223,8 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 			{
 				if (it != buffer.end())
 					return (false);
+				// if (this->_request.CheckMethodAndHeader() == false)
+				// 	return (false);
 				ChangeConfUri(this->_request.getPath());
 				ev.events = EPOLLOUT;
 				ev.data.fd = this->_fd;
