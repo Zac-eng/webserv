@@ -126,24 +126,67 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 // 	return (true);
 // }
 
+
+bool Response::ExistUri(const std::string& file)
+{
+	DIR *dir;
+	dirent *entry;
+
+	dir = opendir(this->_request.getDirectory().c_str());
+	if (dir == NULL)
+		return (false);
+	entry = readdir(dir);
+	while (entry != NULL)
+	{
+		if (strcmp(entry->d_name, file.c_str()) == 0)
+		{
+			closedir(dir);
+			return (true);
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+	return (false);
+}
+
+
 void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 {
 	std::string object;
 	std::string path;
+	std::string file;
+	std::string::iterator it;
 
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
+	if (!location.index.empty())
+		it = location.begin();
 	// if (CheckFileAndCombainLocation(location, object) == true)
 	// 	return ;
 	if (object[object.length() - 1] != '/')
 		object += '/';
 	this->_response.setDirectory(object);
-	if (!this->_request._file.empty())
-		this->_response.setFilename(this->_request._file);
-	else
-		this->_response.setFilename(location.GetIndex());
 	path = object;
-	path += this->_response._filename;
+	if (!this->_request._file.empty())
+	{
+		if (this->existUri(this->_request._file) == false)
+			throw RequestException(404,"uri file not");
+		this->_response.setFilename(this->_request._file);
+		path += this->_response._filename;
+	}
+	else
+	{
+		for (; it != location.end(); it++)
+		{
+			if (this->existUri(it->index) == true)
+			{
+				path += it->index;
+				this->_response.setFilename(it->index);
+			}
+			path = object;
+		}
+		throw RequestException(404,"file not");
+	}
 	this->_response.setPath(path);
 	std::cout <<this->_response._filename<<std::endl;
 	std::cout <<this->_response._directory<<std::endl;
@@ -177,7 +220,6 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	}
 	if (length == 0)
 		return (false);
-
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
@@ -234,8 +276,12 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 				}
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
-			// if (this->_file == "php" || this->_request._method != "GET")
-			// 	ExecuteCgi(epoll_fd, this->_request, server_conf);
+			if (this->_request._extension == "php")
+			{
+				if (this->_post_flag == true)
+					throw (RequestException(405, "extension"));
+				ExecuteCgi(epoll_fd, this->_request, server_conf);
+			}
 			return (true);
 		}
 	}
@@ -265,8 +311,6 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 		this->_buffer.clear();
 	return (true);
 }
-
-
 
 bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {

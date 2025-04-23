@@ -37,27 +37,27 @@ void Response::setPath(const std::string& file)
 	this->_path = file;
 }
 
-bool Response::ExistUri(const std::string& uri)
-{
-	DIR *dir;
-	dirent *entry;
+// bool Response::ExistUri(const std::string& uri)
+// {
+// 	DIR *dir;
+// 	dirent *entry;
 
-	dir = opendir(this->_directory.c_str());
-	if (dir == NULL)
-		return (false);
-	entry = readdir(dir);
-	while (entry != NULL)
-	{
-		if (strcmp(entry->d_name, this->_filename.c_str()) == 0)
-		{
-			closedir(dir);
-			return (true);
-		}
-		entry = readdir(dir);
-	}
-	closedir(dir);
-	return (false);
-}
+// 	dir = opendir(this->_directory.c_str());
+// 	if (dir == NULL)
+// 		return (false);
+// 	entry = readdir(dir);
+// 	while (entry != NULL)
+// 	{
+// 		if (strcmp(entry->d_name, this->_filename.c_str()) == 0)
+// 		{
+// 			closedir(dir);
+// 			return (true);
+// 		}
+// 		entry = readdir(dir);
+// 	}
+// 	closedir(dir);
+// 	return (false);
+// }
 
 
 // bool Response::IsDynamicFileType(const std::string& file)
@@ -105,14 +105,10 @@ bool Response::ReadFile(Request& req)
 	fd = open(this->_path.c_str(), O_RDONLY);
 	if (fd  == -1)
 		return (false);
-				std::cout << 'Q'<<std::endl;
-
 	if (set_nonblocking(fd) == false)
 		return (false);
 	while (1)
 	{
-				std::cout << "---" <<std::endl;
-
 		byte_size = read(fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 		{
@@ -131,11 +127,11 @@ bool Response::ReadFile(Request& req)
 	return (true);
 }
 
-void Response::CheckFileType(std::string& file)
-{
-	if (this->_request.getFile() == "html")
-		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
-}
+// void Response::CheckFileType(std::string& file)
+// {
+// 	if (this->_request.getFile() == "html")
+// 		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
+// }
 
 void Response::CheckConnectionHeader(std::map<std::string, std::string> header)
 {
@@ -287,8 +283,8 @@ void Response::ExecuteResponse(Request& req)
 	if (req._status_number != 0)
 		return (ResponseError(req));
 
-	if (this->ExistUri(req.getPath()) == false)
-		return (ResponseError(req));
+	// if (this->ExistUri(req.getPath()) == false)
+	// 	return (ResponseError(req));
 	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }
