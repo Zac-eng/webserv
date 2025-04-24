@@ -23,8 +23,8 @@ class Request
 		std::string _file;
 		std::string _extension;
 		std::string _version;
-		std::map<std::string, std::string> _header;
 		std::string _body;
+		std::map<std::string, std::string> _header;
 		bool _request_flag;
 		bool _host_flag;
 		bool _post_flag;

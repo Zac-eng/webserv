@@ -6,6 +6,94 @@ ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf),  _complete_post_fl
 
 ClientSocket::~ClientSocket() {};
 
+Request ClientSocket::getRequest(void) const
+{
+	return (this->_request);
+}
+
+void ClientSocket::setRequest(Request& request)
+{
+	this->_request = request;
+	return ;
+}
+
+Response ClientSocket::getResponse(void) const
+{
+	return (this->_response);
+}
+
+void ClientSocket::setResponse(Response& response)
+{
+	this->_response = response;
+	return ;
+}
+
+ServerConfig ClientSocket::getConf(void) const
+{
+	return (this->_conf);
+}
+
+void ClientSocket::setConf(ServerConfig& conf)
+{
+	this->_conf = conf;
+	return ;
+}
+
+bool ClientSocket::getCarrigeReturnFlag(void) const
+{
+	return (this->_carrige_return_flag);
+}
+
+void ClientSocket::setCarrigeReturnFlag(bool& carrige_return_flag)
+{
+	this->_carrige_return_flag = carrige_return_flag;
+	return ;
+}
+
+
+bool ClientSocket::getResponseFlag(void) const
+{
+	return (this->_response_flag);
+}
+
+void ClientSocket::setResponseFlag(bool& response_flag)
+{
+	this->_response_flag = response_flag;
+	return ;
+}
+
+bool ClientSocket::getCompletePostFlag(void) const
+{
+	return (this->_complete_post_flag);
+}
+
+void ClientSocket::setCompletePostFlag(bool& complete_post_flag)
+{
+	this->_complete_post_flag = complete_post_flag;
+	return ;
+}
+
+bool ClientSocket::getPostBodyFlag(void) const
+{
+	return (this->_post_body_flag);
+}
+
+void ClientSocket::setPostBodyFlag(bool& post_body_flag)
+{
+	this->_post_body_flag = post_body_flag;
+	return ;
+}
+
+std::string ClientSocket::getBuffer(void) const
+{
+	return (this->_buffer);
+}
+
+void ClientSocket::setBuffer(std::string& buffer)
+{
+	this->_buffer = buffer;
+	return ;
+}
 
 
 bool ClientSocket::createSocket(void)

@@ -25,10 +25,11 @@ class ASocket
 		int getFd(void) const;
 		void setFd(int fd);
 		ServerConfig getConf(void) const;
-		void ASocket::setConf(ServerConfig conf);
-std::string ASocket::getHostName(void) const;
-void ASocket::setHostName(std::string& host_name);
-
+		void setConf(ServerConfig conf);
+		std::string getHostName(void) const;
+		void setHostName(std::string& host_name);
+		int getPort(void) const
+		void setPort(int port);
 		virtual bool createSocket() = 0;
 		virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 		virtual bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
