@@ -6,6 +6,8 @@ ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf),  _complete_post_fl
 
 ClientSocket::~ClientSocket() {};
 
+
+
 bool ClientSocket::createSocket(void)
 {
 	return (false);
@@ -127,12 +129,12 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 // }
 
 
-bool Response::ExistUri(const std::string& file)
+bool ClientSocket::existUri(const std::string& file)
 {
 	DIR *dir;
 	dirent *entry;
 
-	dir = opendir(this->_request.getDirectory().c_str());
+	dir = opendir(this->_response._directory.c_str());
 	if (dir == NULL)
 		return (false);
 	entry = readdir(dir);
@@ -155,12 +157,12 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::string object;
 	std::string path;
 	std::string file;
-	std::string::iterator it;
+	std::vector<std::string>::iterator it;
 
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
-	if (!location.index.empty())
-		it = location.begin();
+	// if (!location.index.empty())
+	// 	it = location.index.begin();
 	// if (CheckFileAndCombainLocation(location, object) == true)
 	// 	return ;
 	if (object[object.length() - 1] != '/')
@@ -176,15 +178,17 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	}
 	else
 	{
-		for (; it != location.end(); it++)
-		{
-			if (this->existUri(it->index) == true)
-			{
-				path += it->index;
-				this->_response.setFilename(it->index);
-			}
-			path = object;
-		}
+		// for (; it != location.index.end(); it++)
+		// {
+		// 	if (this->existUri(*it) == true)
+		// 	{
+		// 		path += *it;
+		// 		this->_response.setFilename(*it);
+		// 	}
+		// 	path = object;
+		// }
+		path += location.index;
+		this->_response.setFilename(location.index);
 		throw RequestException(404,"file not");
 	}
 	this->_response.setPath(path);
@@ -194,6 +198,20 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 
 	return ;
 }
+
+bool ClientSocket::checkAllowMethod(std::vector<std::string>& allow_method)
+{
+	std::vector<std::string>::iterator it;
+
+	it = allow_method.begin();
+	for (; it != allow_method.end(); it++)
+	{
+		if (*it == this->_request._method)
+			return (true);
+	}
+	return (false);
+}
+
 
 bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri)
 {
@@ -220,6 +238,8 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	}
 	if (length == 0)
 		return (false);
+	if (checkAllowMethod(location_tmp.allow_methods))
+		throw (RequestException(403, "Allow method"));
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
@@ -236,7 +256,6 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// 	return ;
 	ChangeDefaultPath(uri);
 }
-
 
 bool ClientSocket::checkExecuteResponse(int epoll_fd)
 {
@@ -278,9 +297,9 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 				this->_response.setFd(this->_fd);
 			if (this->_request._extension == "php")
 			{
-				if (this->_post_flag == true)
+				if (this->_request._post_flag == true)
 					throw (RequestException(405, "extension"));
-				ExecuteCgi(epoll_fd, this->_request, server_conf);
+				// ExecuteCgi(epoll_fd, this->_request, server_conf);
 			}
 			return (true);
 		}

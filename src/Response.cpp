@@ -183,7 +183,7 @@ void  Response::CreateResponseHeader(Request& req)
 	std::string file;
 
 	file = this->_filename;
-	CheckFileType(file);
+	// CheckFileType(file);
 	this->_header.push_back("Server: webserv/1.0\r\n");
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
 	createDateHeader();

@@ -56,6 +56,8 @@ class ClientSocket : public ASocket
 	bool CheckAndChangeRootUri(const std::string& uri);
 	bool CheckFileAndCombainLocation(LocationConfig& location, std::string& object);
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
+bool existUri(const std::string& file);
+bool checkAllowMethod(std::vector<std::string>& allow_method);
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
 
