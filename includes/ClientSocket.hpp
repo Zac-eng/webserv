@@ -58,6 +58,25 @@ class ClientSocket : public ASocket
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 bool existUri(const std::string& file);
 bool checkAllowMethod(std::vector<std::string>& allow_method);
+
+Request getRequest(void) const;
+void setRequest(Request& request);
+Response getResponse(void) const;
+void setResponse(Response& response);
+ServerConfig getConf(void) const;
+void setConf(ServerConfig& conf);
+bool getCarrigeReturnFlag(void) const;
+void setCarrigeReturnFlag(bool& carrige_return_flag);
+bool getResponseFlag(void) const;
+void setResponseFlag(bool& response_flag);
+bool getCompletePostFlag(void) const;
+void setCompletePostFlag(bool& complete_post_flag);
+bool getPostBodyFlag(void) const;
+void setPostBodyFlag(bool& post_body_flag);
+std::string getBuffer(void) const;
+void setBuffer(std::string& buffer);
+
+
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
 

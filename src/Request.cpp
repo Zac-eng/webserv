@@ -11,188 +11,188 @@ Request::~Request()
 	std::cout << "Request object destroyed" << std::endl;
 }
 
-std::string ClientSocket::getMethod(void) const
+std::string Request::getMethod(void) const
 {
 	return (this->_method);
 }
 
-void ClientSocket::setMethod(std::string& method)
+void Request::setMethod(const std::string& method)
 {
 	this->_method = method;
 	return ;
 }
 
-std::string ClientSocket::getPath(void) const
+std::string Request::getPath(void) const
 {
 	return (this->_path);
 }
 
-void ClientSocket::setPath(std::string& path)
+void Request::setPath(const std::string& path)
 {
 	this->_path = path;
 	return ;
 }
 
-std::string ClientSocket::getDirectory(void) const
+std::string Request::getDirectory(void) const
 {
 	return (this->_directory);
 }
 
-void ClientSocket::setDirectory(std::string& directory)
+void Request::setDirectory(const std::string& directory)
 {
 	this->_directory = directory;
 	return ;
 }
 
-std::string ClientSocket::getFile(void) const
+std::string Request::getFile(void) const
 {
 	return (this->_file);
 }
 
-void ClientSocket::setFile(std::string& file)
+void Request::setFile(const std::string& file)
 {
 	this->_file = file;
 	return ;
 }
 
-std::string ClientSocket::getExtension(void) const
+std::string Request::getExtension(void) const
 {
 	return (this->_extension);
 }
 
-void ClientSocket::setExtension(std::string& extension)
+void Request::setExtension(const std::string& extension)
 {
 	this->_extension = extension;
 	return ;
 }
 
-std::string ClientSocket::getVersion(void) const
+std::string Request::getVersion(void) const
 {
 	return (this->_version);
 }
 
-void ClientSocket::setVersion(std::string& version)
+void Request::setVersion(const std::string& version)
 {
 	this->_version = version;
 	return ;
 }
 
-std::string ClientSocket::getBody(void) const
+std::string Request::getBody(void) const
 {
 	return (this->_body);
 }
 
-void ClientSocket::setBody(std::string& body)
+void Request::setBody(const std::string& body)
 {
 	this->_body = body;
 	return ;
 }
 
-std::map<std::string, std::string> ClientSocket::getHeader(void) const
+std::map<std::string, std::string> Request::getHeader(void) const
 {
 	return (this->_header);
 }
 
-void ClientSocket::setHeader(std::map<std::string, std::string>& header)
+void Request::setHeader(const std::map<std::string, std::string>& header)
 {
 	this->_header = header;
 	return ;
 }
 
-bool ClientSocket::getRequestFlag(void) const
+bool Request::getRequestFlag(void) const
 {
 	return (this->_request_flag);
 }
 
-void ClientSocket::setRequestFlag(bool& request_flag)
+void Request::setRequestFlag(const bool& request_flag)
 {
 	this->_request_flag = request_flag;
 	return ;
 }
 
-bool ClientSocket::getHostFlag(void) const
+bool Request::getHostFlag(void) const
 {
 	return (this->_host_flag);
 }
 
-void ClientSocket::setHostFlag(bool& host_flag)
+void Request::setHostFlag(const bool& host_flag)
 {
 	this->_host_flag = host_flag;
 	return ;
 }
 
-bool ClientSocket::getPostFlag(void) const
+bool Request::getPostFlag(void) const
 {
 	return (this->_post_flag);
 }
 
-void ClientSocket::setPostFlag(bool& post_flag)
+void Request::setPostFlag(const bool& post_flag)
 {
 	this->_post_flag = post_flag;
 	return ;
 }
 
-bool ClientSocket::getChunkFlag(void) const
+bool Request::getChunkFlag(void) const
 {
 	return (this->_chunk_flag);
 }
 
-void ClientSocket::setChunkFlag(bool& chunk_flag)
+void Request::setChunkFlag(const bool& chunk_flag)
 {
 	this->_chunk_flag = chunk_flag;
 	return ;
 }
 
-bool ClientSocket::getChunkFinishFlag(void) const
+bool Request::getChunkFinishFlag(void) const
 {
 	return (this->_chunk_finish_flag);
 }
 
-void ClientSocket::setChunkFinishFlag(bool& chunk_finish_flag)
+void Request::setChunkFinishFlag(const bool& chunk_finish_flag)
 {
 	this->_chunk_finish_flag = chunk_finish_flag;
 	return ;
 }
 
-size_t ClientSocket::getChunkSize(void) const
+size_t Request::getChunkSize(void) const
 {
 	return (this->_chunk_size);
 }
 
-void ClientSocket::setChunkSize(size_t& chunk_size)
+void Request::setChunkSize(const size_t& chunk_size)
 {
 	this->_chunk_size = chunk_size;
 	return ;
 }
 
-size_t ClientSocket::getStatusNumber(void) const
+size_t Request::getStatusNumber(void) const
 {
 	return (this->_status_number);
 }
 
-void ClientSocket::setStatusNumber(size_t& status_number)
+void Request::setStatusNumber(const size_t& status_number)
 {
 	this->_status_number = status_number;
 	return ;
 }
 
-bool ClientSocket::getConnectionFlag(void) const
+bool Request::getConnectionFlag(void) const
 {
 	return (this->_connection_flag);
 }
 
-void ClientSocket::setConnectionFlag(bool& connection_flag)
+void Request::setConnectionFlag(const bool& connection_flag)
 {
 	this->_connection_flag = connection_flag;
 	return ;
 }
 
-std::vector<std::string, std::string> ClientSocket::getValidHeaderKey(void) const
+std::vector<std::string> Request::getValidHeaderKey(void) const
 {
 	return (this->_valid_header_key);
 }
 
-void ClientSocket::setValidHeaderKey(std::vector<std::string, std::string>& valid_header_key)
+void Request::setValidHeaderKey(const std::vector<std::string>& valid_header_key)
 {
 	this->_valid_header_key = valid_header_key;
 	return ;
@@ -749,11 +749,6 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
-}
-
-std::string Request::getFile(void)
-{
-	return (this->_file);
 }
 
 void Request::insertHeaderKey(void)

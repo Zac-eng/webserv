@@ -114,14 +114,14 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 	{
 		if (it != buffer.end())
 			return (false);
-		if (this->_request._chunk_flag == true && this->_request._chunk_finish_flag == false)
+		if (this->_request.getChunkFlag() == true && this->_request.getChunkFinishFlag() == false)
 			return (false);
 		this->_complete_parse_flag = true;
 		return (true);
 	}
-	if (this->_request.GetRequestFlag() == true && this->_request.GetHostFlag() == false)
+	if (this->_request.getRequestFlag() == true && this->_request.getHostFlag() == false)
 		return (false);
-	if (this->_request.GetPostFlag() == true)
+	if (this->_request.getPostFlag() == true)
 	{
 		this->_complete_post_flag = true;
 		return (true);
@@ -136,7 +136,7 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 {
 	if (object.compare("\r\n") == 0)
 	{
-		if (this->_request.GetRequestFlag() == false)
+		if (this->_request.getRequestFlag() == false)
 			return (true);
 		if (CheckCRequestFlag(buffer, it, object) == false)
 			throw (RequestException(400, "request_flag"));
@@ -222,7 +222,7 @@ bool ClientSocket::existUri(const std::string& file)
 	DIR *dir;
 	dirent *entry;
 
-	dir = opendir(this->_response._directory.c_str());
+	dir = opendir((this->_response.getDirectory()).c_str());
 	if (dir == NULL)
 		return (false);
 	entry = readdir(dir);
@@ -257,12 +257,12 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		object += '/';
 	this->_response.setDirectory(object);
 	path = object;
-	if (!this->_request._file.empty())
+	if (!this->_request.getFile().empty())
 	{
-		if (this->existUri(this->_request._file) == false)
+		if (this->existUri(this->_request.getFile()) == false)
 			throw RequestException(404,"uri file not");
-		this->_response.setFilename(this->_request._file);
-		path += this->_response._filename;
+		this->_response.setFilename(this->_request.getFile());
+		path += this->_response.getFilename();
 	}
 	else
 	{
@@ -277,11 +277,11 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		// }
 		path += location.index;
 		this->_response.setFilename(location.index);
-		throw RequestException(404,"file not");
+		// throw RequestException(404,"file not");
 	}
 	this->_response.setPath(path);
-	std::cout <<this->_response._filename<<std::endl;
-	std::cout <<this->_response._directory<<std::endl;
+	std::cout <<this->_response.getFilename()<<std::endl;
+	std::cout <<this->_response.getDirectory()<<std::endl;
 	std::cout <<this->_response._path<<std::endl;
 
 	return ;
@@ -294,7 +294,8 @@ bool ClientSocket::checkAllowMethod(std::vector<std::string>& allow_method)
 	it = allow_method.begin();
 	for (; it != allow_method.end(); it++)
 	{
-		if (*it == this->_request._method)
+		std::cout << *it << std::endl;
+		if (*it == this->_request.getMethod())
 			return (true);
 	}
 	return (false);
@@ -326,7 +327,7 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	}
 	if (length == 0)
 		return (false);
-	if (checkAllowMethod(location_tmp.allow_methods))
+	if (checkAllowMethod(location_tmp.allow_methods) == false)
 		throw (RequestException(403, "Allow method"));
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
@@ -383,9 +384,9 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 				}
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
-			if (this->_request._extension == "php")
+			if (this->_request.getExtension() == "php")
 			{
-				if (this->_request._post_flag == true)
+				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
 				// ExecuteCgi(epoll_fd, this->_request, server_conf);
 			}
@@ -401,7 +402,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				perror("epoll_ctl: mod");
 			}
-		this->_request._status_number = e.getStatus();
+		this->_request.setStatusNumber(e.getStatus());
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
 		return (true);
@@ -464,7 +465,7 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	try
 	{
 		this->_response.ExecuteResponse(this->_request);
-		if (this->_request._connection_flag == true)
+		if (this->_request.getConnectionFlag() == true)
 		{
 			if (clposeAndDeleteSocket(socket) == false)
 				return (false);

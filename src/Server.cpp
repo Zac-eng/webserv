@@ -36,8 +36,8 @@ bool Server::setMonitoringFd(ASocket* socket)
 	struct epoll_event event;
 
 	event.events = EPOLLIN;
-	event.data.fd = socket->_fd;
-	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket->_fd, &event) < 0)
+	event.data.fd = socket->getFd();
+	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, socket->getFd(), &event) < 0)
 		return (false);
 	return (true);
 }
@@ -67,9 +67,9 @@ void Server::createListenServer(void)
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
 			throw ServerException();
-		if (set_nonblocking(socket->_fd) == false)
+		if (set_nonblocking(socket->getFd()) == false)
 			throw ServerException();
-		this->_socket.insert(std::make_pair(socket->GetFd(), socket));
+		this->_socket.insert(std::make_pair(socket->getFd(), socket));
 	}
 	if (epollCreate() == false)
 		throw ServerException();

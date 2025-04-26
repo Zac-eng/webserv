@@ -12,7 +12,7 @@
 
 class ASocket
 {
-	private:
+	protected:
 		ServerConfig _conf;
 		int _fd;
 		std::string _host_name;
@@ -28,7 +28,7 @@ class ASocket
 		void setConf(ServerConfig conf);
 		std::string getHostName(void) const;
 		void setHostName(std::string& host_name);
-		int getPort(void) const
+		int getPort(void) const;
 		void setPort(int port);
 		virtual bool createSocket() = 0;
 		virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;

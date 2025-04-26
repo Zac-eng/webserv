@@ -7,7 +7,7 @@ const char* RequestException::what() const throw()
 	return (this->_message.c_str());
 }
 
-int RequestException::getStatus(void) const
+size_t RequestException::getStatus(void) const
 {
 	return (this->_status);
 }

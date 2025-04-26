@@ -23,7 +23,7 @@ ServerConfig ASocket::getConf(void) const
 
 void ASocket::setConf(ServerConfig conf)
 {
-	this->_confd = conf;
+	this->_conf = conf;
 }
 
 std::string ASocket::getHostName(void) const

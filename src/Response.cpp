@@ -3,7 +3,6 @@
 #include "Server.hpp"
 #include "ClientSocket.hpp"
 
-
 Response::Response()
 {
 	std::cout << "Response object create" << std::endl;
@@ -17,24 +16,147 @@ Response::~Response()
 	std::cout << "Response object destroyed" << std::endl;
 }
 
-void Response::setFd(int fd)
+int Response::getFd(void) const
+{
+	return (this->_fd);
+}
+
+void Response::setFd(const int& fd)
 {
 	this->_fd = fd;
+	return ;
 }
 
-void Response::setDirectory(const std::string& dir)
+Request Response::getRequest(void) const
 {
-	this->_directory = dir;
+	return (this->_request);
 }
 
-void Response::setFilename(const std::string& file)
+void Response::setRequest(const Request& request)
 {
-	this->_filename = file;
+	this->_request = request;
+	return ;
 }
 
-void Response::setPath(const std::string& file)
+std::string Response::getResponse(void) const
 {
-	this->_path = file;
+	return (this->_response);
+}
+
+void Response::setResponse(const std::string& response)
+{
+	this->_response = response;
+	return ;
+}
+
+std::string Response::getResponseBody(void) const
+{
+	return (this->_response_body);
+}
+
+void Response::setResponseBody(const std::string& response_body)
+{
+	this->_response_body = response_body;
+	return ;
+}
+
+size_t Response::getStatusCode(void) const
+{
+	return (this->_status_code);
+}
+
+void Response::setStatusCode(const size_t& status_code)
+{
+	this->_status_code = status_code;
+	return ;
+}
+
+std::string Response::getDirectory(void) const
+{
+	return (this->_directory);
+}
+
+void Response::setDirectory(const std::string& directory)
+{
+	this->_directory = directory;
+	return ;
+}
+
+std::string Response::getFilename(void) const
+{
+	return (this->_filename);
+}
+
+void Response::setFilename(const std::string& filename)
+{
+	this->_filename = filename;
+	return ;
+}
+
+std::string Response::getPath(void) const
+{
+	return (this->_path);
+}
+
+void Response::setPath(const std::string& path)
+{
+	this->_path = path;
+	return ;
+}
+
+std::string Response::getContentLength(void) const
+{
+	return (this->_content_length);
+}
+
+void Response::setContentLength(const std::string& content_length)
+{
+	this->_content_length = content_length;
+	return ;
+}
+
+std::string Response::getResponseMessage(void) const
+{
+	return (this->_response_message);
+}
+
+void Response::setResponseMessage(const std::string& response_message)
+{
+	this->_response_message = response_message;
+	return ;
+}
+
+std::vector<std::string> Response::getHeader(void) const
+{
+	return (this->_header);
+}
+
+void Response::setHeader(const std::vector<std::string>& header)
+{
+	this->_header = header;
+	return ;
+}
+
+std::string Response::getBody(void) const
+{
+	return (this->_body);
+}
+
+void Response::setBody(const std::string& body)
+{
+	this->_body = body;
+	return ;
+}
+
+std::string Response::getCgiBuffer(void) const
+{
+	return (this->_cgi_buffer);
+}
+
+void Response::setCgiBuffer(const std::string& cgi_buffer)
+{
+	this->_cgi_buffer = cgi_buffer;
+	return ;
 }
 
 // bool Response::ExistUri(const std::string& uri)
@@ -188,7 +310,7 @@ void  Response::CreateResponseHeader(Request& req)
 	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
 	createDateHeader();
 	// CheckConnectionHeader(header);
-	if (req._connection_flag == true)
+	if (req.getConnectionFlag() == true)
 		this->_header.push_back("Connection: close\r\n");
 	CreateResponse();
 }
@@ -218,7 +340,7 @@ void Response::handlePost(Request& req)
 
 	if (!file.is_open())
 		throw std::runtime_error("error");
-	file << req._body;
+	file << req.getBody();
 	file.close();
 	this->_status_code = 200;
 	return ;
@@ -232,11 +354,11 @@ void Response::HandleMethod(Request& req)
 		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 		return ;
 	}
-	if (req.GetMethod() == "GET")
+	if (req.getMethod() == "GET")
 		handleGet(req);
-	else if (req.GetMethod() == "POST")
+	else if (req.getMethod() == "POST")
 		handlePost(req);
-	else if (req.GetMethod() == "DELETE")
+	else if (req.getMethod() == "DELETE")
 		handleDelete(req);
 	return ;
 }
@@ -258,14 +380,14 @@ void Response::ResponseError(Request& req)
         std::ostringstream response;
         
         // HTTP ヘッダーとエラーメッセージのフォーマット
-        response << "HTTP/1.1 " << req._status_number << " Bad Request\r\n";
+        response << "HTTP/1.1 " << req.getStatusNumber() << " Bad Request\r\n";
         response << "Content-Type: text/html\r\n";
         response << "Connection: close\r\n";
         response << "\r\n";
         
         // レスポンスボディ
         response << "<html><body>";
-        response << "<h1>" << req._status_number << " Bad Request</h1>";
+        response << "<h1>" << req.getStatusNumber() << " Bad Request</h1>";
         response << "<p>Your request could not be understood by the server.</p>";
         response << "</body></html>";
 
@@ -280,7 +402,7 @@ void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
-	if (req._status_number != 0)
+	if (req.getStatusNumber() != 0)
 		return (ResponseError(req));
 
 	// if (this->ExistUri(req.getPath()) == false)

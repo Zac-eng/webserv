@@ -91,9 +91,9 @@ bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
 		return (false, std::cout <<"epoll_ctl" << std::endl);
-	client->SetFd(fd);
-	socket.insert(std::make_pair(client->GetFd(), client));
-	if (set_nonblocking(client->GetFd()) == false)
+	client->setFd(fd);
+	socket.insert(std::make_pair(client->getFd(), client));
+	if (set_nonblocking(client->getFd()) == false)
 		return (false);
 	return(true);
 }

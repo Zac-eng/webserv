@@ -14,5 +14,5 @@ class RequestException : public std::exception
 		RequestException(size_t status, const std::string& message);
 		const char* what() const throw();
 		virtual ~RequestException() throw();
-		int getStatus(void) const;
+		size_t getStatus(void) const;
 };
