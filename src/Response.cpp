@@ -232,6 +232,8 @@ bool Response::ReadFile(Request& req)
 	while (1)
 	{
 		byte_size = read(fd, buf, BUFFER_SIZE);
+		std::cout << byte_size<<std::endl;
+			debug("ydsabjfhvfhs");
 		if (byte_size < 0)
 		{
 			close(fd);
@@ -280,6 +282,8 @@ void Response::CreateResponse()
 		this->_response += *it;
 	this->_response += "\r\n";
 	this->_response += this->_response_body;
+	std::cout <<"-----aaaaaa"<<std::endl;
+	std::cout <<"-----" <<this->_response_body<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -420,6 +424,7 @@ void Response::ResponseBadGateway(void)
 {
 	ErrorResponse(501, "Bad Gateway");
 }
+
 
 
 void Response::ResponseError(const size_t status_code)

@@ -125,3 +125,4 @@ bool GetSubstringUntilSpace(const std::string& request, std::string::const_itera
 bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object);
 		bool isCarriagereturn(const std::string& request);
 size_t string_to_int(const std::string &str);
+void debug(const std::string& str);

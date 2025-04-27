@@ -16,7 +16,6 @@ Server::~Server()
 	}
 }
 
-
 bool set_nonblocking(int fd)
 {
 	int flag;

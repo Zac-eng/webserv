@@ -95,3 +95,8 @@ size_t string_to_int(const std::string &str)
 	}
 	return (num);
 }
+
+void debug(const std::string& str)
+{
+	std::cout << str <<std::endl;
+}

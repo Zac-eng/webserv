@@ -346,13 +346,25 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 {
 	std::vector<LocationConfig> location;
 
-	location = this->_conf.GetLocation();
 
+	
+	location = this->_conf.GetLocation();
+	// デフォルトのrootパスを探し、404を探し、404のデフォルト書き込み
+	// if (!location.empty())
+	// {
 	if (CheckAndChangeLocationUri(location, uri) == true)
 		return ;
+	// }
+	// 	// if (serverRootIndex() == true)
+	// 	// 	CombainRootAndIndex()
+	// 	if (this->_conf.error_pages.count(404) > 0)
+	// 	{
+	// 		if (existUri(this->_conf.at(404)) == true)
+	// 			throw (RequestException(404, "404 error"));
 	// if (CheckAndChangeRootUri(uri) == true)
 	// 	return ;
-	ChangeDefaultPath(uri);
+	throw (RequestException(404, "request aaaaa"));
+	// ChangeDefaultPath(uri);
 }
 
 bool ClientSocket::checkExecuteResponse(int epoll_fd)
@@ -387,7 +399,6 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 				ChangeConfUri(this->_request.getPath());
 				ev.events = EPOLLOUT;
 				ev.data.fd = this->_fd;
-
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 					perror("epoll_ctl: mod");
 				}
@@ -474,7 +485,7 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	try
 	{
 		if (this->_request.getStatusNumber() != 0)
-			throw ResponseException(this->_request.getStatusNumber());
+			throw (ResponseException(this->_request.getStatusNumber()));
 		this->_response.ExecuteResponse(this->_request);
 		if (this->_request.getConnectionFlag() == true)
 		{
