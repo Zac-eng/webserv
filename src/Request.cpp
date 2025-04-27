@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _bad_request_flag(false), _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
 	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
@@ -198,6 +198,17 @@ void Request::setValidHeaderKey(const std::vector<std::string>& valid_header_key
 	return ;
 }
 
+bool Request::getBadRequestFlag(void) const
+{
+	return (this->_bad_request_flag);
+}
+
+void Request::setBadRequestFlag(const bool& bad_request_flag)
+{
+	this->_bad_request_flag = bad_request_flag;
+	return ;
+}
+
 bool Request::SearchHeaderKey(std::string &key)
 {
 	for (size_t i = 0; i < _valid_header_key.size(); i++)
@@ -346,6 +357,22 @@ void Request::searchConnectionClose(std::string& value)
 	return ;
 }
 
+void Request::checkContentLengthValue(const std::string& value)
+{
+	std::string::const_iterator it;
+
+	it = value.begin();
+	for (; it != value.end() && *it != '\r'; it++)
+	{
+		if (!std::isdigit(*it))
+		{
+			this->_bad_request_flag = true;
+				return ;
+		}
+	}
+	return ;
+}
+
 bool Request::parseHeader(const std::string& request)
 {
 	std::string key;
@@ -380,6 +407,8 @@ bool Request::parseHeader(const std::string& request)
 	this->_header[key] = value;
 	if (key == "transfer-enconding")
 		SearchChunkValue(value);
+	if (key == "content-length")
+		checkContentLengthValue(value);
 	if (key == "connection")
 		searchConnectionClose(value);
 	return (true);
@@ -546,6 +575,14 @@ bool Request::ValidVersion(const std::string& version)
 	return (false);
 }
 
+bool Request::checkPostHeader(void)
+{
+	if (this->_header.count("content-length") > 0 \
+		&& this->_header.count("transfer-encoding") > 0)
+		return (true);
+	return (false);
+}
+
 bool Request::ParseVersion(const std::string& request, std::string::const_iterator& it)
 {
 	std::string version;
@@ -596,6 +633,19 @@ bool Request::ParseBody(const std::string& request)
 		return (false);
 	this->_body = request.substr(0, pos);
 	return (true);
+}
+
+bool Request::checkPostContentLength(void)
+{
+	std::map<std::string, std::string>::iterator it;
+
+	it = this->_header.find("content-length");
+	if (it != this->_header.end())
+	{
+		if (it->second == "0")
+			return (true);
+	}
+	return (false);
 }
 
 // bool Request::ValidHeader(void)

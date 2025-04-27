@@ -32,6 +32,7 @@ class Request
 		size_t _chunk_size;
 		size_t _status_number;
 		bool _connection_flag;
+		bool _bad_request_flag;
 		std::vector<std::string> _valid_header_key;
 
 		// LocationConfig _conf;
@@ -68,7 +69,9 @@ bool executeChunk(const std::string& request);
 bool parseChunk(const std::string& request);
 void searchConnectionClose(std::string& value);
 bool CheckMethodAndHeader(void);
-
+bool checkPostContentLength(void);
+bool checkPostHeader(void);
+void checkContentLengthValue(const std::string& value);
 
 std::string getMethod(void) const;
 void setMethod(const std::string& method);
@@ -104,7 +107,8 @@ bool getConnectionFlag(void) const;
 void setConnectionFlag(const bool& connection_flag);
 std::vector<std::string> getValidHeaderKey(void) const;
 void setValidHeaderKey(const std::vector<std::string>& valid_header_key);
-
+bool getBadRequestFlag(void) const;
+void setBadRequestFlag(const bool& bad_request_flag);
 
 
 
