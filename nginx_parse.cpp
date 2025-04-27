@@ -183,15 +183,33 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		{
 			int i = 0;
 			std::string location_path;
+			std::string rest;
+			std::string next_token;
 			block_line_stream >> location_path;
-			if (location_path[i] != '/')
+			if (!(location_path[i] == '/' || location_path == "~"))
 			{
 				std::cerr << "Error: Invalid location path: " << location_path << std::endl;
 				return false;
 			}
+			if (location_path == "~") {
+				std::string line_php = block_line_stream.str();
+				std::getline(block_line_stream, rest, '{');
+				rest.erase(0, rest.find_first_not_of(" \t"));
+				rest.erase(rest.find_last_not_of(" \t") + 1);
+				location_path += " " + rest;
+				if (!(location_path == "~ \\.php$"))
+				{
+					std::cerr << "Error: Invalid location path." << std::endl;
+				}
+				line.erase(line.find_last_not_of(" \t\n\r") + 1);
+				if (!line.empty() && line.back() == '{'){
+					std::cout << "here:" << std::endl;
+					next_token = "{";
+				}
+			}
 			location_config.setPath(location_path);
-			std::string next_token;
 			block_line_stream >> next_token;
+			std::cout << "next_token: " << next_token << std::endl;
 			if (next_token == "{")
 				has_open = true;
 			set_path = true;

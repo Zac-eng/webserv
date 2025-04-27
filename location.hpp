@@ -7,26 +7,27 @@
 #include <functional>
 #include <sstream>
 #include <set>
+#include <map>
 
 class LocationConfig
 {
 	public:
 		std::string path;
 		std::string root;
-		std::string index;
 		// std::vector<std::string> allow_methods;
 		std::string method;
+		std::string fastcgi_index;
+		std::string fastcgi_pass;
 		std::vector<int> index_count;
 		std::vector<int> index_push_count;
+		std::map<std::string, std::string> fastcgi_param;
 		void setPath(const std::string& p) { path = p; }
 		// void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
-		bool check_location(std::istream& config_file, LocationConfig& location_config);
-		void setIndex(const std::vector<std::string>& indexes);
+		bool check_location(std::istream& config_file, LocationConfig& location_config);		void setIndex(const std::vector<std::string>& indexes);
 		std::vector<std::string> index_files;
 	private:
 
 };
-bool check_location(std::istream& config_file, LocationConfig& location_config);
 
 // class LocationConfig
 // {
