@@ -152,7 +152,7 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 	{
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
 			throw (RequestException(400, "location_error"));
-		if ((this->_request.getBody()).length() == this->_request.getBodySize())
+		if (this->_request.getPostFlag() == true && (this->_request.getBody()).length() == this->_request.getBodySize())
 			this->_complete_parse_flag = true;
 		if (this->_complete_post_flag == true)
 			this->_post_body_flag = true;
@@ -392,6 +392,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 			}
 			if (this->_complete_parse_flag == true)
 			{
+				std::cout << "conmoakekekke"<<std::endl;
 				if (it != buffer.end())
 					return (false);
 				// if (this->_request.CheckMethodAndHeader() == false)
@@ -477,6 +478,16 @@ bool ClientSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
 	return (true);
 }
 
+void ClientSocket::reSetClientSocket(void)
+{
+	this->_carrige_return_flag = false;
+	this->_complete_parse_flag = false;
+	this->_complete_post_flag = false;
+	this->_response_flag = false;
+	this->_post_body_flag = false;
+	this->_buffer.clear();
+}
+
 bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	struct epoll_event ev;
@@ -495,10 +506,12 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		}
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
-
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			perror("epoll_ctl: mod");
 		}
+		this->_request.reSetRequest();
+		this->reSetClientSocket();
+		this->_response.reSetResponse();
 		return (true);
 	}
 	catch (const ResponseException& e)

@@ -73,6 +73,12 @@ void ResponseMethodNotAloowed(void);
 void ResponseInternalServerError(void);
 void ResponseNotImplemented(void);
 void ResponseBadGateway(void);
+void reSetResponse(void);
+
+
+
+
+
 
 
 

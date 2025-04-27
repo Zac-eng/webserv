@@ -425,6 +425,21 @@ void Response::ResponseBadGateway(void)
 	ErrorResponse(501, "Bad Gateway");
 }
 
+void Response::reSetResponse(void)
+{
+	this->_response.clear();
+	this->_response_body.clear();
+	this->_status_code = 0;
+	this->_directory.clear();
+	this->_filename.clear();
+	this->_path.clear();
+	this->_content_length.clear();
+	this->_response_message.clear();
+	this->_header.clear();
+	this->_body.clear();
+	this->_cgi_buffer.clear();
+}
+
 
 
 void Response::ResponseError(const size_t status_code)

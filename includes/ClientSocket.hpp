@@ -58,6 +58,11 @@ class ClientSocket : public ASocket
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 bool existUri(const std::string& file);
 bool checkAllowMethod(std::vector<std::string>& allow_method);
+void reSetClientSocket(void);
+
+
+
+
 
 Request getRequest(void) const;
 void setRequest(Request& request);

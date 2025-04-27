@@ -176,12 +176,12 @@ void Request::setStatusNumber(const size_t& status_number)
 	return ;
 }
 
-size_t Request::getBodySize(void) const
+int Request::getBodySize(void) const
 {
 	return (this->_body_size);
 }
 
-void Request::setBodySize(const size_t& body_size)
+void Request::setBodySize(const int& body_size)
 {
 	this->_body_size = body_size;
 	return ;
@@ -791,6 +791,29 @@ bool Request::CheckMethodAndHeader(void)
 		return (false);
 	}
 	return (true);
+}
+
+void Request::reSetRequest(void)
+{
+	this->_request_flag = false;
+	this->_host_flag = false;
+	this->_post_flag =false;
+	this->_chunk_finish_flag = false;
+	this->_chunk_flag = false;
+	this->_chunk_size = 0;
+	this->_status_number = 0;
+	this->_body_size =-1;
+	this->_connection_flag = false;
+	this->_bad_request_flag = false;
+	this->_request.clear();
+	this->_method.clear();
+	this->_path.clear();
+	this->_directory.clear();
+	this->_file.clear();
+	this->_extension.clear();
+	this->_version.clear();
+	this->_body.clear();
+	this->_header.clear();
 }
 
 bool Request::ParseRequest(const std::string& request, bool parse_post_flag)

@@ -31,7 +31,7 @@ class Request
 		bool _chunk_finish_flag;
 		size_t _chunk_size;
 		size_t _status_number;
-		size_t _body_size;
+		int _body_size;
 		bool _connection_flag;
 		bool _bad_request_flag;
 		std::vector<std::string> _valid_header_key;
@@ -73,6 +73,7 @@ bool CheckMethodAndHeader(void);
 bool checkPostContentLength(void);
 bool checkBodyHeader(void);
 void checkContentLengthValue(const std::string& value);
+void reSetRequest(void);
 
 
 
@@ -113,8 +114,8 @@ void setValidHeaderKey(const std::vector<std::string>& valid_header_key);
 bool getBadRequestFlag(void) const;
 void setBadRequestFlag(const bool& bad_request_flag);
 
-size_t getBodySize(void) const;
-void setBodySize(const size_t& body_size);
+int getBodySize(void) const;
+void setBodySize(const int& body_size);
 
 
 
