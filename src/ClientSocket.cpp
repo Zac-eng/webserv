@@ -129,7 +129,7 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 			this->_complete_parse_flag = true;
 			return (true);
 		}
-		return (true);
+		// return (true);
 	}
 	if (it != buffer.end())
 		return (false);
@@ -337,7 +337,7 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	if (length == 0)
 		return (false);
 	if (checkAllowMethod(location_tmp.allow_methods) == false)
-		throw (RequestException(403, "Allow method"));
+		throw (RequestException(405, "Allow method"));
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
@@ -492,6 +492,7 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (const ResponseException& e)
 	{
+		std::cout << "来てます"<< std::endl;
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
 		this->_response.ResponseError(e.getStatus());

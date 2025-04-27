@@ -257,7 +257,6 @@ bool Request::parseHeaderKey(const std::string& request, std::string::const_iter
 {
 	if (SkipSpaceAndCheckEnd(request, it) == false)
 		return (false);
-	std::cout <<"rrr"<<std::endl;
 	if (HandleHeaderKey(request, it, key) == false)
 		return (false);
 	return (true);
