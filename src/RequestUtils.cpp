@@ -82,3 +82,16 @@ bool substring_object_until_carrige_return(std::string& buffer, std::string::ite
 	it += pos + 2;
 	return (true);
 }
+
+size_t string_to_int(const std::string &str)
+{
+	std::stringstream convert_int(str);
+	int num;
+	convert_int >> num; 
+	if (convert_int.fail())
+	{
+		std::cout << "char: impossible" << std::endl;
+		return (-1);
+	}
+	return (num);
+}

@@ -31,6 +31,7 @@ class Request
 		bool _chunk_finish_flag;
 		size_t _chunk_size;
 		size_t _status_number;
+		size_t _body_size;
 		bool _connection_flag;
 		bool _bad_request_flag;
 		std::vector<std::string> _valid_header_key;
@@ -70,8 +71,10 @@ bool parseChunk(const std::string& request);
 void searchConnectionClose(std::string& value);
 bool CheckMethodAndHeader(void);
 bool checkPostContentLength(void);
-bool checkPostHeader(void);
+bool checkBodyHeader(void);
 void checkContentLengthValue(const std::string& value);
+
+
 
 std::string getMethod(void) const;
 void setMethod(const std::string& method);
@@ -110,6 +113,8 @@ void setValidHeaderKey(const std::vector<std::string>& valid_header_key);
 bool getBadRequestFlag(void) const;
 void setBadRequestFlag(const bool& bad_request_flag);
 
+size_t getBodySize(void) const;
+void setBodySize(const size_t& body_size);
 
 
 
@@ -119,3 +124,4 @@ bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterato
 bool GetSubstringUntilSpace(const std::string& request, std::string::const_iterator& it, std::string& object);
 bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::const_iterator& it, std::string& object);
 		bool isCarriagereturn(const std::string& request);
+size_t string_to_int(const std::string &str);

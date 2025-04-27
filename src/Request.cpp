@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _bad_request_flag(false), _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _body_size(-1), _bad_request_flag(false), _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
 {
 	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
@@ -173,6 +173,17 @@ size_t Request::getStatusNumber(void) const
 void Request::setStatusNumber(const size_t& status_number)
 {
 	this->_status_number = status_number;
+	return ;
+}
+
+size_t Request::getBodySize(void) const
+{
+	return (this->_body_size);
+}
+
+void Request::setBodySize(const size_t& body_size)
+{
+	this->_body_size = body_size;
 	return ;
 }
 
@@ -360,6 +371,7 @@ void Request::searchConnectionClose(std::string& value)
 void Request::checkContentLengthValue(const std::string& value)
 {
 	std::string::const_iterator it;
+	std::string body;
 
 	it = value.begin();
 	for (; it != value.end() && *it != '\r'; it++)
@@ -369,7 +381,9 @@ void Request::checkContentLengthValue(const std::string& value)
 			this->_bad_request_flag = true;
 				return ;
 		}
+		body += *it;
 	}
+	this->_body_size = string_to_int(body);
 	return ;
 }
 
@@ -575,7 +589,7 @@ bool Request::ValidVersion(const std::string& version)
 	return (false);
 }
 
-bool Request::checkPostHeader(void)
+bool Request::checkBodyHeader(void)
 {
 	if (this->_header.count("content-length") > 0 \
 		&& this->_header.count("transfer-encoding") > 0)
@@ -758,6 +772,8 @@ bool Request::parsePostBody(const std::string& request)
 	if (this->_chunk_flag == true)
 		return (parseChunk(request));
 	this->_body += request;
+	if (this->_body.length() > this->_body_size)
+		throw RequestException(400, "body size");
 	return (true);
 }
 

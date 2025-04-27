@@ -141,7 +141,7 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 {
 	if (object.compare("\r\n") == 0)
 	{
-		if (this->_request.getBadRequestFlag() == true || this->_request.checkPostHeader() == true)
+		if (this->_request.getBadRequestFlag() == true || this->_request.checkBodyHeader() == true)
 			throw RequestException(400, "bad request");
 		if (this->_request.getRequestFlag() == false)
 			return (true);
@@ -152,6 +152,8 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 	{
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
 			throw (RequestException(400, "location_error"));
+		if ((this->_request.getBody()).length() == this->_request.getBodySize())
+			this->_complete_parse_flag = true;
 		if (this->_complete_post_flag == true)
 			this->_post_body_flag = true;
 	}
