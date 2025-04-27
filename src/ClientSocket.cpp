@@ -473,6 +473,8 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		return (false);
 	try
 	{
+		if (this->_request.getStatusNumber() != 0)
+			throw ResponseException(this->_request.getStatusNumber());
 		this->_response.ExecuteResponse(this->_request);
 		if (this->_request.getConnectionFlag() == true)
 		{
@@ -492,6 +494,7 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	{
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
+		this->_response.ResponseError(e.getStatus());
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 				return (false);
 			}

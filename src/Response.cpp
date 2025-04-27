@@ -375,26 +375,69 @@ void Response::ExecuteAndGetStatusCode(Request& req)
 	return ;
 }
 
-void Response::ResponseError(Request& req)
+void Response::ErrorResponse(size_t code, const std::string& title)
 {
-        std::ostringstream response;
-        
-        // HTTP ヘッダーとエラーメッセージのフォーマット
-        response << "HTTP/1.1 " << req.getStatusNumber() << " Bad Request\r\n";
-        response << "Content-Type: text/html\r\n";
-        response << "Connection: close\r\n";
-        response << "\r\n";
-        
-        // レスポンスボディ
-        response << "<html><body>";
-        response << "<h1>" << req.getStatusNumber() << " Bad Request</h1>";
-        response << "<p>Your request could not be understood by the server.</p>";
-        response << "</body></html>";
+	std::ostringstream response;
 
-        // レスポンスボディとヘッダーをソケットに書き込む
-        std::string response_str = response.str();
-        write(this->_fd, response_str.c_str(), response_str.length());
-		throw ResponseException(400);
+	response << "HTTP/1.1 "<<code<<" " <<title<<"\r\n";
+	response << "Content-Type: text/html\r\n";
+	response << "Connection: close\r\n";
+	response << "\r\n";
+	response << "<html><body>";
+	response << "<h1>" << code << " " << title << "</h1>";
+	response << "</body></html>";
+
+	this->_response = response.str();
+	write(this->_fd, this->_response.c_str(), this->_response.length());
+}
+
+void Response::ResponseBadRequest(void)
+{
+	ErrorResponse(400, "Bad Request");
+}
+
+void Response::ResponseFileNotFound(void)
+{
+	ErrorResponse(404, "Not Found");
+}
+
+void Response::ResponseMethodNotAloowed(void)
+{
+	ErrorResponse(405, "Method Not Allowed");
+}
+
+void Response::ResponseInternalServerError(void)
+{
+	ErrorResponse(500, "Internal Server Error");
+}
+
+void Response::ResponseNotImplemented(void)
+{
+	ErrorResponse(501, "Not Implemented");
+}
+
+void Response::ResponseBadGateway(void)
+{
+	ErrorResponse(501, "Bad Gateway");
+}
+
+
+void Response::ResponseError(const size_t status_code)
+{
+	// if (server.errorpage() == req.status_number)
+	// 	serchErrorPage();
+	if (status_code == 400)
+		ResponseBadRequest();
+	else if(status_code == 404)
+		ResponseFileNotFound();
+	else if(status_code == 405)
+		ResponseMethodNotAloowed();
+	else if(status_code == 500)
+		ResponseInternalServerError();
+	else if(status_code == 501)
+		ResponseNotImplemented();
+	else if(status_code == 502)
+		ResponseBadGateway();
 }
 
 
@@ -402,9 +445,8 @@ void Response::ExecuteResponse(Request& req)
 {
 	//404 Not Foundを返す
 	//Uriがあるかの確認
-	if (req.getStatusNumber() != 0)
-		return (ResponseError(req));
-
+	// if (req.getStatusNumber() != 0)
+	// 	return (ResponseError(req));
 	// if (this->ExistUri(req.getPath()) == false)
 	// 	return (ResponseError(req));
 	this->ExecuteAndGetStatusCode(req);

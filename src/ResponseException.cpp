@@ -7,7 +7,7 @@ const char* ResponseException::what() const throw()
 	return ("status code error");
 }
 
-int ResponseException::getStatus(void) const
+size_t ResponseException::getStatus(void) const
 {
 	return (this->_status);
 }

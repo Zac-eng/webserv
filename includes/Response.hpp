@@ -63,9 +63,16 @@ void CheckFileType(std::string& file);
 void CheckConnectionHeader(std::map<std::string, std::string> header);
 void CreateResponseHeader(Request& req);
 void CreateResponse();
-void ResponseError(Request& req);
+void ResponseError(const size_t status_code);
 bool IsDynamicFileType(const std::string& file);
 void createDateHeader(void);
+void ErrorResponse(size_t code, const std::string& title);
+void ResponseBadRequest(void);
+void ResponseFileNotFound(void);
+void ResponseMethodNotAloowed(void);
+void ResponseInternalServerError(void);
+void ResponseNotImplemented(void);
+void ResponseBadGateway(void);
 
 
 
