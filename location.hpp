@@ -23,7 +23,8 @@ class LocationConfig
 		std::map<std::string, std::string> fastcgi_param;
 		void setPath(const std::string& p) { path = p; }
 		// void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
-		bool check_location(std::istream& config_file, LocationConfig& location_config);		void setIndex(const std::vector<std::string>& indexes);
+		bool check_location(std::istream& config_file, LocationConfig& location_config);		
+		void setIndex(const std::vector<std::string>& indexes);
 		std::vector<std::string> index_files;
 	private:
 

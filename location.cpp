@@ -64,9 +64,7 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 				index_files.push_back(file);
 			}
 			if (index_files.size() >= prev_size)
-			{
 				index_push_count.push_back(index_files.size() - prev_size);
-			}
 			location_config.setIndex(index_files);
 		}
 		else if (keyword == "allow_methods")
@@ -123,12 +121,6 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 				return false; 
 			}
 			location_config.fastcgi_param[param_first] = param_second;
-			std::cout << "[Debug] fastcgi_params contents:" << std::endl;
-	for (std::map<std::string, std::string>::iterator it = location_config.fastcgi_param.begin();
-		 it != location_config.fastcgi_param.end(); ++it)
-	{
-		std::cout << "  key: [" << it->first << "] value: [" << it->second << "]" << std::endl;
-	}
 		}
 		else
 		{

@@ -3,6 +3,12 @@
 #include "nginx.hpp" // ServerConfig クラスと LocationConfig クラスを定義
 #include "location.hpp"
 
+// void remove_used_listen_ports(std::vector<int>& listen_ports, int count) {
+// 	if (count > listen_ports.size())
+// 		count = listen_ports.size();
+// 	listen_ports.erase(listen_ports.begin(), listen_ports.begin() + count);
+// }
+
 int main()
 {
 	std::string config_filename = "nginx.conf"; // 設定ファイル名
@@ -27,6 +33,7 @@ int main()
 					{
 						std::cout << "  Error Page: " << it->first << " -> " << it->second << std::endl;
 					}
+					std::cout << "	Root: " << config.root_server << std::endl;
 					std::cout << "  Locations:" << std::endl;
 					for (size_t j = 0; j < server.locations.size(); ++j)
 					{
@@ -59,10 +66,6 @@ int main()
 								std::cout << "			" << it->first << " : " << it->second << std::endl;
 							}
 						}
-						// for (size_t k = 0; k < loc.allow_methods.size(); ++k)
-						// {
-						//	 std::cout << loc.allow_methods[k] << " ";
-						// }
 						std::cout << std::endl;
 					}
 				}
@@ -79,7 +82,7 @@ int main()
 				{
 					std::cout << "  Error Page: " << it->first << " -> " << it->second << std::endl;
 				}
-
+				std::cout << "	Root: " << server.root_server << std::endl;
 				std::cout << "  Locations:" << std::endl;
 				for (size_t j = 0; j < server.locations.size(); ++j)
 				{

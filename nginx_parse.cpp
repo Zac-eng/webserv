@@ -81,6 +81,11 @@ void ServerConfig::addListenPort(int port)
 		listen_ports.push_back(port);
 }
 
+void ServerConfig::setIndex(const std::vector<std::string>& indexes)
+{
+	index_server = indexes;
+}
+
 bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& configs)
 {
 	std::string line;
@@ -89,6 +94,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 	bool set_path = false;
 	bool close_server = false;
 	int listen_number = 0;
+	size_t prev_size = index_server.size();
 
 	while (std::getline(config_file, line))
 	{
@@ -177,6 +183,39 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			{
 				std::cerr << "Error: Invalid error code: " << line << std::endl;
 				return false;
+			}
+		}
+		else if (block_keyword == "root")
+		{
+			std::string root_path;
+			block_line_stream >> root_path;
+			if (!root_path.empty() && root_path.back() == ';')
+				root_path.pop_back();
+			else
+			{
+				std::cerr << "Error: Missing semicolon after 'root' directive." << std::endl;
+				return false;
+			}
+			if (root_path.back() == '/')
+				root_path.pop_back();
+			config.root_server = trim(root_path);
+			std::cout << "root_server: " << config.root_server << std::endl; 
+		}
+		else if (block_keyword == "index")
+		{
+			std::string file_index;
+			while (block_line_stream >> file_index)
+			{
+				if (file_index.back() == ';')
+				{
+					file_index.pop_back();
+					index_server.push_back(file_index);
+					break;
+				}
+				index_server.push_back(file_index);
+				if (index_server.size() >= prev_size)
+					index_server_count.push_back(index_server.size());
+				config.setIndex(index_server);
 			}
 		}
 		else if (block_keyword == "location")

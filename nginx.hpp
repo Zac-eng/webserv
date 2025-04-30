@@ -12,20 +12,17 @@
 class ServerConfig
 {
 	public:
-		//ポート番号
 		int listen_port;
-		//サーバー名
 		std::string server_name;
-
+		std::string root_server;
+		std::vector<std::string> index_server;
+		std::vector<int> index_server_count;
 		std::map<int, std::string> error_pages;
-		// std::vector<LocationConfig> locations;
 		std::vector<LocationConfig> locations;
 		ServerConfig() : listen_port(0) {}
-		//材料チェック
-
 		void validate() const;
 		void addListenPort(int port);
-		bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
+		void setIndex(const std::vector<std::string>& indexes);		bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
 		std::vector<int> listen_counts;
 		std::vector<int> listen_ports;
 
