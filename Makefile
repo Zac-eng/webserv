@@ -1,4 +1,4 @@
-NAME = webserv
+NAME = nginx
 CXX = c++
 CXXFLAGS =-std=c++98
 SRCDIR = src
@@ -18,10 +18,10 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $(NAME)
 
 clean:
-	$(RM) $(OBJDIR)
+	$(RM) $(OBJS)
 
 fclean: clean
 	$(RM) $(NAME)
