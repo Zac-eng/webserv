@@ -256,10 +256,10 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::string file;
 	std::vector<std::string>::iterator it;
 
-	std::cout << "qq00---------"<< std::endl;
-	std::cout << this->_request.getDirectory()<< std::endl;
+		std::cout<<"sss"<<std::endl;
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
+		std::cout<<object<<std::endl;
 	// if (!location.index.empty())
 	// 	it = location.index.begin();
 	// if (CheckFileAndCombainLocation(location, object) == true)
