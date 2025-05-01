@@ -43,7 +43,7 @@ class ClientSocket : public ASocket
 	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// CgiSocket作成、レスポンス作成
 	bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
-	bool validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
+	void validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
 	bool checkExecuteResponse(int epoll_fd);
 	bool CheckPostFlag();
 	bool CloseClientFd();
@@ -58,8 +58,7 @@ class ClientSocket : public ASocket
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 bool existUri(const std::string& file);
 bool checkAllowMethod(std::vector<std::string>& allow_method);
-void reSetClientSocket(void);
-
+bool checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterator& it);
 
 
 
@@ -80,7 +79,6 @@ bool getPostBodyFlag(void) const;
 void setPostBodyFlag(bool& post_body_flag);
 std::string getBuffer(void) const;
 void setBuffer(std::string& buffer);
-
 
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);

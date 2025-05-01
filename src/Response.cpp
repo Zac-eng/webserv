@@ -282,8 +282,6 @@ void Response::CreateResponse()
 		this->_response += *it;
 	this->_response += "\r\n";
 	this->_response += this->_response_body;
-	std::cout <<"-----aaaaaa"<<std::endl;
-	std::cout <<"-----" <<this->_response_body<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -321,10 +319,10 @@ void  Response::CreateResponseHeader(Request& req)
 
 void Response::handleGet(Request& req)
 {
+	std::cout << "affvaaaa"<<std::endl;
 
-	std::cout << 'Q'<<std::endl;
 	if (ReadFile(req) == false)
-		return ;
+		throw ResponseException(404);
 	CreateResponseHeader(req);
 	// return (StatusMessage::OK())
 }
@@ -369,7 +367,7 @@ void Response::HandleMethod(Request& req)
 
 void Response::ExecuteAndGetStatusCode(Request& req)
 {
-	bool type = false;
+	// bool type = false;
 
 	// type = IsDynamicFileType(this->_filename);
 	// if (type == true)

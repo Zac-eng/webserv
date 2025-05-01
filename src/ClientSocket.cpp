@@ -137,14 +137,14 @@ bool ClientSocket::CheckCRequestFlag(std::string& buffer, std::string::iterator&
 	return (true);
 }
 
-bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, std::string& object)
+void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
 	if (object.compare("\r\n") == 0)
 	{
 		if (this->_request.getBadRequestFlag() == true || this->_request.checkBodyHeader() == true)
 			throw RequestException(400, "bad request");
 		if (this->_request.getRequestFlag() == false)
-			return (true);
+			return ;
 		if (CheckCRequestFlag(buffer, it, object) == false)
 			throw (RequestException(400, "request_flag"));
 	}
@@ -152,12 +152,12 @@ bool ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 	{
 		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
 			throw (RequestException(400, "location_error"));
-		if (this->_request.getPostFlag() == true && (this->_request.getBody()).length() == this->_request.getBodySize())
+		if ((this->_request.getBody()).length() == this->_request.getBodySize())
 			this->_complete_parse_flag = true;
 		if (this->_complete_post_flag == true)
 			this->_post_body_flag = true;
 	}
-	return (true);
+	return ;
 }
 
 void ClientSocket::ChangeDefaultPath(const std::string& uri)
@@ -256,6 +256,8 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::string file;
 	std::vector<std::string>::iterator it;
 
+	std::cout << "qq00---------"<< std::endl;
+	std::cout << this->_request.getDirectory()<< std::endl;
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
 	// if (!location.index.empty())
@@ -284,6 +286,8 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		// 	}
 		// 	path = object;
 		// }
+		// if (this->existUri(location.index) == false)
+		// 	throw RequestException(404,"uri file not");
 		path += location.index;
 		this->_response.setFilename(location.index);
 		// throw RequestException(404,"file not");
@@ -352,6 +356,7 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// デフォルトのrootパスを探し、404を探し、404のデフォルト書き込み
 	// if (!location.empty())
 	// {
+	std::cout << "1111"<<this->_response.getDirectory()<<std::endl;
 	if (CheckAndChangeLocationUri(location, uri) == true)
 		return ;
 	// }
@@ -367,10 +372,23 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// ChangeDefaultPath(uri);
 }
 
+bool ClientSocket::checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterator& it)
+{
+	std::string object;
+
+	if (substring_object_until_carrige_return(buffer, it, object) == false)
+	{
+		this->_buffer = std::string(it, buffer.end());
+		return (false);
+	}
+	else
+		this->validRequest(buffer, it, object);
+	return (true);
+}
+
 bool ClientSocket::checkExecuteResponse(int epoll_fd)
 {
 	std::string buffer = this->_buffer;
-	std::string object;
 	std::string::iterator it;
 	struct epoll_event ev;
 
@@ -380,19 +398,23 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 	{
 		while (it != buffer.end())
 		{
-			if (substring_object_until_carrige_return(buffer, it, object) == false)
-			{
-				this->_buffer = std::string(it, buffer.end());
+			// if (substring_object_until_carrige_return(buffer, it, object) == false)
+			// {
+			// 	this->_buffer = std::string(it, buffer.end());
+			// 	return (true);
+			// }
+			// else
+			// {
+			// 	if (this->validRequest(buffer, it, object) == 	false)
+			// 	{
+			// 		std::cout << "-aaa--"<< std::endl;
+			// 		return (false);
+			// 	}
+			// }
+			if (this->checkCarrigeReturnAndParseRequest(buffer, it) == false)
 				return (true);
-			}
-			else
-			{
-				if (this->validRequest(buffer, it, object) == 	false)
-					return (false);
-			}
 			if (this->_complete_parse_flag == true)
 			{
-				std::cout << "conmoakekekke"<<std::endl;
 				if (it != buffer.end())
 					return (false);
 				// if (this->_request.CheckMethodAndHeader() == false)
@@ -478,16 +500,6 @@ bool ClientSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
 	return (true);
 }
 
-void ClientSocket::reSetClientSocket(void)
-{
-	this->_carrige_return_flag = false;
-	this->_complete_parse_flag = false;
-	this->_complete_post_flag = false;
-	this->_response_flag = false;
-	this->_post_body_flag = false;
-	this->_buffer.clear();
-}
-
 bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	struct epoll_event ev;
@@ -506,12 +518,10 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		}
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
+
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			perror("epoll_ctl: mod");
 		}
-		this->_request.reSetRequest();
-		this->reSetClientSocket();
-		this->_response.reSetResponse();
 		return (true);
 	}
 	catch (const ResponseException& e)

@@ -88,13 +88,11 @@ void Server::executeServer(void)
 		{
 			if (event[i].events == EPOLLIN)
 			{
-				std::cout << "おはよーーー"<<std::endl;
 				if (this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket) == false)
 					std::cout <<"error" <<std::endl;
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
-				std::cout << "----" <<std::endl;
 				if (this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket) == false)
 					std::cout <<"error" <<std::endl;
 			}
