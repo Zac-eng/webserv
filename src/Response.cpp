@@ -319,8 +319,6 @@ void  Response::CreateResponseHeader(Request& req)
 
 void Response::handleGet(Request& req)
 {
-	std::cout << "affvaaaa"<<std::endl;
-
 	if (ReadFile(req) == false)
 		throw ResponseException(404);
 	CreateResponseHeader(req);
