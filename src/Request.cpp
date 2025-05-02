@@ -863,7 +863,7 @@ void Request::insertHeaderKey(void)
 	_valid_header_key.push_back("sec-fetch-dest");
 	_valid_header_key.push_back("referer");
 	_valid_header_key.push_back("if-none-match");
-	// _valid_header_key.push_back("Referer");
+	_valid_header_key.push_back("cashe-control");
 	// _valid_header_key.push_back("Referer");
 	// _valid_header_key.push_back("Referer");
 	// _valid_header_key.push_back("Referer");

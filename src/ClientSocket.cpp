@@ -293,6 +293,7 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		// throw RequestException(404,"file not");
 	}
 	this->_response.setPath(path);
+	std::cout << "-------" <<std::endl;
 	std::cout <<this->_response.getFilename()<<std::endl;
 	std::cout <<this->_response.getDirectory()<<std::endl;
 	std::cout <<this->_response._path<<std::endl;
@@ -304,6 +305,8 @@ bool ClientSocket::checkAllowMethod(std::vector<std::string>& allow_method)
 {
 	std::vector<std::string>::iterator it;
 
+	if (allow_method.empty())
+		return (true);
 	it = allow_method.begin();
 	for (; it != allow_method.end(); it++)
 	{
@@ -439,6 +442,7 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd)
 	}
 	catch (const RequestException& e)
 	{
+		std::cout <<"aaa"<< std::endl;
 		std::cout << e.what() << std::endl;
 		ev.events = EPOLLOUT;
 		ev.data.fd = this->_fd;
@@ -526,7 +530,6 @@ bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (const ResponseException& e)
 	{
-		std::cout << "来てます"<< std::endl;
 		ev.events = EPOLLIN;
 		ev.data.fd = this->_fd;
 		this->_response.ResponseError(e.getStatus());

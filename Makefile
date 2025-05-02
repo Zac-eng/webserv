@@ -1,4 +1,4 @@
-NAME = nginx
+NAME = webserv
 CXX = c++
 CXXFLAGS =-std=c++98
 SRCDIR = src
