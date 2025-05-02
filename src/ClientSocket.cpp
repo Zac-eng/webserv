@@ -256,10 +256,8 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::string file;
 	std::vector<std::string>::iterator it;
 
-		std::cout<<"sss"<<std::endl;
 	object = location.GetRoot();
 	object += this->_request.getDirectory();
-		std::cout<<object<<std::endl;
 	// if (!location.index.empty())
 	// 	it = location.index.begin();
 	// if (CheckFileAndCombainLocation(location, object) == true)
@@ -293,9 +291,7 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		// throw RequestException(404,"file not");
 	}
 	this->_response.setPath(path);
-	std::cout <<this->_response.getFilename()<<std::endl;
-	std::cout <<this->_response.getDirectory()<<std::endl;
-	std::cout <<this->_response._path<<std::endl;
+
 
 	return ;
 }
@@ -356,7 +352,6 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// デフォルトのrootパスを探し、404を探し、404のデフォルト書き込み
 	// if (!location.empty())
 	// {
-	std::cout << "1111"<<this->_response.getDirectory()<<std::endl;
 	if (CheckAndChangeLocationUri(location, uri) == true)
 		return ;
 	// }
