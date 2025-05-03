@@ -4,6 +4,8 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 SRCS = main.cpp \
 	location.cpp \
 	nginx_parse.cpp \
+	nginx_getter_setter.cpp \
+	location_getter_setter.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 

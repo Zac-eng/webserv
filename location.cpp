@@ -75,7 +75,6 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 		}
 		else if (keyword == "fastcgi_index")
 		{
-			std::cout << "----------------\n";
 			std::string cgi_index;
 			stream >> cgi_index;
 			if (!cgi_index.empty() && cgi_index.back() == ';')
