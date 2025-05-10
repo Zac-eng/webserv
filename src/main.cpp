@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "      Path: " << loc.path << std::endl;
                 std::cout << "      Root: " << loc.root << std::endl;
                 std::cout << "      Index: " << loc.index << std::endl;
-                std::cout << "      Allow Methods: ";
+                // std::cout << "      Allow Methods: ";
                 for (size_t k = 0; k < loc.allow_methods.size(); ++k)
                 {
                     std::cout << loc.allow_methods[k] << " ";

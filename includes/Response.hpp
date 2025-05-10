@@ -17,6 +17,9 @@
 #include <fcntl.h>
 #include <sstream>
 #include "ResponseException.hpp"
+#include <ctime>
+#include <sstream>
+#include <iomanip>
 
 class Response
 {
@@ -26,7 +29,6 @@ class Response
 		Request _request;
 		std::string _response;
 		std::string _response_body;
-		std::string _version;
 		size_t _status_code;
 		std::string _directory;
 		std::string _filename;
@@ -35,8 +37,6 @@ class Response
 		std::string _response_message;
 		std::vector<std::string> _header;
 		std::string _body;
-		bool eroor_flag;
-		std::string _root_path;
 		std::string _cgi_buffer;
 
 
@@ -51,8 +51,6 @@ class Response
 		void ExecuteResponse(Request& req);
 bool ExistUri(const std::string& uri);
 bool ReadUri(Request& req);
-void setDirectory(const std::string& dir);
-void setFilename(const std::string& file);
 bool ReadFile(Request& req);
 void handleGet(Request& req);
 void handlePost(Request& req);
@@ -61,14 +59,44 @@ void ExecuteAndGetStatusCode(Request& req);
 void HandleMethod(Request& req);
 void ExecuteHeaderResponse(Request& req);
 void GetFileSize(void);
-void setPath(const std::string& path);
 void CheckFileType(std::string& file);
 void CheckConnectionHeader(std::map<std::string, std::string> header);
 void CreateResponseHeader(Request& req);
 void CreateResponse();
-void setFd(int fd);
 void ResponseError(Request& req);
 bool IsDynamicFileType(const std::string& file);
+void createDateHeader(void);
+
+
+
+int getFd(void) const;
+void setFd(const int& fd);
+Request getRequest(void) const;
+void setRequest(const Request& request);
+std::string getResponse(void) const;
+void setResponse(const std::string& response);
+std::string getResponseBody(void) const;
+void setResponseBody(const std::string& response_body);
+size_t getStatusCode(void) const;
+void setStatusCode(const size_t& status_code);
+std::string getDirectory(void) const;
+void setDirectory(const std::string& directory);
+std::string getFilename(void) const;
+void setFilename(const std::string& filename);
+std::string getPath(void) const;
+void setPath(const std::string& path);
+std::string getContentLength(void) const;
+void setContentLength(const std::string& content_length);
+std::string getResponseMessage(void) const;
+void setResponseMessage(const std::string& response_message);
+std::vector<std::string> getHeader(void) const;
+void setHeader(const std::vector<std::string>& header);
+std::string getBody(void) const;
+void setBody(const std::string& body);
+std::string getCgiBuffer(void) const;
+void setCgiBuffer(const std::string& cgi_buffer);
+
+
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);
 };

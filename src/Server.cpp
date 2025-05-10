@@ -67,7 +67,7 @@ void Server::createListenServer(void)
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
 			throw ServerException();
-		if (set_nonblocking(socket->_fd) == false)
+		if (set_nonblocking(socket->getFd()) == false)
 			throw ServerException();
 		Server::_socket.insert(std::make_pair(socket->GetFd(), socket));
 	}

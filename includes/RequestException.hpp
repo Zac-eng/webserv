@@ -8,9 +8,11 @@ class RequestException : public std::exception
 {
 	private:
 		size_t _status;
+		std::string _message;
 
 	public:
-		RequestException(size_t status);
+		RequestException(size_t status, const std::string& message);
 		const char* what() const throw();
-		int getStatus(void) const;
+		virtual ~RequestException() throw();
+		size_t getStatus(void) const;
 };

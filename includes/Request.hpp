@@ -10,6 +10,7 @@
 #include <map>
 #include "RequestException.hpp"
 #include <cstdlib>
+#include <cctype>
 
 class Request
 {
@@ -20,9 +21,10 @@ public:
 		std::string _path;
 		std::string _directory;
 		std::string _file;
+		std::string _extension;
 		std::string _version;
-		std::map<std::string, std::string> _header;
 		std::string _body;
+		std::map<std::string, std::string> _header;
 		bool _request_flag;
 		bool _host_flag;
 		bool _post_flag;
@@ -30,10 +32,11 @@ public:
 		bool _chunk_finish_flag;
 		size_t _chunk_size;
 		size_t _status_number;
+		bool _connection_flag;
 		std::vector<std::string> _valid_header_key;
 
 		// LocationConfig _conf;
-
+	public:
 		Request();
 		~Request();
 		bool ParseMethod(const std::string& request, std::string::const_iterator& it);
@@ -55,21 +58,59 @@ bool ValidVersion(const std::string& version);
 bool ParseBody(const std::string& request);
 bool SkipColon(const std::string& request, std::string::const_iterator& it);
 bool ValidHeader(void);
-bool GetRequestFlag();
-bool GetHostFlag();
-bool GetPostFlag();
-std::string getDirectory(void);
 bool parsePostBody(const std::string& request);
-std::string getPath(void);
 void SetUri(std::string& object);
 std::string GetMethod();
-std::string getFile();
 void SearchChunkValue(std::string& value);
 bool checkHexadecimal(char object);
 bool parseChunkSize(const std::string& request);
 bool parseChunkValue(const std::string& request);
 bool executeChunk(const std::string& request);
 bool parseChunk(const std::string& request);
+void searchConnectionClose(std::string& value);
+bool CheckMethodAndHeader(void);
+
+
+std::string getMethod(void) const;
+void setMethod(const std::string& method);
+std::string getPath(void) const;
+void setPath(const std::string& path);
+std::string getDirectory(void) const;
+void setDirectory(const std::string& directory);
+std::string getFile(void) const;
+void setFile(const std::string& file);
+std::string getExtension(void) const;
+void setExtension(const std::string& extension);
+std::string getVersion(void) const;
+void setVersion(const std::string& version);
+std::string getBody(void) const;
+void setBody(const std::string& body);
+std::map<std::string, std::string> getHeader(void) const;
+void setHeader(const std::map<std::string, std::string>& header);
+bool getRequestFlag(void) const;
+void setRequestFlag(const bool& request_flag);
+bool getHostFlag(void) const;
+void setHostFlag(const bool& host_flag);
+bool getPostFlag(void) const;
+void setPostFlag(const bool& post_flag);
+bool getChunkFlag(void) const;
+void setChunkFlag(const bool& chunk_flag);
+bool getChunkFinishFlag(void) const;
+void setChunkFinishFlag(const bool& chunk_finish_flag);
+size_t getChunkSize(void) const;
+void setChunkSize(const size_t& chunk_size);
+size_t getStatusNumber(void) const;
+void setStatusNumber(const size_t& status_number);
+bool getConnectionFlag(void) const;
+void setConnectionFlag(const bool& connection_flag);
+std::vector<std::string> getValidHeaderKey(void) const;
+void setValidHeaderKey(const std::vector<std::string>& valid_header_key);
+
+
+
+
+
+
 };
 
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);
