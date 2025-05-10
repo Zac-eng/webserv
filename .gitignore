@@ -14,3 +14,6 @@ test
 test.cpp
 test.hpp
 test.txt
+googletest-1.15.2/
+build/
+test.sh

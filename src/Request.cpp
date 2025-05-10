@@ -220,15 +220,15 @@ void Request::setBadRequestFlag(const bool& bad_request_flag)
 	return ;
 }
 
-bool Request::SearchHeaderKey(std::string &key)
-{
-	for (size_t i = 0; i < _valid_header_key.size(); i++)
-	{
-		if (key == _valid_header_key[i])
-			return (true);
-	}
-	return (false);
-}
+// bool Request::SearchHeaderKey(std::string &key)
+// {
+// 	for (size_t i = 0; i < _valid_header_key.size(); i++)
+// 	{
+// 		if (key == _valid_header_key[i])
+// 			return (true);
+// 	}
+// 	return (false);
+// }
 
 void convertLower(std::string& key)
 {
@@ -248,8 +248,8 @@ bool Request::HandleHeaderKey(const std::string& request, std::string::const_ite
 	if (it == request.end())
 		return (false);
 	convertLower(key);
-	if (SearchHeaderKey(key) == false)
-		return (false);
+	// if (SearchHeaderKey(key) == false)
+	// 	return (false);
 	return (true);
 }
 
@@ -517,10 +517,6 @@ bool Request::ValidUri(const std::string& uri)
 		return (false);
 	this->_extension = uri.substr(it_tmp - uri.begin());
 	this->_path = uri;
-		// 	std::cout <<this->_directory<<std::endl;
-		// std::cout <<this->_file<<std::endl;
-		// std::cout <<this->_extension<<std::endl;
-		// std::cout <<this->_path<<std::endl;
 	return (true);
 }
 
@@ -864,6 +860,7 @@ void Request::insertHeaderKey(void)
 	_valid_header_key.push_back("referer");
 	_valid_header_key.push_back("if-none-match");
 	_valid_header_key.push_back("cashe-control");
+	_valid_header_key.push_back("sec-purpose");
 	// _valid_header_key.push_back("Referer");
 	// _valid_header_key.push_back("Referer");
 	// _valid_header_key.push_back("Referer");

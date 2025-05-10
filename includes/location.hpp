@@ -7,61 +7,65 @@
 #include <functional>
 #include <sstream>
 #include <set>
-
-class LocationConfig
-{
-public:
-	std::string path;
-	std::string root;
-	std::string index;
-	std::vector<std::string> allow_methods;
-
-	std::string GetRoot();
-	std::string GetPath();
-	std::string GetIndex();
-	void setPath(const std::string& p) { path = p; }
-	void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
-};
-
+#include <map>
 
 // class LocationConfig
 // {
-// 	private:
+// 	public:
 // 		std::string path;
 // 		std::string root;
-// 		std::set<std::string> allowed_methods;
-// 		std::string index;
-// 		bool autoindex;
-// 	public:
-// 	   // コンストラクタ
-// 		LocationConfig()
-// 			: path(""), root(""), index(""), autoindex(false) {}
-
-// 		// セッター
+// 		// std::vector<std::string> allow_methods;
+// 		std::string method;
+// 		std::string fastcgi_index;
+// 		std::string fastcgi_pass;
+// 		std::vector<int> index_count;
+// 		std::vector<int> index_push_count;
+// 		std::map<std::string, std::string> fastcgi_param;
 // 		void setPath(const std::string& p) { path = p; }
-// 		void setRoot(const std::string& r) { root = r; }
-// 		void setIndex(const std::string& i) { index = i; }
-// 		void setAutoindex(bool a) { autoindex = a; }
-// 		void addAllowedMethod(const std::string& method) { allowed_methods.insert(method); }
+// 		// void addAllowMethod(const std::string& method) { allow_methods.push_back(method); }
+// 		bool check_location(std::istream& config_file, LocationConfig& location_config);		
+// 		void setIndex(const std::vector<std::string>& indexes);
+// 		std::vector<std::string> index_files;
+// 	private:
 
-// 		// ゲッター
-// 		const std::string& getPath() const { return path; }
-// 		const std::string& getRoot() const { return root; }
-// 		const std::string& getIndex() const { return index; }
-// 		bool getAutoindex() const { return autoindex; }
-// 		const std::set<std::string>& getAllowedMethods() const { return allowed_methods; }
-
-// 		// 検証関数
-// 		void validate() const
-// 		{
-// 			if (path.empty())
-// 				throw std::runtime_error("Location path is not set.");
-// 			if (root.empty())
-// 				throw std::runtime_error("Root path is not set in location block.");
-// 		}
 // };
 
-bool check_location(std::istream& config_file, LocationConfig& location_config);
+class LocationConfig
+{
+	public:
+		void setPath(const std::string& p);
+		void setRoot(const std::string& r);
+		void setMethod(const std::string& m);
+		void setFastcgiIndex(const std::string& idx);
+		void setFastcgiPass(const std::string& pass);
+		void setIndexCount(const std::vector<int>& counts);
+		void setIndexPushCount(const std::vector<int>& counts);
+		void setFastcgiParam(const std::map<std::string, std::string>& params);
+
+		const std::string& getPath() const;
+		const std::string& getRoot() const;
+		const std::string& getMethod() const;
+		const std::string& getFastcgiIndex() const;
+		const std::string& getFastcgiPass() const;
+		const std::vector<std::string>& getIndexFiles() const;
+		const std::vector<int>& getIndexCount() const;
+		const std::vector<int>& getIndexPushCount() const;
+		const std::map<std::string, std::string>& getFastcgiParam() const;
+void setIndex(const std::vector<std::string>& indexes);
+
+		bool check_location(std::istream& config_file, LocationConfig& location_config);
+
+	private:
+		std::string path;
+		std::string root;
+		std::string method;
+		std::string fastcgi_index;
+		std::string fastcgi_pass;
+		std::vector<int> index_count;
+		std::vector<int> index_push_count;
+		std::map<std::string, std::string> fastcgi_param;
+		std::vector<std::string> index_files;
+};
 
 
 #endif

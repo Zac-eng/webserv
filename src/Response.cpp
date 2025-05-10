@@ -49,17 +49,6 @@ void Response::setResponse(const std::string& response)
 	return ;
 }
 
-std::string Response::getResponseBody(void) const
-{
-	return (this->_response_body);
-}
-
-void Response::setResponseBody(const std::string& response_body)
-{
-	this->_response_body = response_body;
-	return ;
-}
-
 size_t Response::getStatusCode(void) const
 {
 	return (this->_status_code);
@@ -202,54 +191,37 @@ void Response::setCgiBuffer(const std::string& cgi_buffer)
 // 	return (false);
 // }
 
-void Response::GetFileSize()
-{
-	struct stat file;
-	std::stringstream ss;
+// // おそらくこれもepollに含めなきゃいけない
+// bool Response::ReadFile(Request& req)
+// {
+// 	int fd;
+// 	int byte_size;
+// 	char buf[BUFFER_SIZE];
 	
-	if (stat(this->_path.c_str(), &file) == -1)
-	{
-		throw std::runtime_error("stat");
-	}
-	ss << file.st_size;
-	this->_content_length = ss.str();
-
-}
-
-// おそらくこれもepollに含めなきゃいけない
-bool Response::ReadFile(Request& req)
-{
-	int fd;
-	int byte_size;
-	char buf[BUFFER_SIZE];
-	
-	std::cout <<this->_path<<std::endl;
-	fd = open(this->_path.c_str(), O_RDONLY);
-	if (fd  == -1)
-		return (false);
-	if (set_nonblocking(fd) == false)
-		return (false);
-	while (1)
-	{
-		byte_size = read(fd, buf, BUFFER_SIZE);
-		std::cout << byte_size<<std::endl;
-			debug("ydsabjfhvfhs");
-		if (byte_size < 0)
-		{
-			close(fd);
-			throw std::runtime_error("close fd");
-		}
-		else if (byte_size == 0)
-		{
-			this->GetFileSize();
-			close(fd);
-			break;
-		}
-		else
-			this->_response_body.append(buf, byte_size);
-	}
-	return (true);
-}
+// 	fd = open(this->_path.c_str(), O_RDONLY);
+// 	if (fd  == -1)
+// 		return (false);
+// 	if (set_nonblocking(fd) == false)
+// 		return (false);
+// 	while (1)
+// 	{
+// 		byte_size = read(fd, buf, BUFFER_SIZE);
+// 		if (byte_size < 0)
+// 		{
+// 			close(fd);
+// 			throw std::runtime_error("close fd");
+// 		}
+// 		else if (byte_size == 0)
+// 		{
+// 			this->GetFileSize();
+// 			close(fd);
+// 			break;
+// 		}
+// 		else
+// 			this->_response_body.append(buf, byte_size);
+// 	}
+// 	return (true);
+// }
 
 // void Response::CheckFileType(std::string& file)
 // {
@@ -281,7 +253,7 @@ void Response::CreateResponse()
 	for (; it != this->_header.end(); it++)
 		this->_response += *it;
 	this->_response += "\r\n";
-	this->_response += this->_response_body;
+	this->_response += this->_body;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -319,8 +291,8 @@ void  Response::CreateResponseHeader(Request& req)
 
 void Response::handleGet(Request& req)
 {
-	if (ReadFile(req) == false)
-		throw ResponseException(404);
+	// if (ReadFile(req) == false)
+	// 	throw ResponseException(404);
 	CreateResponseHeader(req);
 	// return (StatusMessage::OK())
 }
@@ -424,7 +396,6 @@ void Response::ResponseBadGateway(void)
 void Response::reSetResponse(void)
 {
 	this->_response.clear();
-	this->_response_body.clear();
 	this->_status_code = 0;
 	this->_directory.clear();
 	this->_filename.clear();
@@ -459,12 +430,14 @@ void Response::ResponseError(const size_t status_code)
 
 void Response::ExecuteResponse(Request& req)
 {
+	// std::cout << this->_body <<std::endl;
 	//404 Not Foundを返す
 	//Uriがあるかの確認
 	// if (req.getStatusNumber() != 0)
 	// 	return (ResponseError(req));
 	// if (this->ExistUri(req.getPath()) == false)
 	// 	return (ResponseError(req));
+	
 	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }

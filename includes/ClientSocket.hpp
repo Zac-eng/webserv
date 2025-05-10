@@ -16,6 +16,8 @@
 #include <sstream>
 #include <map>
 #include <sys/epoll.h>
+#include "FileSocket.hpp"
+#include "Server.hpp"
 
 #define BUFFER_SIZE 100
 
@@ -33,6 +35,8 @@ class ClientSocket : public ASocket
 	bool _complete_parse_flag;
 	bool _post_body_flag;
 	std::string _buffer;
+	int _other_fd;
+	std::string _error_file_path;
 
 	ClientSocket();
 	~ClientSocket();
@@ -44,10 +48,10 @@ class ClientSocket : public ASocket
 	// CgiSocket作成、レスポンス作成
 	bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
-	bool checkExecuteResponse(int epoll_fd);
+	bool checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket);
 	bool CheckPostFlag();
 	bool CloseClientFd();
-	bool CheckCRequestFlag(std::string& buffer, std::string::iterator& it, std::string& object);
+	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it, const std::string& object);
 	void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
 	bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
 	void CombineUriAndLocationRoot(LocationConfig& location);
@@ -56,11 +60,13 @@ class ClientSocket : public ASocket
 	bool CheckAndChangeRootUri(const std::string& uri);
 	bool CheckFileAndCombainLocation(LocationConfig& location, std::string& object);
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
-bool existUri(const std::string& file);
-bool checkAllowMethod(std::vector<std::string>& allow_method);
+bool existUri(const std::string& directory, const std::string& file);
+bool checkAllowMethod(const std::vector<std::string>& allow_method);
 bool checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterator& it);
-
-
+bool checkExistErrorPages(const std::string& path, std::string directory, std::string file);
+bool setFileSocket(std::map<int, ASocket*>& _socket, const std::string directory, const std::string file);
+bool checkErrorPages(int epoll_fd, size_t status, std::map<int, ASocket*>& _socket);
+bool checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket);
 
 
 Request getRequest(void) const;

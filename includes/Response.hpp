@@ -28,7 +28,6 @@ class Response
 		int _fd;
 		Request _request;
 		std::string _response;
-		std::string _response_body;
 		size_t _status_code;
 		std::string _directory;
 		std::string _filename;
@@ -51,7 +50,7 @@ class Response
 		void ExecuteResponse(Request& req);
 bool ExistUri(const std::string& uri);
 bool ReadUri(Request& req);
-bool ReadFile(Request& req);
+// bool ReadFile(Request& req);
 void handleGet(Request& req);
 void handlePost(Request& req);
 void handleDelete(Request& req);

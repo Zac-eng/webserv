@@ -77,8 +77,7 @@ std::string	extract_quoted_string(const std::string& str)
 
 void ServerConfig::addListenPort(int port)
 {
-	if (std::find(listen_ports.begin(), listen_ports.end(), port) == listen_ports.end())
-		listen_ports.push_back(port);
+	listen_ports.push_back(port);	
 }
 
 void ServerConfig::setIndex(const std::vector<std::string>& indexes)
@@ -123,6 +122,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			close_server = false;
 			if (config.listen_port == 0)
 			{
+				listen_number++;
 				addListenPort(80);
 				config.listen_port = 80;
 			}
@@ -199,7 +199,6 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			if (root_path.back() == '/')
 				root_path.pop_back();
 			config.root_server = trim(root_path);
-			std::cout << "root_server: " << config.root_server << std::endl; 
 		}
 		else if (block_keyword == "index")
 		{
@@ -242,13 +241,11 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				}
 				line.erase(line.find_last_not_of(" \t\n\r") + 1);
 				if (!line.empty() && line.back() == '{'){
-					std::cout << "here:" << std::endl;
 					next_token = "{";
 				}
 			}
 			location_config.setPath(location_path);
 			block_line_stream >> next_token;
-			std::cout << "next_token: " << next_token << std::endl;
 			if (next_token == "{")
 				has_open = true;
 			set_path = true;
@@ -256,6 +253,12 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		}
 		else if (block_keyword == "}")
 		{
+			if (config.listen_port == 0)
+			{
+				listen_number++;
+				addListenPort(80);
+				config.listen_port = 80;
+			}
 			listen_counts.push_back(listen_number);
 			listen_number = 0;
 			close_server = true;

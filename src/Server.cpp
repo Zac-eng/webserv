@@ -16,6 +16,17 @@ Server::~Server()
 	}
 }
 
+std::vector<ServerConfig> Server::getConf(void)
+{
+	return (this->_conf);
+}
+
+void Server::setConf(std::vector<ServerConfig>& conf)
+{
+	this->_conf = conf;
+	return ;
+}
+
 bool set_nonblocking(int fd)
 {
 	int flag;
@@ -65,13 +76,20 @@ void Server::createListenServer(void)
 	{
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
+		{
+			delete socket;
 			throw ServerException();
+		}
 		if (set_nonblocking(socket->getFd()) == false)
+		{
+			delete socket;
 			throw ServerException();
+		}
 		this->_socket.insert(std::make_pair(socket->getFd(), socket));
 	}
 	if (epollCreate() == false)
 		throw ServerException();
+	return ;
 }
 
 void Server::executeServer(void)
@@ -81,7 +99,7 @@ void Server::executeServer(void)
 
 	while (true)
 	{
-		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS + 1, -1);
+		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, -1);
 		if (event_counts == -1)
 			throw ServerException();
 		for (int i = 0; i < event_counts; i++)

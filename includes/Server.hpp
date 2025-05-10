@@ -26,6 +26,9 @@ class Server
 	Server(std::vector<ServerConfig>& conf);
 	bool epollCreate(void);
 	bool setMonitoringFd(ASocket* socket);
+
+	std::vector<ServerConfig> getConf(void);
+	void setConf(std::vector<ServerConfig>& conf);
 };
 
 bool set_nonblocking(int fd);

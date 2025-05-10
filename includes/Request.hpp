@@ -127,3 +127,4 @@ bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::co
 		bool isCarriagereturn(const std::string& request);
 size_t string_to_int(const std::string &str);
 void debug(const std::string& str);
+bool isSlash(const std::string& uri, std::string::const_iterator& it);
