@@ -11,6 +11,7 @@ SRCS = $(wildcard ./src/*.cpp) $(wildcard ./src/message/*.cpp)
 OBJS = $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
 
 
+# Default target
 all: $(NAME)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
@@ -18,14 +19,21 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
+# Compile .cpp to .o
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean object files
 clean:
 	$(RM) $(OBJS)
 
+# Clean everything
 fclean: clean
 	$(RM) $(NAME)
 
+# Rebuild
 re: fclean all
 
 .PHONY: all clean fclean re

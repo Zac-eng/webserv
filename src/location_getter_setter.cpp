@@ -10,10 +10,6 @@ void LocationConfig::setRoot(const std::string& r) {
 	root = r;
 }
 
-void LocationConfig::setMethod(const std::string& m) {
-	method = m;
-}
-
 void LocationConfig::setFastcgiIndex(const std::string& idx) {
 	fastcgi_index = idx;
 }
@@ -35,6 +31,10 @@ void LocationConfig::setFastcgiParam(const std::map<std::string, std::string>& p
 	fastcgi_param = params;
 }
 
+void LocationConfig::setMethodCount(const std::vector<int>& counts) {
+	allow_method_count = counts;
+}
+
 // Getters
 const std::string& LocationConfig::getPath() const {
 	return path;
@@ -42,10 +42,6 @@ const std::string& LocationConfig::getPath() const {
 
 const std::string& LocationConfig::getRoot() const {
 	return root;
-}
-
-const std::string& LocationConfig::getMethod() const {
-	return method;
 }
 
 const std::string& LocationConfig::getFastcgiIndex() const {
@@ -72,3 +68,10 @@ const std::map<std::string, std::string>& LocationConfig::getFastcgiParam() cons
 	return fastcgi_param;
 }
 
+const std::vector<std::string>& LocationConfig::getMethod() const {
+	return allow_method;
+}
+
+const std::vector<int>& LocationConfig::getMethodCount() const {
+	return allow_method_count;
+}

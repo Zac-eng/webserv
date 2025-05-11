@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include "Server.hpp"
 #include "ASocket.hpp"
 #include "ListenSocket.hpp"
@@ -6,6 +7,11 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "nginx.hpp" // ServerConfig クラスと LocationConfig クラスを定義
+=======
+#include <iostream>
+#include <vector>
+#include "nginx.hpp"
+>>>>>>> b7e28d98626a2bd2ba78f0d6d24bae8223835876
 #include "location.hpp"
 
 void printServerConfig(const ServerConfig& server, int serverIndex, int listenPort) {
@@ -40,8 +46,23 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 			}
 		}
 		std::cout << std::endl;
+<<<<<<< HEAD
 
 		std::cout << "      Allow Methods: " << loc.getMethod() << std::endl;
+=======
+		std::cout << "      Allow Methods: ";
+		if (!loc.getMethodCount().empty()) {
+			size_t count = loc.getMethodCount().back();
+			const std::vector<std::string>& methods = loc.getMethod();
+			size_t start = methods.size() >= count ? methods.size() - count : 0;
+			for (size_t k = start; k < methods.size(); k++) {
+				std::cout << methods[k];
+				if (k < methods.size() - 1)
+					std::cout << ", ";
+			}
+		}
+		std::cout << std::endl;
+>>>>>>> b7e28d98626a2bd2ba78f0d6d24bae8223835876
 		std::cout << "      fastcgi_index: " << loc.getFastcgiIndex() << std::endl;
 		std::cout << "      fastcgi_pass: " << loc.getFastcgiPass() << std::endl;
 

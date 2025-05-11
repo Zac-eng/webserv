@@ -15,13 +15,11 @@ void	ServerConfig::validate() const
 {
 	if (listen_port < 1 || listen_port > 65535)
 		throw std::runtime_error("listen, Directive not specified ");
-	if (server_name.empty())
-	{
+	if (server_name.empty()) {
 		std::cout << "server_name" << server_name << std::endl;
 		throw std::runtime_error("server_name, Directive not specified");
 	}
-	for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it)
-	{
+	for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		if (it->first < 400 || it->first > 599)
 			throw std::runtime_error("Error: Invalid error code.");
 		if (it->second.empty())
@@ -36,8 +34,7 @@ bool	is_space(char c)
 
 struct is_not_space
 {
-	bool operator()(int c) const
-	{
+	bool operator()(int c) const {
 		return !is_space(c);
 	}
 };
@@ -55,8 +52,7 @@ std::string trim(const std::string& str)
 std::string	extract_quoted_string(const std::string& str)
 {
 	size_t	start_quote = str.find('"');
-	if (start_quote == std::string::npos)
-	{
+	if (start_quote == std::string::npos) {
 		size_t end_semicolon = str.find(';');
 		if (end_semicolon == std::string::npos)
 			return trim(str);
@@ -64,12 +60,10 @@ std::string	extract_quoted_string(const std::string& str)
 			return trim(str.substr(0, end_semicolon));
 	}
 	size_t	end_quote = str.find('"', start_quote + 1);
-	if (end_quote == std::string::npos)
-	{
+	if (end_quote == std::string::npos) {
 		std::cerr << "Error: quote is not closed." << str << std::endl;
 		throw std::runtime_error("quote is not closed.");
 	}
-	// size_t	end_semicolon = str.find(';', end_quote + 1);
 	std::string result = str.substr(start_quote + 1, end_quote - start_quote - 1);
 	result = trim(result);
 	return result;
@@ -112,48 +106,40 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		std::stringstream block_line_stream(line);
 		std::string block_keyword;
 		block_line_stream >> block_keyword;
-		if (block_keyword == "server")
-		{
-			if (close_server == false)
-			{
+		if (block_keyword == "server") {
+			if (close_server == false) {
 				std::cerr << "Error: Missing closing '}' in server block." << std::endl;
 				return false;
 			}
 			close_server = false;
-			if (config.listen_port == 0)
-			{
+			if (config.listen_port == 0) {
 				listen_number++;
 				addListenPort(80);
 				config.listen_port = 80;
 			}
-			try
-			{
+			try {
 				config.validate();
 				configs.push_back(config);
 			}
-			catch(const std::runtime_error& e)
-			{
+			catch(const std::runtime_error& e) {
 				std::cerr << "Error: " << e.what() << std::endl;
 				return false;
 			}
 			config = ServerConfig();
 		}
-		else if (block_keyword == "listen")
-		{
+		else if (block_keyword == "listen") {
 			listen_number++;
 			std::string port_str;
 			block_line_stream >> port_str;
-			if (!port_str.empty() && port_str.back() == ';')
-				port_str.pop_back();
-			else
-			{
+			if (!port_str.empty() && port_str[port_str.size() - 1] == ';')
+				port_str.erase(port_str.size() - 1);
+			else {
 				std::cerr << "Error: Missing semicolon after 'listen' directive." << std::endl;
 				return false;
 			}
 			try {
 				int port = std::stoi(port_str);
-				if (port < 1 || port > 65535)
-				{
+				if (port < 1 || port > 65535) {
 					std::cerr << "Error: Invalid port number: " << port_str << std::endl;
 					return false;
 				}
@@ -164,14 +150,12 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				return false;
 			}
 		}
-		else if (block_keyword == "server_name")
-		{
+		else if (block_keyword == "server_name") {
 			std::string value;
 			std::getline(block_line_stream, value, ';');
 			config.server_name = extract_quoted_string(value);
 		}
-		else if (block_keyword == "error_page")
-		{
+		else if (block_keyword == "error_page") {
 			int error_code;
 			std::string error_path;
 			block_line_stream >> error_code;
@@ -179,35 +163,29 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			error_path = trim(error_path);
 			if (error_code >= 400 && error_code <= 599)
 				config.error_pages[error_code] = error_path;
-			else
-			{
+			else {
 				std::cerr << "Error: Invalid error code: " << line << std::endl;
 				return false;
 			}
 		}
-		else if (block_keyword == "root")
-		{
+		else if (block_keyword == "root") {
 			std::string root_path;
 			block_line_stream >> root_path;
-			if (!root_path.empty() && root_path.back() == ';')
-				root_path.pop_back();
-			else
-			{
+			if (!root_path.empty() && root_path[root_path.size() - 1] == ';')
+				root_path.erase(root_path.size() - 1);
+			else {
 				std::cerr << "Error: Missing semicolon after 'root' directive." << std::endl;
 				return false;
 			}
-			if (root_path.back() == '/')
-				root_path.pop_back();
+			if (root_path[root_path.size() - 1] == '/')
+				root_path.erase(root_path.size() - 1);
 			config.root_server = trim(root_path);
 		}
-		else if (block_keyword == "index")
-		{
+		else if (block_keyword == "index") {
 			std::string file_index;
-			while (block_line_stream >> file_index)
-			{
-				if (file_index.back() == ';')
-				{
-					file_index.pop_back();
+			while (block_line_stream >> file_index) {
+				if (file_index[file_index.size() - 1] == ';') {
+					file_index.erase(file_index.size() - 1);
 					index_server.push_back(file_index);
 					break;
 				}
@@ -217,15 +195,13 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				config.setIndex(index_server);
 			}
 		}
-		else if (block_keyword == "location")
-		{
+		else if (block_keyword == "location") {
 			int i = 0;
 			std::string location_path;
 			std::string rest;
 			std::string next_token;
 			block_line_stream >> location_path;
-			if (!(location_path[i] == '/' || location_path == "~"))
-			{
+			if (!(location_path[i] == '/' || location_path == "~")) {
 				std::cerr << "Error: Invalid location path: " << location_path << std::endl;
 				return false;
 			}
@@ -235,12 +211,11 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				rest.erase(0, rest.find_first_not_of(" \t"));
 				rest.erase(rest.find_last_not_of(" \t") + 1);
 				location_path += " " + rest;
-				if (!(location_path == "~ \\.php$"))
-				{
+				if (!(location_path == "~ \\.php$")) {
 					std::cerr << "Error: Invalid location path." << std::endl;
 				}
 				line.erase(line.find_last_not_of(" \t\n\r") + 1);
-				if (!line.empty() && line.back() == '{'){
+				if (!line.empty() && line[line.size() - 1] == '{'){
 					next_token = "{";
 				}
 			}
@@ -251,10 +226,8 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			set_path = true;
 
 		}
-		else if (block_keyword == "}")
-		{
-			if (config.listen_port == 0)
-			{
+		else if (block_keyword == "}") {
+			if (config.listen_port == 0) {
 				listen_number++;
 				addListenPort(80);
 				config.listen_port = 80;
@@ -263,19 +236,15 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			listen_number = 0;
 			close_server = true;
 		}
-		if (set_path == true && block_keyword == "location")
-		{
-			if (has_open == false)
-			{
+		if (set_path == true && block_keyword == "location") {
+			if (has_open == false) {
 				while (std::getline(block_stream, line))
 				{
 					line = trim(line);
-					if (!line.empty())
-					{
+					if (!line.empty()) {
 						if (line == "{")
 							break;
-						else
-						{
+						else {
 							std::cerr << "Error: Expected '{' after 'location' directive." << std::endl;
 							return false;
 						}
@@ -289,22 +258,14 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			config.locations.push_back(location_config);
 		}
 	}
-	// if (count + 1 != i)
-	// {
-	// 	std::cerr << "Error: Missing closing '}' in server block." << std::endl;
-	// 	return false;
-	// }
-	if (config.listen_port == 0)
-	{
+	if (config.listen_port == 0) {
 		config.listen_port = 80;
 	}
-	try
-	{
+	try {
 		config.validate();
 		configs.push_back(config);
 	}
-	catch (const std::runtime_error& e)
-	{
+	catch (const std::runtime_error& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 		return false;
 	}
@@ -322,20 +283,16 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 		std::stringstream stream(line);
 		std::string keyword;
 		stream >> keyword;
-		if (keyword == "server")
-		{
+		if (keyword == "server") {
 			std::string next_token;
-			if (!(stream >> next_token) || next_token != "{")
-			{
+			if (!(stream >> next_token) || next_token != "{") {
 				while (std::getline(config_file, line))
 				{
 					line = trim(line);
-					if (!line.empty())
-					{
+					if (!line.empty()) {
 						if (line == "{")
 							break;
-						else
-						{
+						else {
 							std::cerr << "Error: Expected '{' after 'server' directive." << std::endl;
 							return false;
 						}
@@ -345,25 +302,18 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 			if (!check_listen_name(config_file, configs))
 				return false;
 		}
-		else
-		{
+		else {
 			std::cerr << "Error: Unexpected directive in http block: " << line << std::endl;
 			return false;
 		}
 	}
-	// if (has_closing == false)
-	// {
-	// 	std::cerr << "Error: Missing closing '}' in http block." << std::endl;
-	// 	return false;
-	// }
 	return true;
 }
 
 bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerConfig>& configs)
 {
 	std::ifstream config_file(filename);
-	if (!config_file.is_open())
-	{
+	if (!config_file.is_open()) {
 		std::cerr << "file can't open" << filename << std::endl;
 		return false;
 	}
@@ -377,25 +327,20 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 		std::stringstream stream(line);
 		std::string keyword;
 		stream >> keyword;
-		if (keyword == "http")
-		{
-			if (http_found)
-			{
+		if (keyword == "http") {
+			if (http_found) {
 				std::cerr << "Errpr: Multiple 'http' blocks are not allowed." << std::endl;
 				return false;
 			}
 			std::string next_token;
-			if (!(stream >> next_token) || next_token != "{")
-			{
+			if (!(stream >> next_token) || next_token != "{") {
 				while (std::getline(config_file, line))
 				{
 					line = trim(line);
-					if (!line.empty())
-					{
+					if (!line.empty()) {
 						if (line == "{")
 							break;
-						else
-						{
+						else {
 							std::cerr << "Error: Expected '{' after 'http' directive." << std::endl;
 							return false;
 						}
