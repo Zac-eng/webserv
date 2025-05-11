@@ -16,10 +16,10 @@ class FileSocket : public ASocket
 
 	public:
 		FileSocket(int other_fd, Request& resquest, Response& response, std::string directory, std::string file);
-		bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
-		bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+		void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+		void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 		bool createSocket();
 		void readFile();
 		void getFileSize(void);
-		bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
+		void clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 };

@@ -29,9 +29,8 @@ class ClientSocket : public ASocket
 	Request _request;
 	Response _response;
 	ServerConfig _conf;
-	bool _carrige_return_flag;
 	bool _response_flag;
-	bool _complete_post_flag;
+	bool _progress_post_flag;
 	bool _complete_parse_flag;
 	bool _post_body_flag;
 	std::string _buffer;
@@ -44,11 +43,11 @@ class ClientSocket : public ASocket
 	// 何もない
 	bool createSocket();
 	// Requestパース
-	bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// CgiSocket作成、レスポンス作成
-	bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
-	bool checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket);
+	void checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket);
 	bool CheckPostFlag();
 	bool CloseClientFd();
 	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it);
@@ -59,7 +58,7 @@ class ClientSocket : public ASocket
 	void ChangeConfUri(const std::string& uri);
 	bool CheckAndChangeRootUri(const std::string& uri);
 	bool CheckFileAndCombainLocation(std::string& object);
-	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
+	void closeAndDeleteSocket(std::map<int, ASocket*>& socket);
 bool existUri(const std::string& directory, const std::string& file);
 bool checkAllowMethod(const std::vector<std::string>& allow_method);
 bool checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterator& it);
@@ -67,6 +66,7 @@ bool checkExistErrorPages(const std::string& path, std::string directory, std::s
 bool setFileSocket(std::map<int, ASocket*>& _socket, const std::string directory, const std::string file);
 bool checkErrorPages(int epoll_fd, size_t status, std::map<int, ASocket*>& _socket);
 bool checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket);
+void reSetClientSocket();
 
 
 Request getRequest(void) const;
@@ -75,8 +75,6 @@ Response getResponse(void) const;
 void setResponse(Response& response);
 ServerConfig getConf(void) const;
 void setConf(ServerConfig& conf);
-bool getCarrigeReturnFlag(void) const;
-void setCarrigeReturnFlag(bool& carrige_return_flag);
 bool getResponseFlag(void) const;
 void setResponseFlag(bool& response_flag);
 bool getCompletePostFlag(void) const;

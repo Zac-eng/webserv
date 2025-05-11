@@ -50,20 +50,20 @@ void FileSocket::readFile()
 	return ;
 }
 
-bool FileSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
+void FileSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
 {
 	std::map<int, ASocket*>::iterator it;
 
 	it = socket.find(this->_fd);
 	if (it == socket.end())
-		return (false);
+		return ;
 	close(it->first);
 	delete (it->second);
 	socket.erase(it);
-	return (true);
+	return ;
 }
 
-bool FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+void FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	struct epoll_event ev;
 
@@ -99,12 +99,11 @@ bool FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 		this->_request.setStatusNumber(500);
 	}
 	this->_response.setFd(this->_other_fd);
-	if (clposeAndDeleteSocket(_socket) == false)
-		return (false);
-	return (true);
+	clposeAndDeleteSocket(_socket);
+	return ;
 }
 
-bool FileSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+void FileSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	(void)epoll_fd;
 	(void)_socket;

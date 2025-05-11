@@ -1,9 +1,9 @@
 #include "ClientSocket.hpp"
 #include "Request.hpp"
 
-ClientSocket::ClientSocket() : _response_flag(false), _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -40,17 +40,6 @@ void ClientSocket::setConf(ServerConfig& conf)
 	return ;
 }
 
-bool ClientSocket::getCarrigeReturnFlag(void) const
-{
-	return (this->_carrige_return_flag);
-}
-
-void ClientSocket::setCarrigeReturnFlag(bool& carrige_return_flag)
-{
-	this->_carrige_return_flag = carrige_return_flag;
-	return ;
-}
-
 
 bool ClientSocket::getResponseFlag(void) const
 {
@@ -65,12 +54,12 @@ void ClientSocket::setResponseFlag(bool& response_flag)
 
 bool ClientSocket::getCompletePostFlag(void) const
 {
-	return (this->_complete_post_flag);
+	return (this->_progress_post_flag);
 }
 
 void ClientSocket::setCompletePostFlag(bool& complete_post_flag)
 {
-	this->_complete_post_flag = complete_post_flag;
+	this->_progress_post_flag = complete_post_flag;
 	return ;
 }
 
@@ -124,7 +113,7 @@ bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& 
 		return (false);
 	if (this->_request.getPostFlag() == true)
 	{
-		this->_complete_post_flag = true;
+		this->_progress_post_flag = true;
 		if (this->_request.checkPostContentLength() == true)
 		{
 			this->_complete_parse_flag = true;
@@ -151,11 +140,11 @@ void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 	}
 	else
 	{
-		if (this->_request.ParseRequest(object, this->_complete_post_flag) == false)
+		if (this->_request.ParseRequest(object, this->_progress_post_flag) == false)
 			throw (RequestException(400, "location_error"));
 		if ((this->_request.getBody()).length() == this->_request.getBodySize())
 			this->_complete_parse_flag = true;
-		if (this->_complete_post_flag == true)
+		if (this->_progress_post_flag == true)
 			this->_post_body_flag = true;
 	}
 	return ;
@@ -420,10 +409,7 @@ bool ClientSocket::setFileSocket(std::map<int, ASocket*>& _socket, const std::st
 	file_socket->setFd(this->_other_fd);
 	_socket.insert(std::make_pair(this->_other_fd, file_socket));
 	if (set_nonblocking(this->_other_fd) == false)
-	{
-		delete file_socket;
 		return (false);
-	}
 	return (true);
 }
 
@@ -444,10 +430,12 @@ bool ClientSocket::checkErrorPages(int epoll_fd, size_t status, std::map<int, AS
 	if (this->setFileSocket(_socket, directory, file) == false)
 	{
 		close (this->_other_fd);
+		delete (_socket[this->_fd]);
+		_socket.erase(this->_other_fd);
 		return (false);
 	}
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_other_fd, &event) == -1) {
-		perror("epoll_ctl: mod");
+		throw RequestException(500, "erooe pages");
 	}
 	this->_response_flag = true;
 	return (true);
@@ -463,7 +451,6 @@ bool ClientSocket::checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket)
 	{
 		throw RequestException(500, "file open error");
 	}
-
 	if (this->setFileSocket(_socket, this->_response.getDirectory(), this->_response.getFilename()) == false)
 	{
 		close (this->_other_fd);
@@ -471,74 +458,96 @@ bool ClientSocket::checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket)
 	}
 	event.data.fd = this->_other_fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD,this->_other_fd, &event) == -1) {
-		perror("epoll_ctl: ssmod");
+		close (this->_other_fd);
+		throw RequestException(500, "file open error");
 	}
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
-		perror("epoll_ctl: ssmod");
+		close (this->_other_fd);
+		throw RequestException(500, "file open error");
 	}
 	this->_response_flag = true;
 	return (true);
 }
 
 
-bool ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket)
+void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	std::string buffer = this->_buffer;
 	std::string::iterator it;
 	struct epoll_event ev;
 
-
+	ev.events = EPOLLOUT;
+	ev.data.fd = this->_fd;
 	it = buffer.begin();
-	try
+	while (it != buffer.end())
 	{
-		while (it != buffer.end())
+		if (this->checkCarrigeReturnAndParseRequest(buffer, it) == false)
+			return ;
+		if (this->_complete_parse_flag == true)
 		{
-			if (this->checkCarrigeReturnAndParseRequest(buffer, it) == false)
-				return (true);
-			if (this->_complete_parse_flag == true)
-			{
-
-				if (it != buffer.end())
-					return (false);
-				// if (this->_request.CheckMethodAndHeader() == false)
+			if (it != buffer.end())
+				throw RequestException(400, "Parse not finish");
+			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
-				ChangeConfUri(this->_request.getPath());
-				if (this->checkReadFile(epoll_fd, _socket) == true)
-				{
-					return (true);
-				}
-				ev.events = EPOLLOUT;
-				ev.data.fd = this->_fd;
-				if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-					perror("epoll_ctl: mod");
-				}
-				this->_response_flag = true;
-				this->_response.setFd(this->_fd);
+			ChangeConfUri(this->_request.getPath());
+			if (this->checkReadFile(epoll_fd, _socket) == true)
+				return ;
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+				throw RequestException(500, "Parse not finish");
+			}
+			this->_response_flag = true;
+			this->_response.setFd(this->_fd);
 			if (this->_request.getExtension() == "php")
 			{
 				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
-
-				// ExecuteCgi(epoll_fd, this->_request, server_conf);
+			// ExecuteCgi(epoll_fd, this->_request, server_conf);
 			}
-			return (true);
+			return ;
 		}
 	}
+	if (it == buffer.end())
+		this->_buffer.clear();
+	return ;
+}
+
+
+void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+{
+	int byte_size = 0;
+	char buf[BUFFER_SIZE];
+	size_t pos = 0;
+	struct epoll_event ev;
+
+	ev.events = EPOLLOUT;
+	ev.data.fd = this->_fd;
+	try
+	{
+		byte_size = read(this->_fd, buf, BUFFER_SIZE);
+		if (byte_size < 0)
+			return ;
+		this->_buffer.append(buf, byte_size);
+		pos = this->_buffer.find("\r\n");
+		if (pos == std::string::npos)
+			return ;
+		else
+			this->checkExecuteResponse(epoll_fd, _socket);
+		return ;
 	}
 	catch (const RequestException& e)
 	{
 		if (checkErrorPages(epoll_fd, e.getStatus(), _socket) == true){
-			return (true);
+			return ;
 		}
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-				perror("epoll_ctl: aaa");
+				this->_request.setStatusNumber(500);
 			}
-
-		if (this->_request.getStatusNumber() != 0)
-			this->_request.setStatusNumber(e.getStatus());
+		this->_request.setStatusNumber(e.getStatus());
+		std::cout <<this->_request.getStatusNumber()<<std::endl;
+		std::cout <<&this->_request<<std::endl;
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
-		return (true);
+		return ;
 	}
 	catch (std::exception& e)
 	{
@@ -547,94 +556,80 @@ bool ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _
 				perror("epoll_ctl: md");
 			}
 		std::cout << e.what() << std::endl;
-		return (false);
+		return ;
 	}
-	if (it == buffer.end())
-		this->_buffer.clear();
-	return (true);
 }
 
-
-bool ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
-{
-	int byte_size = 0;
-	char buf[BUFFER_SIZE];
-	size_t pos = 0;
-	
-	byte_size = read(this->_fd, buf, BUFFER_SIZE);
-	if (byte_size < 0)
-		return (false);
-	this->_buffer.append(buf, byte_size);
-	pos = this->_buffer.find("\r\n");
-	if (pos == std::string::npos)
-		return (true);
-	else
-	{
-		if (this->checkExecuteResponse(epoll_fd, _socket) == false)
-		{
-			if (clposeAndDeleteSocket(_socket) == false)
-				return (false);
-		}
-	}
-	return (true);
-}
-
-bool ClientSocket::clposeAndDeleteSocket(std::map<int, ASocket*>& socket)
+void ClientSocket::closeAndDeleteSocket(std::map<int, ASocket*>& socket)
 {
 	std::map<int, ASocket*>::iterator it;
 
 	it = socket.find(this->_fd);
 	if (it == socket.end())
-		return (false);
+		return ;
 	close(it->first);
 	delete (it->second);
 	socket.erase(it);
-	return (true);
+	return ;
 }
 
-bool ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
+void ClientSocket::reSetClientSocket()
+{
+	this->_response_flag = false;
+	this->_progress_post_flag = false;
+	this->_complete_parse_flag = false;
+	this->_post_body_flag = false;
+	this->_buffer.clear();
+	this->_other_fd = -1;
+	this->_error_file_path.clear();
+}
+
+void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	struct epoll_event ev;
-	if (this->_response_flag == false)
-		return (false);
+
+	ev.events = EPOLLIN;
+	ev.data.fd = this->_fd;
 	try
 	{
-		std::cout << this->_response.getFd()<<std::endl;
+		std::cout <<&this->_request<<std::endl;
+
+		std::cout << this->_request.getStatusNumber()<<std::endl;
+		if (this->_response_flag == false)
+			throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)
 			throw (ResponseException(this->_request.getStatusNumber()));
-		this->_response.ExecuteResponse(this->_request);
 		if (this->_request.getConnectionFlag() == true)
 		{
-			if (clposeAndDeleteSocket(socket) == false)
-				return (false);
-			return (true);
+			closeAndDeleteSocket(socket);
+			return ;
 		}
-		ev.events = EPOLLIN;
-		ev.data.fd = this->_fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-			perror("epoll_ctl: mod");
+			throw (ResponseException(500));
 		}
-		return (true);
+		this->_response.ExecuteResponse(this->_request);
 	}
 	catch (const ResponseException& e)
 	{
-		ev.events = EPOLLIN;
-		ev.data.fd = this->_fd;
-		this->_response.ResponseError(e.getStatus());
+		this->_response.setStatusCode(e.getStatus());
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				return (false);
+				this->_response.setStatusCode(500);
 			}
-		if (clposeAndDeleteSocket(socket) == false)
-			return (false);
-		return (true);
+		this->_response.ResponseError();
+		closeAndDeleteSocket(socket);
+		return ;
 	}
 	catch (std::exception& e)
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				perror("epoll_ctl: mod");
+				this->_response.setStatusCode(500);
 			}
-		if (clposeAndDeleteSocket(socket) == false)
-			return (false);
-		return (false);
+		this->_response.setStatusCode(500);
+		closeAndDeleteSocket(socket);
+		return ;
 	}
+	this->_request.reSetRequest();
+	this->_response.reSetResponse();
+	this->reSetClientSocket();
+	return ;
 }

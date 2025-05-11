@@ -11,3 +11,9 @@ size_t ResponseException::getStatus(void) const
 {
 	return (this->_status);
 }
+
+void ResponseException::setStatus(size_t status)
+{
+	this->_status = status;
+	return ;
+}

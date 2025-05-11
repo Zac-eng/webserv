@@ -13,4 +13,5 @@ class ResponseException : public std::exception
 		ResponseException(size_t status);
 		const char* what() const throw();
 		size_t getStatus(void) const;
+		void setStatus(size_t status);
 };

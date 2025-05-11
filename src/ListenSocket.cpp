@@ -81,7 +81,7 @@ bool ListenSocket::createSocket(void)
 	return (true);
 }
 
-bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket)
+void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	int fd;
 	ASocket *client = new ClientSocket(this->_conf);
@@ -92,21 +92,31 @@ bool ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	memset(&address, 0 ,len);
 	fd = accept(this->_fd, (struct sockaddr *)&address, &len);
 	if (fd < 0)
-		return (false);
+	{
+		delete (client);
+		return ;
+	}
 	event.events = EPOLLIN;
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
-		return (false);
+	{
+		delete (client);
+		return ;
+	}
 	client->setFd(fd);
 	socket.insert(std::make_pair(client->getFd(), client));
 	if (set_nonblocking(client->getFd()) == false)
-		return (false);
-	return(true);
+	{
+		delete (client);
+		socket.erase(client->getFd());
+		return ;
+	}
+	return;
 }
 
-bool ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
+void ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	(void)epoll_fd;
 	(void)_socket;
-	return (false);
+	return ;
 }

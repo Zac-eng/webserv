@@ -8,9 +8,6 @@ Response::Response()
 	std::cout << "Response object create" << std::endl;
 }
 
-Response::Response(Request& request) : _request(request) {};
-
-
 Response::~Response()
 {
 	std::cout << "Response object destroyed" << std::endl;
@@ -24,17 +21,6 @@ int Response::getFd(void) const
 void Response::setFd(const int& fd)
 {
 	this->_fd = fd;
-	return ;
-}
-
-Request Response::getRequest(void) const
-{
-	return (this->_request);
-}
-
-void Response::setRequest(const Request& request)
-{
-	this->_request = request;
 	return ;
 }
 
@@ -407,26 +393,24 @@ void Response::reSetResponse(void)
 	this->_cgi_buffer.clear();
 }
 
-
-
-void Response::ResponseError(const size_t status_code)
+void Response::ResponseError()
 {
 	// if (server.errorpage() == req.status_number)
 	// 	serchErrorPage();
-	if (status_code == 400)
+	if (this->_status_code == 400)
 		ResponseBadRequest();
-	else if(status_code == 404)
+	else if(this->_status_code == 404)
 		ResponseFileNotFound();
-	else if(status_code == 405)
+	else if(this->_status_code == 405)
 		ResponseMethodNotAloowed();
-	else if(status_code == 500)
+	else if(this->_status_code == 500)
 		ResponseInternalServerError();
-	else if(status_code == 501)
+	else if(this->_status_code == 501)
 		ResponseNotImplemented();
-	else if(status_code == 502)
+	else if(this->_status_code == 502)
 		ResponseBadGateway();
+	return ;
 }
-
 
 void Response::ExecuteResponse(Request& req)
 {

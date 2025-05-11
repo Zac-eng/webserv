@@ -31,6 +31,6 @@ class ASocket
 		int getPort(void) const;
 		void setPort(int port);
 		virtual bool createSocket() = 0;
-		virtual bool handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
-		virtual bool handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
+		virtual void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
+		virtual void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 };

@@ -26,7 +26,6 @@ class Response
 	// private:
 		public:
 		int _fd;
-		Request _request;
 		std::string _response;
 		size_t _status_code;
 		std::string _directory;
@@ -39,7 +38,6 @@ class Response
 		std::string _cgi_buffer;
 
 
-		Response(Request& request);
 		Response ();
 		~Response();
 		bool Get(std::string::const_iterator it, const std::string& request);
@@ -62,7 +60,7 @@ void CheckFileType(std::string& file);
 void CheckConnectionHeader(std::map<std::string, std::string> header);
 void CreateResponseHeader(Request& req);
 void CreateResponse();
-void ResponseError(const size_t status_code);
+void ResponseError(void);
 bool IsDynamicFileType(const std::string& file);
 void createDateHeader(void);
 void ErrorResponse(size_t code, const std::string& title);
