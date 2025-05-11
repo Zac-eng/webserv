@@ -53,7 +53,7 @@ bool ReadUri(Request& req);
 // bool ReadFile(Request& req);
 void handleGet(Request& req);
 void handlePost(Request& req);
-void handleDelete(Request& req);
+void handleDelete(void);
 void ExecuteAndGetStatusCode(Request& req);
 void HandleMethod(Request& req);
 void ExecuteHeaderResponse(Request& req);

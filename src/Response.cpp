@@ -298,7 +298,7 @@ void Response::handleGet(Request& req)
 }
 
 
-void Response::handleDelete(Request& req)
+void Response::handleDelete(void)
 {
 	if (remove(this->_path.c_str()) != 0)
 		throw ResponseException(400);
@@ -331,7 +331,7 @@ void Response::HandleMethod(Request& req)
 	else if (req.getMethod() == "POST")
 		handlePost(req);
 	else if (req.getMethod() == "DELETE")
-		handleDelete(req);
+		handleDelete();
 	return ;
 }
 

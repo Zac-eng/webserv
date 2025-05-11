@@ -106,6 +106,8 @@ bool FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 
 bool FileSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
+	(void)epoll_fd;
+	(void)_socket;
 	throw std::runtime_error("File Socket Epoll Out");
 }
 

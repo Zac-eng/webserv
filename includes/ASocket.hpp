@@ -21,7 +21,7 @@ class ASocket
 	public:
 		ASocket();
 		ASocket(ServerConfig& conf);
-		~ASocket();
+		virtual ~ASocket();
 		int getFd(void) const;
 		void setFd(int fd);
 		ServerConfig getConf(void) const;

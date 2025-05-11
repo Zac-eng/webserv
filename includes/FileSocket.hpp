@@ -11,8 +11,8 @@ class FileSocket : public ASocket
 		int _other_fd;
 		Request _request;
 		Response& _response;
-		std::string _file;
 		std::string _directory;
+		std::string _file;
 
 	public:
 		FileSocket(int other_fd, Request& resquest, Response& response, std::string directory, std::string file);

@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _body_size(-1), _bad_request_flag(false), _connection_flag(false), _status_number(0), _chunk_size(0), _post_flag(false), _chunk_flag(false), _chunk_finish_flag(false), _host_flag(false), _request_flag(false)
+Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _body_size(-1),  _connection_flag(false), _bad_request_flag(false)
 {
 	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
@@ -176,12 +176,12 @@ void Request::setStatusNumber(const size_t& status_number)
 	return ;
 }
 
-int Request::getBodySize(void) const
+size_t Request::getBodySize(void) const
 {
 	return (this->_body_size);
 }
 
-void Request::setBodySize(const int& body_size)
+void Request::setBodySize(const size_t& body_size)
 {
 	this->_body_size = body_size;
 	return ;

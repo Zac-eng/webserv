@@ -1,9 +1,9 @@
 #include "ClientSocket.hpp"
 #include "Request.hpp"
 
-ClientSocket::ClientSocket() : _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket() : _response_flag(false), _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf),  _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _response_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _complete_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -109,7 +109,7 @@ bool ClientSocket::CloseClientFd()
 	return (true);
 }
 
-bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it, const std::string& object)
+bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it)
 {
 	if (this->_post_body_flag == true)
 	{
@@ -146,7 +146,7 @@ void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 			throw RequestException(400, "bad request");
 		if (this->_request.getRequestFlag() == false)
 			return ;
-		if (CheckRequestFlag(buffer, it, object) == false)
+		if (CheckRequestFlag(buffer, it) == false)
 			throw (RequestException(400, "request_flag"));
 	}
 	else
@@ -200,11 +200,9 @@ void ClientSocket::ChangeDefaultPath(const std::string& uri)
 size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 {
 	size_t i;
-	size_t result;
 	std::string path;
 
 	i = 0;
-	result = 0;
 	path = location.getPath();
 	if (uri.empty() || path.empty())
 		return (0);
@@ -213,7 +211,7 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 	return (i);
 }
 
-bool ClientSocket::CheckFileAndCombainLocation(LocationConfig& location, std::string& object)
+bool ClientSocket::CheckFileAndCombainLocation(std::string& object)
 {
 	std::string file;
 	std::string path;
@@ -295,7 +293,6 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		}
 		if (it == (location.getIndexFiles()).end())
 			throw RequestException(404,"uri file not");
-			std::cout << "2222"<< std::endl;
 	}
 
 	return ;
@@ -323,9 +320,7 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	size_t length;
 	size_t result;
 	std::vector<LocationConfig>::iterator it;
-	bool location_flag;
 
-	location_flag = false;
 	it = location.begin();
 	length = 0;
 	result = 0;
@@ -444,7 +439,7 @@ bool ClientSocket::checkErrorPages(int epoll_fd, size_t status, std::map<int, AS
 	it = (this->_conf.getErrorPages()).find(status);
 	if (it == (this->_conf.getErrorPages()).end())
 		return (false);
-	if (this->checkExistErrorPages(it->second, directory, file) == false);
+	if (this->checkExistErrorPages(it->second, directory, file) == false)
 		return (false);
 	if (this->setFileSocket(_socket, directory, file) == false)
 	{

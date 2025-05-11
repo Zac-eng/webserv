@@ -51,14 +51,14 @@ class ClientSocket : public ASocket
 	bool checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket);
 	bool CheckPostFlag();
 	bool CloseClientFd();
-	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it, const std::string& object);
+	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it);
 	void ValidLocation(LocationConfig& location, LocationConfig& location_tmp, bool& location_flag);
 	bool CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri);
 	void CombineUriAndLocationRoot(LocationConfig& location);
 	void ChangeDefaultPath(const std::string& uri);
 	void ChangeConfUri(const std::string& uri);
 	bool CheckAndChangeRootUri(const std::string& uri);
-	bool CheckFileAndCombainLocation(LocationConfig& location, std::string& object);
+	bool CheckFileAndCombainLocation(std::string& object);
 	bool clposeAndDeleteSocket(std::map<int, ASocket*>& socket);
 bool existUri(const std::string& directory, const std::string& file);
 bool checkAllowMethod(const std::vector<std::string>& allow_method);
