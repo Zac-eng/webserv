@@ -135,7 +135,10 @@ void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 		if (this->_request.ParseRequest(object, this->_progress_post_flag) == false)
 			throw (RequestException(400, "location_error"));
 		if (this->_request.getProgressMultipartFlag() == false)
+		{
 			this->_multipart_flag = false;
+			this->_complete_parse_flag = true;
+		}
 	}
 	else if (object.compare("\r\n") == 0)
 	{
@@ -511,10 +514,11 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
 			ChangeConfUri(this->_request.getPath());
+				// std::cout << "----"<<std::endl;
 			if (this->_request.getExtension() == "php")
 			{
-				if (this->_request.getPostFlag() == true)
-					throw (RequestException(405, "extension"));
+				// if (this->_request.getPostFlag() == true)
+				// 	throw (RequestException(405, "extension"));
 			// return (ExecuteCgi(epoll_fd, this->_request, server_conf));
 			}
 			this->checkReadFile();
