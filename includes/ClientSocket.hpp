@@ -7,6 +7,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "ASocket.hpp"
+#include "Server.hpp"
 #include <iostream>
 #include <string>
 #include <sys/types.h>
@@ -39,6 +40,7 @@ class ClientSocket : public ASocket
 	ClientSocket();
 	~ClientSocket();
 	ClientSocket(ServerConfig& conf);
+	// ClientSocket(ServerConfig& conf, const sockaddr_in& addr);
 	// 何もない
 	bool createSocket();
 	// Requestパース

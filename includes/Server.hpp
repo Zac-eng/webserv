@@ -13,11 +13,11 @@
 
 class Server
 {
-	public:
+public:
 	std::map<int, ASocket*> _socket;
 	std::vector<ServerConfig> _conf;
 	int _epoll_fd;
-	
+
 
 	Server();
 	~Server();

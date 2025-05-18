@@ -6,9 +6,11 @@
 #include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "nginx.hpp"
 #include <cstring>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
+
+#define BUFFER_SIZE 100
 
 class ASocket
 {

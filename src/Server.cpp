@@ -54,11 +54,11 @@ bool Server::setMonitoringFd(ASocket* socket)
 
 bool Server::epollCreate(void)
 {
-	this->_epoll_fd = epoll_create1(0);
+	Server::_epoll_fd = epoll_create1(0);
 
-	if (this->_epoll_fd < 0)
+	if (Server::_epoll_fd < 0)
 		return (false);
-	for (std::map<int, ASocket*>::iterator it = this->_socket.begin(); it != this->_socket.end(); it++)
+	for (std::map<int, ASocket*>::iterator it = Server::_socket.begin(); it != Server::_socket.end(); it++)
 	{
 		if (setMonitoringFd(it->second) ==  false)
 			return (false);
