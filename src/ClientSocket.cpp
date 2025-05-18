@@ -514,7 +514,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
 			ChangeConfUri(this->_request.getPath());
-				// std::cout << "----"<<std::endl;
 			if (this->_request.getExtension() == "php")
 			{
 				// if (this->_request.getPostFlag() == true)
