@@ -1,6 +1,5 @@
 #include "nginx.hpp"
 #include "location.hpp"
-// #include "location.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,6 +8,8 @@
 #include <stdexcept>
 #include <algorithm> // std::remove_if
 #include <functional>
+#include <stdexcept>
+#include <climits>
 
 
 void	ServerConfig::validate() const
@@ -38,6 +39,28 @@ struct is_not_space
 		return !is_space(c);
 	}
 };
+
+int my_stoi(const std::string& str)
+{
+	if (str.empty())
+		throw std::invalid_argument("Input string is empty");
+	const char* s = str.c_str();
+	char* end_ptr;
+	errno = 0;
+	long converted_value = std::strtol(s, &end_ptr, 10);
+	if (end_ptr == s)
+		throw std::invalid_argument("No conversion could be performed");
+	char* check_after_num = end_ptr;
+	while (*check_after_num != '\0') {
+		if (!std::isspace(static_cast<unsigned char>(*check_after_num))) {
+			throw std::invalid_argument("Invalid characters after number");
+		}
+		check_after_num++;
+	}
+	if (errno == ERANGE || converted_value < INT_MIN || converted_value > INT_MAX)
+		throw std::out_of_range("Value out of range for int");
+	return static_cast<int>(converted_value);
+}
 
 //空白文字が削除された新しい文字列を返す 
 std::string trim(const std::string& str)
@@ -138,7 +161,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				return false;
 			}
 			try {
-				int port = std::stoi(port_str);
+				int port = my_stoi(port_str);
 				if (port < 1 || port > 65535) {
 					std::cerr << "Error: Invalid port number: " << port_str << std::endl;
 					return false;

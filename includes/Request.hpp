@@ -46,7 +46,6 @@ class Request
 		bool parseHeader(const std::string& request);
 		bool ParseRequestLine(const std::string& request);
 		bool ParseRequest(const std::string& request, bool parse_post_flag);
-		void insertHeaderKey(void);
 bool CheckUriExtension(const std::string& uri, std::string::const_iterator& it_tmp);
 bool SearchHeaderKey(std::string &key);
 bool HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);

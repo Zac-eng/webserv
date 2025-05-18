@@ -100,6 +100,7 @@ bool ClientSocket::CloseClientFd()
 
 bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it)
 {
+	//ポストを実行中で、キャリッジリターンが送られた時の処理。chunkが終わっているか終わっていないかの確認。
 	if (this->_post_body_flag == true)
 	{
 		if (it != buffer.end())
@@ -119,7 +120,7 @@ bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& 
 			this->_complete_parse_flag = true;
 			return (true);
 		}
-		// return (true);
+		return (true);
 	}
 	if (it != buffer.end())
 		return (false);
@@ -136,13 +137,16 @@ void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 		if (this->_request.getRequestFlag() == false)
 			return ;
 		if (CheckRequestFlag(buffer, it) == false)
+	{
+
 			throw (RequestException(400, "request_flag"));
+	}
 	}
 	else
 	{
 		if (this->_request.ParseRequest(object, this->_progress_post_flag) == false)
 			throw (RequestException(400, "location_error"));
-		if ((this->_request.getBody()).length() == this->_request.getBodySize())
+		if (!(this->_request.getBody()).empty() && (this->_request.getBody()).length() == this->_request.getBodySize())
 			this->_complete_parse_flag = true;
 		if (this->_progress_post_flag == true)
 			this->_post_body_flag = true;
@@ -159,10 +163,14 @@ void ClientSocket::ChangeDefaultPath(const std::string& uri)
 	if (object[object.length() - 1] != '/')
 		object += '/';
 	this->_response.setDirectory(object);
-	this->_response.setFilename("index.html");
-	object += "index.html";
-	this->_response.setPath(object);
-	return ;
+	if (this->existUri(this->_response.getDirectory(), "index.html") == true)
+	{
+		object += "index.html";
+		this->_response.setFilename("index.html");
+		this->_response.setPath(object);
+		return ;
+	}
+	throw RequestException(404, "default error");
 }
 
 // bool ClientSocket::CheckAndChangeRootUri(const std::string& uri)
@@ -199,23 +207,6 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 		i++;
 	return (i);
 }
-
-bool ClientSocket::CheckFileAndCombainLocation(std::string& object)
-{
-	std::string file;
-	std::string path;
-
-	file = this->_request.getFile();
-	if (file.empty())
-		return (false);
-	this->_response.setDirectory(object);
-	this->_response.setFilename(file);
-	path = object;
-	path += file;
-	this->_response.setPath(path);
-	return (true);
-}
-
 
 bool ClientSocket::existUri(const std::string& directory, const std::string& file)
 {
@@ -353,7 +344,6 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// 			throw (RequestException(404, "404 error"));
 	// if (CheckAndChangeRootUri(uri) == true)
 	// 	return ;
-	throw (RequestException(404, "request aaaaa"));
 	ChangeDefaultPath(uri);
 }
 
@@ -495,14 +485,14 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
 			}
-			this->_response_flag = true;
-			this->_response.setFd(this->_fd);
 			if (this->_request.getExtension() == "php")
 			{
 				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
 			// ExecuteCgi(epoll_fd, this->_request, server_conf);
 			}
+			this->_response_flag = true;
+			this->_response.setFd(this->_fd);
 			return ;
 		}
 	}
@@ -536,27 +526,28 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
-		if (checkErrorPages(epoll_fd, e.getStatus(), _socket) == true){
-			return ;
-		}
+		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
 			}
+		if (checkErrorPages(epoll_fd, e.getStatus(), _socket) == true){
+			return ;
+		}
 		this->_request.setStatusNumber(e.getStatus());
-		std::cout <<this->_request.getStatusNumber()<<std::endl;
-		std::cout <<&this->_request<<std::endl;
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
-		return ;
 	}
 	catch (std::exception& e)
 	{
-
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				perror("epoll_ctl: md");
+			this->_request.setStatusNumber(500);
 			}
-		std::cout << e.what() << std::endl;
-		return ;
+		if (checkErrorPages(epoll_fd, 500, _socket) == true){
+			return ;
+		}
+		this->_request.setStatusNumber(500);
+		this->_response_flag = true;
+		this->_response.setFd(this->_fd);
 	}
 }
 
@@ -592,9 +583,6 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
-		std::cout <<&this->_request<<std::endl;
-
-		std::cout << this->_request.getStatusNumber()<<std::endl;
 		if (this->_response_flag == false)
 			throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)

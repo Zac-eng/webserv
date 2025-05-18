@@ -1,8 +1,7 @@
 #include "Request.hpp"
 
-Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _body_size(-1),  _connection_flag(false), _bad_request_flag(false)
+Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _connection_flag(false), _bad_request_flag(false)
 {
-	this->insertHeaderKey();
 	std::cout << "Request object created argument" << std::endl;
 }
 
@@ -315,6 +314,7 @@ void Request::SearchChunkValue(std::string& value)
 				continue ;
 			if (tmp == "chunked")
 			{
+				std::cout << "chunkに来てます" <<std::endl;
 				this->_chunk_flag = true;
 				return ;
 			}
@@ -396,7 +396,6 @@ bool Request::parseHeader(const std::string& request)
 	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
-		std::cout <<request<<std::endl;
 		throw (RequestException(400,"header_key_error"));
 	}
 	if (SkipColon(request, it) == false)
@@ -418,7 +417,7 @@ bool Request::parseHeader(const std::string& request)
 	}
 	convertLower(key);
 	this->_header[key] = value;
-	if (key == "transfer-enconding")
+	if (key == "transfer-encoding")
 		SearchChunkValue(value);
 	if (key == "content-length")
 		checkContentLengthValue(value);
@@ -684,7 +683,19 @@ bool Request::parseChunkSize(const std::string& request)
 	if (checkHexadecimal(*it) == false)
 		return (false);
 	if (*it == '0')
-		return (false);
+	{
+		it++;
+		if (it != request.end() && *it != '\r')
+			return (false);
+		it++;
+		if (it != request.end() && *it != '\n')
+			return (false);
+		it++;
+		if (it != request.end())
+			return (false);
+		this->_chunk_finish_flag = true;
+		return (true);
+	}
 	for (; it != request.end() && *it != '\r'; it++)
 	{
 		if (checkHexadecimal(*it) == false)
@@ -743,6 +754,8 @@ bool Request::executeChunk(const std::string& request)
 	{
 		if (parseChunkSize(request) == false)
 			return (false);
+		if (this->_chunk_finish_flag == true)
+			return (true);
 		this->_chunk_size = convertDecimal(request);
 		return (true);
 	}
@@ -755,8 +768,6 @@ bool Request::parseChunk(const std::string& request)
 {
 	if (this->_chunk_finish_flag == true)
 		throw (RequestException(400, "chunk_finish"));
-	if (request == "\r\n")
-		this->_chunk_finish_flag = true;
 	if (executeChunk(request) == false)
 		throw (RequestException(400,"chunk_error"));
 	return (true);
@@ -816,6 +827,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
 	if (parse_post_flag == true)
 	{
+		std::cout << "--"<<std::endl;
 		if (parsePostBody(request) == false)
 			return (false);
 	}
@@ -833,38 +845,4 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
-}
-
-void Request::insertHeaderKey(void)
-{
-	_valid_header_key.clear();
-	_valid_header_key.push_back("host");
-	_valid_header_key.push_back("date");
-	_valid_header_key.push_back("user-agent");
-	_valid_header_key.push_back("accept");
-	_valid_header_key.push_back("content-type");
-	_valid_header_key.push_back("content-length");
-	_valid_header_key.push_back("transfer-enconding");
-	_valid_header_key.push_back("cashe-control");
-	_valid_header_key.push_back("connection");
-	_valid_header_key.push_back("accept-language");
-	_valid_header_key.push_back("accept-encoding");
-	_valid_header_key.push_back("athorization");
-	_valid_header_key.push_back("sec-ch-ua");
-	_valid_header_key.push_back("sec-ch-ua-mobile");
-	_valid_header_key.push_back("sec-ch-ua-platform");
-	_valid_header_key.push_back("sec-fetch-site");
-	_valid_header_key.push_back("sec-fetch-user");
-	_valid_header_key.push_back("sec-fetch-mode");
-	_valid_header_key.push_back("sec-fetch-dest");
-	_valid_header_key.push_back("referer");
-	_valid_header_key.push_back("if-none-match");
-	_valid_header_key.push_back("cashe-control");
-	_valid_header_key.push_back("sec-purpose");
-	// _valid_header_key.push_back("Referer");
-	// _valid_header_key.push_back("Referer");
-	// _valid_header_key.push_back("Referer");
-	// _valid_header_key.push_back("Referer");
-
-	_valid_header_key.push_back("upgrade-insecure-requests");
 }

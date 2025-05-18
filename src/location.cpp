@@ -70,7 +70,6 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 			std::string method;
 			while (stream >> method)
 			{
-				std::cout << "method: " << method << std::endl;
 				if (!method.empty() && method[method.size() - 1] == ';') {
 					method.erase(method.size() - 1);
 					allow_method.push_back(method);
@@ -81,10 +80,6 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 			if (allow_method.size() >= method_prev)
 				allow_method_count.push_back(allow_method.size() - method_prev);
 			location_config.setMethod(allow_method);
-			for (size_t i = 0; i < allow_method.size(); i++)
-			{
-				std::cout << "allow_method: " << allow_method[i] << std::endl;
-			}
 		}
 		else if (keyword == "fastcgi_index") {
 			std::string cgi_index;

@@ -70,7 +70,6 @@ void FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_other_fd;
-
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_fd, NULL) == -1) {
 			throw RequestException(500, "file size Error");
 		}
@@ -78,13 +77,11 @@ void FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 	{
 		this->readFile();
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD,this->_other_fd, &ev) == -1) {
-
 			this->_request.setStatusNumber(500);
 		}
 	}
 	catch (const RequestException& e)
 	{
-		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_other_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
@@ -94,7 +91,7 @@ void FileSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 	catch (std::exception& e)
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD,this->_other_fd, &ev) == -1) {
-			std::cout << "error" << std::endl;
+			this->_request.setStatusNumber(500);
 			}
 		this->_request.setStatusNumber(500);
 	}
