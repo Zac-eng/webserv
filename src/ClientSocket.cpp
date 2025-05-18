@@ -1,9 +1,9 @@
 #include "ClientSocket.hpp"
 #include "Request.hpp"
 
-ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -130,17 +130,23 @@ bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& 
 
 void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, std::string& object)
 {
-	if (object.compare("\r\n") == 0)
+	if (this->_multipart_flag == true)
+	{
+		if (this->_request.ParseRequest(object, this->_progress_post_flag) == false)
+			throw (RequestException(400, "location_error"));
+		if (this->_request.getProgressMultipartFlag() == false)
+			this->_multipart_flag = false;
+	}
+	else if (object.compare("\r\n") == 0)
 	{
 		if (this->_request.getBadRequestFlag() == true || this->_request.checkBodyHeader() == true)
 			throw RequestException(400, "bad request");
 		if (this->_request.getRequestFlag() == false)
 			return ;
 		if (CheckRequestFlag(buffer, it) == false)
-	{
-
+		{
 			throw (RequestException(400, "request_flag"));
-	}
+		}
 	}
 	else
 	{
@@ -150,6 +156,8 @@ void ClientSocket::validRequest(std::string& buffer, std::string::iterator& it, 
 			this->_complete_parse_flag = true;
 		if (this->_progress_post_flag == true)
 			this->_post_body_flag = true;
+		if (this->_progress_post_flag == true && this->_request.getMultipartFlag() == true)
+			this->_multipart_flag = true;
 	}
 	return ;
 }
@@ -445,7 +453,6 @@ void ClientSocket::readFile(int fd)
 		if (byte_size < 0)
 		{
 			close(fd);
-
 			throw RequestException(500, "file size Error");
 		}
 		else if (byte_size == 0)
@@ -540,6 +547,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 			return ;
+		buf[byte_size] = '\0';
 		this->_buffer.append(buf, byte_size);
 		pos = this->_buffer.find("\r\n");
 		if (pos == std::string::npos)
@@ -597,6 +605,7 @@ void ClientSocket::reSetClientSocket()
 	this->_buffer.clear();
 	this->_other_fd = -1;
 	this->_error_file_path.clear();
+	this->_multipart_flag = false;
 }
 
 void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)

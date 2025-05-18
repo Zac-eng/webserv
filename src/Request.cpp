@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _connection_flag(false), _bad_request_flag(false)
+Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _connection_flag(false), _bad_request_flag(false), _multipart_flag(false), _progress_multipart_flag(false), _start_flag(false), _end_flag(false), _count_body(0)
 {
 	std::cout << "Request object created argument" << std::endl;
 }
@@ -219,6 +219,16 @@ void Request::setBadRequestFlag(const bool& bad_request_flag)
 	return ;
 }
 
+bool Request::getMultipartFlag()
+{
+	return (this->_multipart_flag);
+}
+
+bool Request::getProgressMultipartFlag()
+{
+	return (this->_progress_multipart_flag);
+}
+
 // bool Request::SearchHeaderKey(std::string &key)
 // {
 // 	for (size_t i = 0; i < _valid_header_key.size(); i++)
@@ -314,7 +324,6 @@ void Request::SearchChunkValue(std::string& value)
 				continue ;
 			if (tmp == "chunked")
 			{
-				std::cout << "chunkに来てます" <<std::endl;
 				this->_chunk_flag = true;
 				return ;
 			}
@@ -386,6 +395,26 @@ void Request::checkContentLengthValue(const std::string& value)
 	return ;
 }
 
+void Request::checkMultipartHeader(std::string& value)
+{
+	std::string boundary;
+	size_t pos;
+
+	boundary = "boundary=";
+	pos = value.find(boundary);
+	if (pos == std::string::npos)
+		return ;
+	boundary = value.substr(pos + boundary.length());
+	pos = boundary.find_first_of(" ;");
+	this->_boundary = "--";
+	if (pos == std::string::npos)
+		this->_boundary += boundary.substr(0, pos);
+	else
+		this->_boundary += boundary;
+	this->_multipart_flag = true;
+	return ;
+}
+
 bool Request::parseHeader(const std::string& request)
 {
 	std::string key;
@@ -396,6 +425,7 @@ bool Request::parseHeader(const std::string& request)
 	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
+		std::cout << request <<std::endl;
 		throw (RequestException(400,"header_key_error"));
 	}
 	if (SkipColon(request, it) == false)
@@ -423,6 +453,8 @@ bool Request::parseHeader(const std::string& request)
 		checkContentLengthValue(value);
 	if (key == "connection")
 		searchConnectionClose(value);
+	if (key == "content-type" && this->_post_flag == true)
+		checkMultipartHeader(value);
 	return (true);
 }
 
@@ -809,7 +841,7 @@ void Request::reSetRequest(void)
 	this->_chunk_flag = false;
 	this->_chunk_size = 0;
 	this->_status_number = 0;
-	this->_body_size =-1;
+	this->_body_size = 0;
 	this->_connection_flag = false;
 	this->_bad_request_flag = false;
 	this->_request.clear();
@@ -821,13 +853,80 @@ void Request::reSetRequest(void)
 	this->_version.clear();
 	this->_body.clear();
 	this->_header.clear();
+	this->_count_body = 0;
+	this->_multipart_flag = false;
+	this->_progress_multipart_flag = false;
+	this->_boundary.clear();
+	this->_start_flag = false;
+	this->_end_flag = false;
+
+}
+
+std::string Request::substringCarrigereturn(const std::string request)
+{
+	std::string object;
+	std::string::const_iterator it;
+
+	it = request.begin();
+	for (; it != request.end() && *it != '\r'; it++)
+		object += *it;
+	if (it == request.end())
+		throw RequestException(400, "parse multi error");
+	it++;
+	if (it == request.end() || *it != '\n')
+		throw RequestException(400, "parse multi error");
+	it++;
+	if (it == request.end())
+		return (object);
+	throw RequestException(400, "parse multi error");
+}
+
+
+void Request::parseMultipart(const std::string request)
+{
+	std::string object;
+	std::string boundary;
+
+	boundary = this->_boundary;
+	boundary += "--";
+	object = this->substringCarrigereturn(request);
+	if (this->_start_flag == false)
+	{
+		if (object == this->_boundary)
+		{
+			this->_start_flag = true;
+			this->_count_body += request.length();
+			return ;
+		}
+		else
+		{
+			throw RequestException(400, "error");
+		}
+	}
+	if (object == boundary)
+	{
+		this->_end_flag = true;
+		this->_progress_multipart_flag = false;
+		this->_count_body += request.length();
+		if (this->_body_size != this->_count_body)
+			throw RequestException(400, "diffrent body size");
+		return ;
+	}	
+	this->_body += request;
+	this->_count_body += request.length();
 }
 
 bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
+	std::cout <<request<<std::endl;
 	if (parse_post_flag == true)
 	{
-		std::cout << "--"<<std::endl;
+		if (this->_multipart_flag == true)
+		{
+			this->_progress_multipart_flag = true;
+			this->parseMultipart(request);
+			return  (true);
+		}
 		if (parsePostBody(request) == false)
 			return (false);
 	}

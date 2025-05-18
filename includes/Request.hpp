@@ -36,6 +36,13 @@ class Request
 		bool _bad_request_flag;
 		std::vector<std::string> _valid_header_key;
 
+		bool _multipart_flag;
+		bool _progress_multipart_flag;
+		bool _start_flag;
+		bool _end_flag;
+		std::string _boundary;
+		size_t _count_body;
+
 		// LocationConfig _conf;
 	public:
 		Request();
@@ -73,6 +80,11 @@ bool checkPostContentLength(void);
 bool checkBodyHeader(void);
 void checkContentLengthValue(const std::string& value);
 void reSetRequest(void);
+void parseMultipart(const std::string request);
+std::string substringCarrigereturn(const std::string request);
+void checkMultipartHeader(std::string& value);
+
+
 
 
 
@@ -112,6 +124,8 @@ std::vector<std::string> getValidHeaderKey(void) const;
 void setValidHeaderKey(const std::vector<std::string>& valid_header_key);
 bool getBadRequestFlag(void) const;
 void setBadRequestFlag(const bool& bad_request_flag);
+bool getProgressMultipartFlag();
+bool getMultipartFlag();
 
 size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);

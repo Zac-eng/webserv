@@ -18,7 +18,7 @@
 #include <sys/epoll.h>
 #include "Server.hpp"
 
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 2000
 
 class ASocket;
 
@@ -35,6 +35,7 @@ class ClientSocket : public ASocket
 	std::string _buffer;
 	int _other_fd;
 	std::string _error_file_path;
+	bool _multipart_flag;
 
 	ClientSocket();
 	~ClientSocket();
