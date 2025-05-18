@@ -85,7 +85,7 @@ void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 {
 	int fd;
 	struct sockaddr_in address;
-	ASocket *client = NULL;
+	ASocket *client = new ClientSocket(this->_conf);
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
 	

@@ -10,8 +10,9 @@
 
 #define READ 0
 #define WRITE 1
-#define CMD_PATH "/bin/php"
+#define CMD_PATH "/usr/bin/php"
 #define CGI_EXTENTION ".php"
+#define CGI_TIMEOUT 3
 
 const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr);
 

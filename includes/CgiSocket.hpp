@@ -10,12 +10,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define READ 0
-#define WRITE 1
-#define CMD_PATH "/bin/php"
-#define CGI_EXTENTION ".php"
-#define CGI_TIMEOUT 3
-
 enum NextEvent {
 	CgiIn,
 	CgiOut,
@@ -33,9 +27,9 @@ private:
 	std::string& _response_body;
 
 	CgiSocket(void);
-	bool initPipes(int ptc[], int ctp[]);
-	bool prepareChildPipes(int ptc[], int ctp[]);
-	bool prepareParentPipes(int ptc[], int ctp[]);
+	static bool initPipes(int ptc[], int ctp[]);
+	static bool prepareChildPipes(int ptc[], int ctp[]);
+	static bool prepareParentPipes(int ptc[], int ctp[]);
 	bool isTimeout(void);
 
 public:
@@ -44,8 +38,10 @@ public:
 	~CgiSocket();
 	CgiSocket(const CgiSocket& obj);
 	CgiSocket& operator = (const CgiSocket& obj);
-	CgiSocket* createCgiSocket(ServerConfig& conf, Request& req, const sockaddr_in& client_addr, std::string& response_buf);
+	static CgiSocket* createCgiSocket(ServerConfig& conf, Request& req, const sockaddr_in& client_addr, std::string& response_buf);
 	bool	createSocket(void);
+	int		getReadPipe() const;
+	int		getWritePipe() const;
 	void	handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 

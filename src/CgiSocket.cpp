@@ -64,6 +64,7 @@ CgiSocket* CgiSocket::createCgiSocket(
   else if (pid == 0) {
     // not sure since req.getPath does not always return the "path" we need here
     const char *args[] = {CMD_PATH, req.getPath().c_str(), NULL};
+    std::cout << req.getPath() << std::endl;
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(500);
@@ -185,4 +186,10 @@ bool CgiSocket::isTimeout() {
   return (current_time > this->_created_at + CGI_TIMEOUT);
 }
 
+int		CgiSocket::getReadPipe() const {
+  return this->_pipe_fds[READ];
+}
 
+int		CgiSocket::getWritePipe() const {
+  return this->_pipe_fds[WRITE];
+}

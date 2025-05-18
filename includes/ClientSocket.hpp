@@ -18,10 +18,7 @@
 #include <map>
 #include <sys/epoll.h>
 #include "Server.hpp"
-
-#define BUFFER_SIZE 100
-
-class ASocket;
+#include "CgiSocket.hpp"
 
 class ClientSocket : public ASocket
 {

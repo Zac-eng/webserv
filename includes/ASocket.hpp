@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 2048
 
 class ASocket
 {

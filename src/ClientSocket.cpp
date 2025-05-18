@@ -508,7 +508,15 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			{
 				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
-			// return (ExecuteCgi(epoll_fd, this->_request, server_conf));
+				sockaddr_in dummy;
+				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, dummy, _response._cgi_buffer);
+				if (cgi == NULL)
+					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
+				ev.events = EPOLLOUT;
+				ev.data.fd = cgi->getReadPipe();
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+					throw RequestException(500, "Parse not finish");
+				}
 			}
 			this->checkReadFile();
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
