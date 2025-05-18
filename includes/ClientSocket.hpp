@@ -16,7 +16,6 @@
 #include <sstream>
 #include <map>
 #include <sys/epoll.h>
-#include "FileSocket.hpp"
 #include "Server.hpp"
 
 #define BUFFER_SIZE 100
@@ -47,7 +46,7 @@ class ClientSocket : public ASocket
 	// CgiSocket作成、レスポンス作成
 	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
-	void checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket);
+	void checkExecuteResponse(int epoll_fd);
 	bool CheckPostFlag();
 	bool CloseClientFd();
 	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it);
@@ -64,10 +63,11 @@ bool checkAllowMethod(const std::vector<std::string>& allow_method);
 bool checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterator& it);
 bool checkExistErrorPages(const std::string& path, std::string directory, std::string file);
 bool setFileSocket(std::map<int, ASocket*>& _socket, const std::string directory, const std::string file);
-bool checkErrorPages(int epoll_fd, size_t status, std::map<int, ASocket*>& _socket);
-bool checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket);
 void reSetClientSocket();
-
+void getFileSize(int fd);
+void readFile(int fd);
+bool checkErrorPages(size_t status);
+void checkReadFile(void);
 
 Request getRequest(void) const;
 void setRequest(Request& request);
@@ -83,7 +83,6 @@ bool getPostBodyFlag(void) const;
 void setPostBodyFlag(bool& post_body_flag);
 std::string getBuffer(void) const;
 void setBuffer(std::string& buffer);
-
 };
 bool CompareLocationAndUri(const std::string& new_location, const std::string& before_location);
 

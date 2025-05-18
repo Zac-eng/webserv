@@ -392,75 +392,99 @@ bool ClientSocket::checkExistErrorPages(const std::string& path, std::string dir
 	return (true);
 }
 
-bool ClientSocket::setFileSocket(std::map<int, ASocket*>& _socket, const std::string directory, const std::string file)
-{
-	ASocket *file_socket = new FileSocket(this->_fd, this->_request, this->_response, directory, file);
-	
-	file_socket->setFd(this->_other_fd);
-	_socket.insert(std::make_pair(this->_other_fd, file_socket));
-	if (set_nonblocking(this->_other_fd) == false)
-		return (false);
-	return (true);
-}
 
-bool ClientSocket::checkErrorPages(int epoll_fd, size_t status, std::map<int, ASocket*>& _socket)
+bool ClientSocket::checkErrorPages(size_t status)
 {
 	std::map<int, std::string>::const_iterator it;
 	std::string directory;
 	std::string file;
-	struct epoll_event event;
+	int fd;
 
-	event.events = EPOLLIN;
-	event.data.fd = this->_other_fd;
+
 	it = (this->_conf.getErrorPages()).find(status);
 	if (it == (this->_conf.getErrorPages()).end())
 		return (false);
 	if (this->checkExistErrorPages(it->second, directory, file) == false)
 		return (false);
-	if (this->setFileSocket(_socket, directory, file) == false)
+	fd = open((this->_response.getPath()).c_str(), O_RDONLY);
+	if (fd == -1)
 	{
-		close (this->_other_fd);
-		delete (_socket[this->_fd]);
-		_socket.erase(this->_other_fd);
-		return (false);
+		throw RequestException(500, "file open error");
 	}
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_other_fd, &event) == -1) {
-		throw RequestException(500, "erooe pages");
-	}
-	this->_response_flag = true;
+	readFile(fd);
+	close(fd);
 	return (true);
 }
 
-bool ClientSocket::checkReadFile(int epoll_fd, std::map<int, ASocket*>& _socket)
+void ClientSocket::getFileSize(int fd)
 {
-	struct epoll_event event;
+	struct stat file;
+	std::stringstream ss;
+	std::string path;
+	
+	path = this->_response.getDirectory();
+	path += this->_response.getFilename();
+	if (stat(path.c_str(), &file) == -1)
+	{
+		close(fd);
+		throw RequestException(500, "file size Error");
+	}
+	ss << file.st_size;
+	this->_response.setContentLength(ss.str());
+}
 
-	event.events = EPOLLIN;
-	this->_other_fd = open((this->_response.getPath()).c_str(), O_RDONLY);
-	if (this->_other_fd == -1)
+void ClientSocket::readFile(int fd)
+{
+	int byte_size;
+	char buf[BUFFER_SIZE];
+	std::string buffer;
+
+	while (1)
+	{
+		byte_size = read(fd, buf, BUFFER_SIZE);
+		if (byte_size < 0)
+		{
+			close(fd);
+
+			throw RequestException(500, "file size Error");
+		}
+		else if (byte_size == 0)
+		{
+			this->getFileSize(fd);
+			break;
+		}
+		else
+			buffer.append(buf, byte_size);
+	}
+	this->_response.setBody(buffer);
+	return ;
+}
+
+void ClientSocket::checkReadFile(void)
+{
+	int fd;
+
+	fd = open((this->_response.getPath()).c_str(), O_RDONLY);
+	if (fd == -1)
 	{
 		throw RequestException(500, "file open error");
 	}
-	if (this->setFileSocket(_socket, this->_response.getDirectory(), this->_response.getFilename()) == false)
-	{
-		close (this->_other_fd);
-		return (false);
-	}
-	event.data.fd = this->_other_fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD,this->_other_fd, &event) == -1) {
-		close (this->_other_fd);
-		throw RequestException(500, "file open error");
-	}
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
-		close (this->_other_fd);
-		throw RequestException(500, "file open error");
-	}
-	this->_response_flag = true;
-	return (true);
+	readFile(fd);
+	close(fd);
+	// if (this->setFileSocket(_socket, this->_response.getDirectory(), this->_response.getFilename()) == false)
+	// {
+	// 	close (this->_other_fd);
+	// 	return (false);
+	// }
+	// if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD,this->_other_fd, &event) == -1) {
+	// 	close (this->_other_fd);
+	// 	throw RequestException(500, "file open error");
+	// }
+	return ;
 }
 
 
-void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _socket)
+void ClientSocket::checkExecuteResponse(int epoll_fd)
 {
 	std::string buffer = this->_buffer;
 	std::string::iterator it;
@@ -480,16 +504,15 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& _
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
 			ChangeConfUri(this->_request.getPath());
-			if (this->checkReadFile(epoll_fd, _socket) == true)
-				return ;
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-				throw RequestException(500, "Parse not finish");
-			}
 			if (this->_request.getExtension() == "php")
 			{
 				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
-			// ExecuteCgi(epoll_fd, this->_request, server_conf);
+			// return (ExecuteCgi(epoll_fd, this->_request, server_conf));
+			}
+			this->checkReadFile();
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+				throw RequestException(500, "Parse not finish");
 			}
 			this->_response_flag = true;
 			this->_response.setFd(this->_fd);
@@ -511,6 +534,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
+	(void)_socket;
 	try
 	{
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
@@ -521,7 +545,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (pos == std::string::npos)
 			return ;
 		else
-			this->checkExecuteResponse(epoll_fd, _socket);
+			this->checkExecuteResponse(epoll_fd);
 		return ;
 	}
 	catch (const RequestException& e)
@@ -530,7 +554,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
 			}
-		if (checkErrorPages(epoll_fd, e.getStatus(), _socket) == true){
+		if (checkErrorPages(e.getStatus()) == true){
 			return ;
 		}
 		this->_request.setStatusNumber(e.getStatus());
@@ -542,7 +566,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
-		if (checkErrorPages(epoll_fd, 500, _socket) == true){
+		if (checkErrorPages(500) == true){
 			return ;
 		}
 		this->_request.setStatusNumber(500);
