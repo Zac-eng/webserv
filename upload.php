@@ -1,14 +1,20 @@
-<?php
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
-    // アップロードされたファイルの保存先ディレクトリ
-    $target_dir = "/var/www/html/uploads/";
-    $target_file = $target_dir . basename($_FILES["file"]["name"]);
+Content-Disposition: form-data; name="file"; filename="index.html"
+Content-Type: text/html
 
-    // ファイルを保存
-    if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
-        echo "ファイルがアップロードされました: " . htmlspecialchars(basename($_FILES["file"]["name"]));
-    } else {
-        echo "ファイルのアップロードに失敗しました。";
-    }
-}
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイルアップロード</title>
+</head>
+<body>
+    <h1>ファイルをアップロード</h1>
+    <form action="/upload.php" method="post" enctype="multipart/form-data">
+        <label for="file">ファイル選択:</label>
+        <input type="file" name="file" id="file" required><br><br>
+        <input type="submit" value="アップロード">
+    </form>
+</body>
+</html>
+

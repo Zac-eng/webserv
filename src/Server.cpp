@@ -104,25 +104,6 @@ void Server::executeServer(void)
 			throw ServerException();
 		for (int i = 0; i < event_counts; i++)
 		{
-			            std::cout << "Event #" << i << ": ";
-            
-            // イベントの種類を表示
-            if (event[i].events & EPOLLIN) {
-                std::cout << "EPOLLIN (Readable) ";
-            }
-            if (event[i].events & EPOLLOUT) {
-                std::cout << "EPOLLOUT (Writable) ";
-            }
-            if (event[i].events & EPOLLERR) {
-                std::cout << "EPOLLERR (Error) ";
-            }
-            if (event[i].events & EPOLLHUP) {
-                std::cout << "EPOLLHUP (Hang-up) ";
-            }
-            std::cout << std::endl;
-
-            // どのファイルディスクリプタにイベントが関連しているかも表示
-            std::cout << "File descriptor: " << event[i].data.fd << std::endl;
 			if (event[i].events == EPOLLIN)
 			{
 				this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);

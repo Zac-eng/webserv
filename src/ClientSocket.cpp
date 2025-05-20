@@ -580,7 +580,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
 			}
-		checkErrorPages(e.getStatus());
 		this->_request.setStatusNumber(e.getStatus());
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
@@ -590,7 +589,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
-		checkErrorPages(500);
 		this->_request.setStatusNumber(500);
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
@@ -628,7 +626,6 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 
 	ev.events = EPOLLIN;
 	ev.data.fd = this->_fd;
-	std::cout << "11"<<std::endl;
 	try
 	{
 		if (this->_response_flag == false)
@@ -653,6 +650,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 				this->_response.setStatusCode(500);
 			}
+		checkErrorPages(this->_response.getStatusCode());
 		this->_response.ResponseError(this->_error_file_flag);
 		closeAndDeleteSocket(socket);
 		return ;
@@ -663,6 +661,8 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 				this->_response.setStatusCode(500);
 			}
 		this->_response.setStatusCode(500);
+		checkErrorPages(500);
+		this->_response.ResponseError(this->_error_file_flag);
 		closeAndDeleteSocket(socket);
 		return ;
 	}
