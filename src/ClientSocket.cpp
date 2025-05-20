@@ -3,7 +3,7 @@
 
 ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false), _error_file_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false), _error_file_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf, struct sockaddr_in address) : _conf(conf), _address(address), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false), _error_file_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -97,6 +97,7 @@ bool ClientSocket::CloseClientFd()
 		return (false);
 	return (true);
 }
+
 
 bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it)
 {
@@ -533,7 +534,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			{
 				// if (this->_request.getPostFlag() == true)
 				// 	throw (RequestException(405, "extension"));
-			// return (ExecuteCgi(epoll_fd, this->_request, server_conf));
+				// ExecuteCgi(this->_request, server_conf, this->address, this->_response);
 			}
 			this->checkReadFile();
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {

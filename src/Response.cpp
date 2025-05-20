@@ -352,7 +352,6 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 		response << "<h1>" << code << " " << title << "</h1>";
 		response << "</body></html>";
 	}
-
 	this->_response = response.str();
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }

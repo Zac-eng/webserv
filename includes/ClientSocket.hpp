@@ -28,6 +28,7 @@ class ClientSocket : public ASocket
 	Request _request;
 	Response _response;
 	ServerConfig _conf;
+	struct sockaddr_in _address;
 	bool _response_flag;
 	bool _progress_post_flag;
 	bool _complete_parse_flag;
@@ -38,9 +39,10 @@ class ClientSocket : public ASocket
 	bool _multipart_flag;
 	bool _error_file_flag;
 
+
 	ClientSocket();
 	~ClientSocket();
-	ClientSocket(ServerConfig& conf);
+	ClientSocket(ServerConfig& conf, struct sockaddr_in _address);
 	// 何もない
 	bool createSocket();
 	// Requestパース
