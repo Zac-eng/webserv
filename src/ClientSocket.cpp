@@ -1,9 +1,9 @@
 #include "ClientSocket.hpp"
 #include "Request.hpp"
 
-ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false) {};
+ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false), _error_file_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _multipart_flag(false), _error_file_flag(false) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -397,37 +397,48 @@ bool ClientSocket::checkExistErrorPages(const std::string& path, std::string dir
 	file = path.substr(it_tmp - path.begin());
 	if (this->existUri(directory, file) == false)
 		return (false);
-	this->_other_fd = open(path.c_str(), O_RDONLY);
-	if (this->_other_fd == -1)
-		throw RequestException(500, "file open error2");
+	this->_response.setDirectory(directory);
+	this->_response.setFilename(file);
+	this->_response.setPath(path);
 	return (true);
 }
 
 
-bool ClientSocket::checkErrorPages(size_t status)
+void ClientSocket::checkErrorPages(size_t status)
 {
 	std::map<int, std::string>::const_iterator it;
+	std::string path;
 	std::string directory;
 	std::string file;
+	std::map<int, std::string> error_pages;
 	int fd;
 
-
-	it = (this->_conf.getErrorPages()).find(status);
-	if (it == (this->_conf.getErrorPages()).end())
-		return (false);
-	if (this->checkExistErrorPages(it->second, directory, file) == false)
-		return (false);
-	fd = open((this->_response.getPath()).c_str(), O_RDONLY);
+	error_pages = this->_conf.getErrorPages();
+	it = error_pages.begin();
+	for (; it != error_pages.end(); it++)
+	{
+		if (it->first == (int)status)
+			break ;
+	}
+	if (it == error_pages.end())
+		return ;
+	path = it->second;
+	if (this->checkExistErrorPages(path, directory, file) == false)
+		return ;
+	fd = open(path.c_str(), O_RDONLY);
 	if (fd == -1)
 	{
-		throw RequestException(500, "file open error");
+		this->_request.setStatusNumber(500);
+		return ;
 	}
-	readFile(fd);
+	if (readFile(fd) == false)
+		this->_request.setStatusNumber(500);
 	close(fd);
-	return (true);
+	this->_error_file_flag = true;
+	return ;
 }
 
-void ClientSocket::getFileSize(int fd)
+bool ClientSocket::getFileSize(int fd)
 {
 	struct stat file;
 	std::stringstream ss;
@@ -438,13 +449,14 @@ void ClientSocket::getFileSize(int fd)
 	if (stat(path.c_str(), &file) == -1)
 	{
 		close(fd);
-		throw RequestException(500, "file size Error");
+		return (false);
 	}
 	ss << file.st_size;
 	this->_response.setContentLength(ss.str());
+	return (true);
 }
 
-void ClientSocket::readFile(int fd)
+bool ClientSocket::readFile(int fd)
 {
 	int byte_size;
 	char buf[BUFFER_SIZE];
@@ -456,18 +468,19 @@ void ClientSocket::readFile(int fd)
 		if (byte_size < 0)
 		{
 			close(fd);
-			throw RequestException(500, "file size Error");
+			return (false);
 		}
 		else if (byte_size == 0)
 		{
-			this->getFileSize(fd);
+			if (this->getFileSize(fd) == false)
+				return (false);
 			break;
 		}
 		else
 			buffer.append(buf, byte_size);
 	}
 	this->_response.setBody(buffer);
-	return ;
+	return (true);
 }
 
 void ClientSocket::checkReadFile(void)
@@ -479,7 +492,8 @@ void ClientSocket::checkReadFile(void)
 	{
 		throw RequestException(500, "file open error");
 	}
-	readFile(fd);
+	if (readFile(fd) == false)
+		throw RequestException(404, "file errorrr");
 	close(fd);
 	// if (this->setFileSocket(_socket, this->_response.getDirectory(), this->_response.getFilename()) == false)
 	// {
@@ -490,6 +504,7 @@ void ClientSocket::checkReadFile(void)
 	// 	close (this->_other_fd);
 	// 	throw RequestException(500, "file open error");
 	// }
+	this->_response_flag = true;
 	return ;
 }
 
@@ -565,9 +580,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
 			}
-		if (checkErrorPages(e.getStatus()) == true){
-			return ;
-		}
+		checkErrorPages(e.getStatus());
 		this->_request.setStatusNumber(e.getStatus());
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
@@ -577,9 +590,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
-		if (checkErrorPages(500) == true){
-			return ;
-		}
+		checkErrorPages(500);
 		this->_request.setStatusNumber(500);
 		this->_response_flag = true;
 		this->_response.setFd(this->_fd);
@@ -617,12 +628,15 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 
 	ev.events = EPOLLIN;
 	ev.data.fd = this->_fd;
+	std::cout << "11"<<std::endl;
 	try
 	{
 		if (this->_response_flag == false)
 			throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)
+		{
 			throw (ResponseException(this->_request.getStatusNumber()));
+		}
 		if (this->_request.getConnectionFlag() == true)
 		{
 			closeAndDeleteSocket(socket);
@@ -639,7 +653,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 				this->_response.setStatusCode(500);
 			}
-		this->_response.ResponseError();
+		this->_response.ResponseError(this->_error_file_flag);
 		closeAndDeleteSocket(socket);
 		return ;
 	}

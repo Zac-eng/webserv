@@ -3,7 +3,7 @@
 #include "Server.hpp"
 #include "ClientSocket.hpp"
 
-Response::Response()
+Response::Response() : _error_file_flag(false)
 {
 	std::cout << "Response object create" << std::endl;
 }
@@ -341,9 +341,17 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 	response << "Content-Type: text/html\r\n";
 	response << "Connection: close\r\n";
 	response << "\r\n";
-	response << "<html><body>";
-	response << "<h1>" << code << " " << title << "</h1>";
-	response << "</body></html>";
+
+	if (this->_error_file_flag == true && !this->_body.empty())
+	{
+		response << this->_body;
+	}
+	else
+	{
+		response << "<html><body>";
+		response << "<h1>" << code << " " << title << "</h1>";
+		response << "</body></html>";
+	}
 
 	this->_response = response.str();
 	write(this->_fd, this->_response.c_str(), this->_response.length());
@@ -391,12 +399,19 @@ void Response::reSetResponse(void)
 	this->_header.clear();
 	this->_body.clear();
 	this->_cgi_buffer.clear();
+	this->_error_file_flag = false;
 }
 
-void Response::ResponseError()
+void Response::ResponseError(bool flag)
 {
-	// if (server.errorpage() == req.status_number)
+	// if (server.errorpage() == this->_r.status_number)
 	// 	serchErrorPage();
+	// std::cout << this->_body<<std::endl;
+	// if (flag == true && !this->_body.empty())
+	// 	write(this->_fd, this->_body.c_str(), this->_body.length());
+	if (flag == true)
+		this->_error_file_flag = true;
+
 	if (this->_status_code == 400)
 		ResponseBadRequest();
 	else if(this->_status_code == 404)
@@ -421,7 +436,6 @@ void Response::ExecuteResponse(Request& req)
 	// 	return (ResponseError(req));
 	// if (this->ExistUri(req.getPath()) == false)
 	// 	return (ResponseError(req));
-	
 	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }

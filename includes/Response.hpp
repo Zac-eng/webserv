@@ -36,6 +36,7 @@ class Response
 		std::vector<std::string> _header;
 		std::string _body;
 		std::string _cgi_buffer;
+		bool _error_file_flag;
 
 
 		Response ();
@@ -60,7 +61,7 @@ void CheckFileType(std::string& file);
 void CheckConnectionHeader(std::map<std::string, std::string> header);
 void CreateResponseHeader(Request& req);
 void CreateResponse();
-void ResponseError(void);
+void ResponseError(bool flag);
 bool IsDynamicFileType(const std::string& file);
 void createDateHeader(void);
 void ErrorResponse(size_t code, const std::string& title);

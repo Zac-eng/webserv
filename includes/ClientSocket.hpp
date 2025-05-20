@@ -36,6 +36,7 @@ class ClientSocket : public ASocket
 	int _other_fd;
 	std::string _error_file_path;
 	bool _multipart_flag;
+	bool _error_file_flag;
 
 	ClientSocket();
 	~ClientSocket();
@@ -65,9 +66,9 @@ bool checkCarrigeReturnAndParseRequest(std::string& buffer, std::string::iterato
 bool checkExistErrorPages(const std::string& path, std::string directory, std::string file);
 bool setFileSocket(std::map<int, ASocket*>& _socket, const std::string directory, const std::string file);
 void reSetClientSocket();
-void getFileSize(int fd);
-void readFile(int fd);
-bool checkErrorPages(size_t status);
+bool getFileSize(int fd);
+bool readFile(int fd);
+void checkErrorPages(size_t status);
 void checkReadFile(void);
 
 Request getRequest(void) const;
