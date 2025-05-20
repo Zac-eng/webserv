@@ -3,7 +3,7 @@
 
 ClientSocket::ClientSocket() : _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
 
-ClientSocket::ClientSocket(ServerConfig& conf) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false) {};
+ClientSocket::ClientSocket(ServerConfig& conf, const sockaddr_in& client_addr) : _conf(conf), _response_flag(false), _progress_post_flag(false),  _complete_parse_flag(false), _post_body_flag(false), _client_addr(client_addr) {};
 
 ClientSocket::~ClientSocket() {};
 
@@ -508,8 +508,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			{
 				if (this->_request.getPostFlag() == true)
 					throw (RequestException(405, "extension"));
-				sockaddr_in dummy;
-				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, dummy, _response._cgi_buffer);
+				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_client_addr, _response._cgi_buffer);
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;

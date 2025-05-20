@@ -33,10 +33,11 @@ class ClientSocket : public ASocket
 	std::string _buffer;
 	int _other_fd;
 	std::string _error_file_path;
+	struct sockaddr_in _client_addr;
 
 	ClientSocket();
 	~ClientSocket();
-	ClientSocket(ServerConfig& conf);
+	ClientSocket(ServerConfig& conf, const sockaddr_in& client_addr);
 	// ClientSocket(ServerConfig& conf, const sockaddr_in& addr);
 	// 何もない
 	bool createSocket();
