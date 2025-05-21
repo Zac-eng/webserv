@@ -244,6 +244,7 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 		object += '/';
 	this->_response.setDirectory(object);
 	path = object;
+	std::cout << _request.getFile() << std::endl;
 	if (!(this->_request.getFile()).empty())
 	{
 		if (this->existUri(this->_response.getDirectory(), this->_request.getFile()) == false)
@@ -506,9 +507,15 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			ChangeConfUri(this->_request.getPath());
 			if (this->_request.getExtension() == "php")
 			{
-				if (this->_request.getPostFlag() == true)
-					throw (RequestException(405, "extension"));
+				// if (this->_request.getPostFlag() == true)
+				// 	throw (RequestException(405, "extension"));
+				if (this->_request.getFile().empty())
+					this->_request.setFile("index.php");
+				if (!this->existUri(this->_response.getDirectory(), this->_request.getFile()))
+					throw RequestException(404, "default error");
+				this->_request.setFile(_response.getDirectory() + _request.getFile());
 				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_client_addr, _response._cgi_buffer);
+				std::cout << cgi << std::endl;
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;

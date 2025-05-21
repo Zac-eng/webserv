@@ -63,8 +63,8 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   else if (pid == 0) {
     // not sure since req.getPath does not always return the "path" we need here
-    const char *args[] = {CMD_PATH, req.getPath().c_str(), NULL};
-    std::cout << req.getPath() << std::endl;
+    const char *args[] = {CMD_PATH, req.getFile().c_str(), NULL};
+    std::cout << req.getFile() << std::endl;
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(500);
@@ -81,6 +81,7 @@ CgiSocket* CgiSocket::createCgiSocket(
     std::exit(0);
   }
   if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
+    std::cout << "no pipes" << std::endl;
     req.setStatusNumber(500);
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
@@ -96,6 +97,7 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   int read_count;
   int status;
 
+  std::cout << "cgi in event" << std::endl;
   while (true) {
     if (isTimeout()) {
       kill(this->_cgi_pid, SIGINT);
@@ -132,6 +134,7 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   ev.events = EPOLLIN;
   ev.data.fd = this->_pipe_fds[READ];
 
+  std::cout << "cgi out event" << std::endl;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
     return ;
