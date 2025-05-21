@@ -1,10 +1,11 @@
 #include "CgiMetaProcessors.hpp"
 
 const char **create_meta_vars(const ServerConfig& conf, const Request& req, const sockaddr_in& addr) {
+  (void)addr;
   std::vector<std::string> meta_vars;
   Auth auth_info = CgiMetaProcessors::get_auth_info(req);
   CgiPath cgi_path = CgiMetaProcessors::get_path_info(conf, req);
-  RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
+  // RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
   meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
   meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
@@ -12,8 +13,8 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   meta_vars.push_back("PATH_INFO=" + cgi_path.path_info);
   meta_vars.push_back("PATH_TRANSLATED=" + cgi_path.translated);
   meta_vars.push_back("QUERY_STRING=" + cgi_path.query_string);
-  meta_vars.push_back("REMOTE_ADDR=" + remote_info.remote_addr);
-  meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
+  // meta_vars.push_back("REMOTE_ADDR=" + remote_info.remote_addr);
+  // meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
   meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
   meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
   meta_vars.push_back("SCRIPT_NAME=" + cgi_path.script_name);
@@ -70,7 +71,8 @@ CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request
     if (script_path_pos != std::string::npos) {
       size_t border_pos = script_path_pos + sizeof(CGI_EXTENTION) / sizeof(char);
       ret_val.script_name = filepath.substr(0, border_pos);
-      ret_val.path_info = filepath.substr(border_pos + 1, filepath.length());
+      // ret_val.path_info = filepath.substr(border_pos + 1, filepath.length());
+      std::cerr << "meta" << std::endl;
     }
     for (; it != conf.getLocations().end(); ++it) {
       if (it->getPath().length() < matching_prefix_len)

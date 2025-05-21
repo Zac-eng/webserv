@@ -25,6 +25,7 @@ private:
 	time_t _created_at;
 	Request& _req;
 	std::string& _response_body;
+	int	_client_fd;
 
 	CgiSocket(void);
 	static bool initPipes(int ptc[], int ctp[]);
@@ -34,11 +35,12 @@ private:
 
 public:
 	// CgiSocket(ServerConfig& conf, pid_t cgi_pid, int read_fd, int write_fd, Request& req, std::string& response);
-	CgiSocket(pid_t cgi_pid, int read_fd, int write_fd, Request& req, std::string& response);
+	CgiSocket(pid_t cgi_pid, int read_fd, int write_fd, Request& req, std::string& response, int client_fd);
 	~CgiSocket();
 	CgiSocket(const CgiSocket& obj);
 	CgiSocket& operator = (const CgiSocket& obj);
-	static CgiSocket* createCgiSocket(ServerConfig& conf, Request& req, const sockaddr_in& client_addr, std::string& response_buf);
+	static CgiSocket* createCgiSocket(ServerConfig& conf, Request& req, const sockaddr_in& client_addr, std::string& response_buf, int client_fd);
+	int		waitChildProcess() const;
 	bool	createSocket(void);
 	int		getReadPipe() const;
 	int		getWritePipe() const;

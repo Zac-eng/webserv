@@ -514,7 +514,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				if (!this->existUri(this->_response.getDirectory(), this->_request.getFile()))
 					throw RequestException(404, "default error");
 				this->_request.setFile(_response.getDirectory() + _request.getFile());
-				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_client_addr, _response._cgi_buffer);
+				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_client_addr, _response._cgi_buffer, this->_fd);
 				std::cout << cgi << cgi->getReadPipe() <<  cgi->getWritePipe() << std::endl;
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
@@ -651,7 +651,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_fd, &ev) == -1) {
 				this->_response.setStatusCode(500);
 			}
 		this->_response.setStatusCode(500);

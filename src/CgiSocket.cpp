@@ -6,8 +6,9 @@ CgiSocket::CgiSocket(
   int read_fd,
   int write_fd,
   Request& req,
-  std::string& response
-): _req(req), _response_body(response) {
+  std::string& response,
+  int client_fd
+): _req(req), _response_body(response), _client_fd(client_fd) {
   this->_cgi_pid = cgi_pid;
   this->_pipe_fds[READ] = read_fd;
   this->_pipe_fds[WRITE] = write_fd;
@@ -46,7 +47,8 @@ CgiSocket* CgiSocket::createCgiSocket(
   ServerConfig& conf,
   Request& req,
   const sockaddr_in& client_addr,
-  std::string& response_buf
+  std::string& response_buf,
+  int client_fd
 ) {
   int ptc_pipe[2];
   int ctp_pipe[2];
@@ -63,7 +65,8 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   else if (pid == 0) {
     // not sure since req.getPath does not always return the "path" we need here
-    const char *args[] = {CMD_PATH, req.getFile().c_str(), NULL};
+    // const char *args[] = {CMD_PATH, req.getFile().c_str(), NULL};
+    const char *args[] = {CMD_PATH, "/home/hmiyazak/Dev/42/webserv/abc.php", NULL};
     std::cout << req.getFile() << std::endl;
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       close_pipes(ptc_pipe, ctp_pipe);
@@ -73,25 +76,26 @@ CgiSocket* CgiSocket::createCgiSocket(
     if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0) {
       switch (errno) {
         case ENOENT:
+          perror("noent");
           std::exit(404);
         default:
+          perror("cgi error");
           std::exit(502);
       }
     }
     std::exit(0);
   }
   if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
-    std::cout << "no pipes" << std::endl;
     req.setStatusNumber(500);
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
     return NULL;
   }
-  // if (waitpid(pid, &status, WNOHANG))
-  return new CgiSocket(pid, ctp_pipe[READ], ptc_pipe[WRITE], req, response_buf);
+  return new CgiSocket(pid, ctp_pipe[READ], ptc_pipe[WRITE], req, response_buf, client_fd);
 }
 
 void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
+  struct epoll_event ev;
   std::string response_body;
   char read_buf[BUFFER_SIZE];
   int read_count;
@@ -100,27 +104,38 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   std::cout << "cgi in event" << std::endl;
   while (true) {
     if (isTimeout()) {
+      perror("timeout");
       kill(this->_cgi_pid, SIGINT);
       return ;
     }
     read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
-    if (read_count < 0)
+    if (read_count < 0) {
+      perror("read");
       return ;
+    }
     read_buf[read_count] = '\0';
     response_body += read_buf;
     if (read_count < BUFFER_SIZE - 1)
       break;
   }
   this->_response_body = response_body;
+  std::cout << "cgibody" << this->_response_body << std::endl;
   while (true) {
     if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
+      std::cout << "wait finished: " << status << std::endl;
       break;
     }
     if (isTimeout())
       kill(this->_cgi_pid, SIGINT);
   }
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
-    perror("epoll_ctl: del");
+    std::cout << epoll_fd << this->_pipe_fds[READ] << std::endl;
+    perror("epollin_ctl: del");
+  }
+  ev.events = EPOLLOUT;
+  ev.data.fd = this->_client_fd;
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev) == -1) {
+    perror("epoll_ctl: add");
   }
   std::map<int, ASocket*>::iterator self_pos = socket.find(_pipe_fds[READ]);
   if (self_pos != socket.end())
@@ -147,7 +162,10 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
     perror("epoll_ctl: add");
     return ;
   }
-  socket.insert(std::make_pair(this->_pipe_fds[READ], this));
+  if (socket.insert(std::make_pair(this->_pipe_fds[READ], this)).second == false) {
+    perror("epoll_ctl: add");
+    return ;
+  }
   if (this->_req.getBody().empty())
     return ;
   if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0)
@@ -169,7 +187,7 @@ bool CgiSocket::initPipes(int ptc[], int ctp[]) {
 
 bool CgiSocket::prepareChildPipes(int ptc[], int ctp[]) {
   if (close(ptc[WRITE]) != 0 || close(ctp[READ]) != 0 || \
-    dup2(ptc[READ], 0) != 0 || dup2(ctp[WRITE], 1) != 0) {
+    dup2(ptc[READ], 0) < 0 || dup2(ctp[WRITE], 1) < 0) {
     return false;
   }
   return true;
@@ -195,4 +213,11 @@ int		CgiSocket::getReadPipe() const {
 
 int		CgiSocket::getWritePipe() const {
   return this->_pipe_fds[WRITE];
+}
+
+int		CgiSocket::waitChildProcess() const {
+  int status;
+  waitpid(this->_cgi_pid, &status, WNOHANG);
+  std::cout << "wait finished: " << status << std::endl;
+  return status;
 }

@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "CgiSocket.hpp"
 
 Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
 
@@ -100,7 +101,7 @@ void Server::executeServer(void)
 	while (true)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, -1);
-		std::cout << "wait: " << event_counts<<event[0].data.fd << " ptr: " << this->_socket[event[0].data.fd] << std::endl;
+		// std::cout << "wait: " << event_counts<<event[0].data.fd << " ptr: " << this->_socket[event[0].data.fd] << "ev: " << (event[0].events==EPOLLIN?"EPOLLIN":event[0].events==EPOLLOUT?"EPOLLOUT":"sonota")  << std::endl;
 		if (event_counts == -1)
 			throw ServerException();
 		for (int i = 0; i < event_counts; i++)
@@ -113,8 +114,21 @@ void Server::executeServer(void)
 			{
 				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
 			}
+			else if (event[i].events == EPOLLHUP)
+			{
+				std::cout << "hup" << std::endl;
+				CgiSocket* cgi = dynamic_cast<CgiSocket*>(_socket[event[i].data.fd]);
+				if (cgi == NULL)
+					continue;
+				std::cout << "cp status: " << cgi->waitChildProcess() << std::endl;
+				close(event[i].data.fd);
+    		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL);
+				// event[i].events = EPOLLIN;
+				// if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, event[i].data.fd, &event[i]) != 0)
+				// 	perror("epollhup");
+			}
 			else
-				std::cout << "not out or in" << std::endl;
+				std::cout << EPOLLIN << " " << EPOLLOUT << " " << event[i].events << event[i].data.fd << ": not out or in" << std::endl;
 		}
 	}
 }
