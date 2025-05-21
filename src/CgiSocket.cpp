@@ -134,7 +134,7 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   ev.events = EPOLLIN;
   ev.data.fd = this->_pipe_fds[READ];
 
-  std::cout << "cgi out event" << std::endl;
+  std::cerr << "cgi out event" << std::endl;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
     return ;

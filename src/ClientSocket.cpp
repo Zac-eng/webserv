@@ -485,7 +485,7 @@ void ClientSocket::checkReadFile(void)
 }
 
 
-void ClientSocket::checkExecuteResponse(int epoll_fd)
+void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& sock)
 {
 	std::string buffer = this->_buffer;
 	std::string::iterator it;
@@ -515,14 +515,18 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 					throw RequestException(404, "default error");
 				this->_request.setFile(_response.getDirectory() + _request.getFile());
 				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_client_addr, _response._cgi_buffer);
-				std::cout << cgi << std::endl;
+				std::cout << cgi << cgi->getReadPipe() <<  cgi->getWritePipe() << std::endl;
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;
-				ev.data.fd = cgi->getReadPipe();
+				ev.data.fd = cgi->getWritePipe();
+				std::cout << ev.data.fd << std::endl;
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
 					throw RequestException(500, "Parse not finish");
 				}
+				if (sock.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
+					throw RequestException(500, "sock_map insertion failed");
+				return ;
 			}
 			this->checkReadFile();
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
@@ -559,7 +563,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (pos == std::string::npos)
 			return ;
 		else
-			this->checkExecuteResponse(epoll_fd);
+			this->checkExecuteResponse(epoll_fd, _socket);
 		return ;
 	}
 	catch (const RequestException& e)

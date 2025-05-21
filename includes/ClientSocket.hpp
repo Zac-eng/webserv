@@ -46,7 +46,7 @@ class ClientSocket : public ASocket
 	// CgiSocket作成、レスポンス作成
 	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void validRequest(std::string& buffer, std::string::iterator& it, std::string& object);
-	void checkExecuteResponse(int epoll_fd);
+	void checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& sock);
 	bool CheckPostFlag();
 	bool CloseClientFd();
 	bool CheckRequestFlag(std::string& buffer, std::string::iterator& it);

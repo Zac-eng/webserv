@@ -100,6 +100,7 @@ void Server::executeServer(void)
 	while (true)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, -1);
+		std::cout << "wait: " << event_counts<<event[0].data.fd << " ptr: " << this->_socket[event[0].data.fd] << std::endl;
 		if (event_counts == -1)
 			throw ServerException();
 		for (int i = 0; i < event_counts; i++)
@@ -112,6 +113,8 @@ void Server::executeServer(void)
 			{
 				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
 			}
+			else
+				std::cout << "not out or in" << std::endl;
 		}
 	}
 }
