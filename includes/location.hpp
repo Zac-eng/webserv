@@ -21,7 +21,7 @@ class LocationConfig
 		void setIndexPushCount(const std::vector<int>& counts);
 		void setFastcgiParam(const std::map<std::string, std::string>& params);
 		void setMethodCount(const std::vector<int>& counts);
-
+		
 		const std::string& getPath() const;
 		const std::string& getRoot() const;
 		const std::string& getFastcgiIndex() const;
@@ -32,13 +32,19 @@ class LocationConfig
 		const std::map<std::string, std::string>& getFastcgiParam() const;
 		const std::vector<std::string>& getMethod() const;
 		const std::vector<int>& getMethodCount() const;
-
+		
 		bool check_location(std::istream& config_file, LocationConfig& location_config);
 		void setIndex(const std::vector<std::string>& indexes);
 		void setMethod(const std::vector<std::string>& methods);
+		void parseReturnDirective(const std::string& line, LocationConfig& config);
+		void parseConfFile(const std::string& filename, std::vector<LocationConfig>& configs);
 	private:
 		std::string path;
 		std::string root;
+		std::string path_parser;
+		bool redirect_flag;
+		std::map<int, std::string> redirect_map;
+		LocationConfig() : path(""), redirect_flag(false) {}
 		std::vector<std::string> allow_method;
 		std::string fastcgi_index;
 		std::string fastcgi_pass;
