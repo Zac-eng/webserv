@@ -314,7 +314,7 @@ void ClientSocket::parseRedirect(LocationConfig& location)
 	(void)location;
 	// this->_response.setRedirectUri(location.getRedirectUri());
 	// this->_request.setStatusNumber(location.getRedirectNumber());
-	this->_response.setRedirectUri("https://profile.intra.42.fr");
+	this->_response.setRedirectUri("htt.fr");
 	this->_request.setStatusNumber(301);
 	return ;
 }
@@ -595,7 +595,15 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		if (pos == std::string::npos)
 			return ;
 		else
+		{
+			// if (this->_fd == 5)
+			// {
+			// 	std::cout << pos << std::endl;
+			// 	std::cout << buf <<std::endl;
+			// 	std::exit(1);
+			// }
 			this->checkExecuteResponse(epoll_fd);
+		}
 		return ;
 	}
 	catch (const RequestException& e)
@@ -652,13 +660,20 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
+		std::cout << this->_fd <<"--"<<this->_request.getStatusNumber()<<std::endl;
 		if (this->_response_flag == false)
 			throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)
 		{
 			throw (ResponseException(this->_request.getStatusNumber()));
 		}
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+		if (this->_request.getConnectionFlag() == true)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
+				throw (ResponseException(500));
+			}
+		}
+		else if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			throw (ResponseException(500));
 		}
 		this->_response.ExecuteResponse(this->_request);
@@ -671,7 +686,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	catch (const ResponseException& e)
 	{
 		this->_response.setStatusCode(e.getStatus());
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
 				this->_response.setStatusCode(500);
 			}
 		if ((this->_response.getRedirectUri()).empty())
@@ -682,7 +697,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
 				this->_response.setStatusCode(500);
 			}
 		this->_response.setStatusCode(500);

@@ -104,6 +104,7 @@ void Server::executeServer(void)
 			throw ServerException();
 		for (int i = 0; i < event_counts; i++)
 		{
+		// std::cout <<event[i].data.fd<<std::endl;
 			if (event[i].events == EPOLLIN)
 			{
 				this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);

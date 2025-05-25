@@ -108,6 +108,7 @@ void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 		socket.erase(client->getFd());
 		return ;
 	}
+	std::cout << "2回目がきてる"<<fd<<std::endl;
 	return;
 }
 
