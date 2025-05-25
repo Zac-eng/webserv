@@ -1,25 +1,20 @@
-NAME = webserv
+NAME = parser
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
-SRCDIR = src
-OBJDIR = object
+SRCS = main.cpp \
+		nginx_parse.cpp \
 
-RM = rm -rf
-
-SRCS = $(wildcard ./src/*.cpp)
-OBJS = $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
+OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	mkdir -p $(@D)
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $(NAME)
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
-
 clean:
-	$(RM) $(OBJDIR)
+	$(RM) $(OBJS)
 
 fclean: clean
 	$(RM) $(NAME)
