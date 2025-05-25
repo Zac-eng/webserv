@@ -15,6 +15,9 @@ class LocationConfig
 	public:
 		void setPath(const std::string& p);
 		void setRoot(const std::string& r);
+		void setPathParser(const std::string& path);
+		void setRedirectFlag(bool flag);
+		void setRedirectMap(int status_code, const std::string& url);
 		void setFastcgiIndex(const std::string& idx);
 		void setFastcgiPass(const std::string& pass);
 		void setIndexCount(const std::vector<int>& counts);
@@ -32,7 +35,10 @@ class LocationConfig
 		const std::map<std::string, std::string>& getFastcgiParam() const;
 		const std::vector<std::string>& getMethod() const;
 		const std::vector<int>& getMethodCount() const;
-		
+		const std::string& getPathParser() const;
+		const std::map<int, std::string>& getRedirectMap() const;
+		bool getRedirectFlag() const;
+	
 		bool check_location(std::istream& config_file, LocationConfig& location_config);
 		void setIndex(const std::vector<std::string>& indexes);
 		void setMethod(const std::vector<std::string>& methods);
