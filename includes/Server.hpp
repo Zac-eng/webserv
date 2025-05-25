@@ -10,6 +10,7 @@
 #include "ServerException.hpp"
 
 #define MAX_EVENTS 10
+#define EPOLL_TIME 1
 
 class Server
 {

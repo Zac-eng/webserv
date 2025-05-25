@@ -38,13 +38,13 @@ class LocationConfig
 		void setMethod(const std::vector<std::string>& methods);
 		void parseReturnDirective(const std::string& line, LocationConfig& config);
 		void parseConfFile(const std::string& filename, std::vector<LocationConfig>& configs);
-	private:
+		LocationConfig() : path(""), redirect_flag(false) {}
+		bool redirect_flag;
+		std::map<int, std::string> redirect_map;
+		private:
 		std::string path;
 		std::string root;
 		std::string path_parser;
-		bool redirect_flag;
-		std::map<int, std::string> redirect_map;
-		LocationConfig() : path(""), redirect_flag(false) {}
 		std::vector<std::string> allow_method;
 		std::string fastcgi_index;
 		std::string fastcgi_pass;

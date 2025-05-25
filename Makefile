@@ -1,6 +1,6 @@
 NAME = webserv
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -g
+CXXFLAGS = -std=c++11 -g
 SRCDIR = src
 OBJDIR = object
 INCLUDES = -I ./includes

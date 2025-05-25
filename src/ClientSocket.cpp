@@ -311,11 +311,16 @@ bool ClientSocket::checkAllowMethod(const std::vector<std::string>& allow_method
 
 void ClientSocket::parseRedirect(LocationConfig& location)
 {
-	(void)location;
-	// this->_response.setRedirectUri(location.getRedirectUri());
-	// this->_request.setStatusNumber(location.getRedirectNumber());
-	this->_response.setRedirectUri("htt.fr");
-	this->_request.setStatusNumber(301);
+	std::map<int, std::string>::const_iterator redirect_map;
+
+	// (void)location;
+	// redirect_map = location.getRedirect();
+	redirect_map = (location.redirect_map).begin();
+
+	// // this->_response.setRedirectUri(location.getRedirectUri());
+	// // this->_request.setStatusNumber(location.getRedirectNumber());
+	this->_response.setRedirectUri(redirect_map->second);
+	this->_request.setStatusNumber(redirect_map->first);
 	return ;
 }
 
@@ -347,8 +352,10 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 		throw (RequestException(405, "Allow method"));
 	// if (location_tmp.getRedirectFlag() == true)
 	// {
-		// parseRedirect(location_tmp);
+	// 	parseRedirect(location_tmp);
 	// }
+	// if (location_tmp.redirect_flag == true)
+	// 	parseRedirect(location_tmp);
 	// else
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
