@@ -616,7 +616,6 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 bool Request::ValidVersion(const std::string& version)
 {
 	std::string object;
-	std::string::iterator it;
 
 	object = version;
 	if (ParseUtils::parse_object(object, "HTTP/") == false)

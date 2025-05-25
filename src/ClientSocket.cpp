@@ -350,7 +350,7 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 		// parseRedirect(location_tmp);
 	// }
 	// else
-		CombineUriAndLocationRoot(location_tmp);
+	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
 
@@ -583,7 +583,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
-	(void)_socket;
 	try
 	{
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
@@ -593,7 +592,13 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		this->_buffer.append(buf, byte_size);
 		pos = this->_buffer.find("\r\n");
 		if (pos == std::string::npos)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+				return ;
+				}
+			closeAndDeleteSocket(_socket);
 			return ;
+		}
 		else
 		{
 			// if (this->_fd == 5)
@@ -618,7 +623,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
 		this->_request.setStatusNumber(500);

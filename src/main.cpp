@@ -7,6 +7,7 @@
 #include "Response.hpp"
 #include "nginx.hpp" // ServerConfig クラスと LocationConfig クラスを定義
 #include "location.hpp"
+#include "Signal.hpp"
 
 void printServerConfig(const ServerConfig& server, int serverIndex, int listenPort) {
 	std::cout << "Server " << serverIndex << ":" << std::endl;
@@ -73,37 +74,39 @@ int main() {
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;
 
+	
 	if (parser.parse_config(config_filename, configs)) {
-	std::cout << "Config file parsed successfully!" << std::endl;
-
-	std::vector<int> listen_ports = parser.getListenPorts();
-	std::vector<int> listen_counts = parser.getListenCounts();
-	int portIndexOffset = 0;
-	for (size_t i = 0; i < configs.size(); ++i) {
-		int listenCount = listen_counts[i];
-		for (int a = 0; a < listenCount; ++a) {
-			int port = listen_ports[portIndexOffset + a];
-			printServerConfig(configs[i], static_cast<int>(portIndexOffset + a + 1), port);
+		std::cout << "Config file parsed successfully!" << std::endl;
+		
+		std::vector<int> listen_ports = parser.getListenPorts();
+		std::vector<int> listen_counts = parser.getListenCounts();
+		int portIndexOffset = 0;
+		for (size_t i = 0; i < configs.size(); ++i) {
+			int listenCount = listen_counts[i];
+			for (int a = 0; a < listenCount; ++a) {
+				int port = listen_ports[portIndexOffset + a];
+				printServerConfig(configs[i], static_cast<int>(portIndexOffset + a + 1), port);
+			}
+			portIndexOffset += listenCount;
 		}
-		portIndexOffset += listenCount;
-	}
-
-
+		
+		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
 	}
     try
     {
-        Server server(configs);
+		Server server(configs);
         server.createListenServer();
+		std::signal(SIGINT, Signal::signal_handler);
         server.executeServer();
     }
     catch (const ServerException& e)
     {
-        std::cout << e.what() << std::endl;
+		std::cout <<"aaa"<< e.what() << std::endl;
     }
     catch (std::exception& e)
     {
-        std::cout << e.what() << std::endl;
+		std::cout << e.what() << std::endl;
     }
 }

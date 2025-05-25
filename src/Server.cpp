@@ -1,11 +1,16 @@
 #include "Server.hpp"
+#include "Signal.hpp"
 
-Server::Server(std::vector<ServerConfig>& conf) : _conf(conf) {};
+Server::Server(std::vector<ServerConfig>& conf) : _conf(conf)
+{
+	std::cout << "server created" << std::endl;
+};
 
 Server::Server() {};
 
 Server::~Server()
 {
+	std::cout << "server destructor" << std::endl;
 	std::map<int, ASocket*>::iterator it;
 
 	it = this->_socket.begin();
@@ -14,6 +19,7 @@ Server::~Server()
 		close(it->first);
 		delete it->second;
 	}
+	close(this->_epoll_fd);
 }
 
 std::vector<ServerConfig> Server::getConf(void)
@@ -97,11 +103,16 @@ void Server::executeServer(void)
 	int event_counts;
 	struct epoll_event event[MAX_EVENTS];
 
-	while (true)
+	while (g_stop)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, -1);
 		if (event_counts == -1)
-			throw ServerException();
+		{
+			if (g_stop == 1)
+				throw ServerException();
+			else
+				return ;
+		}
 		for (int i = 0; i < event_counts; i++)
 		{
 		// std::cout <<event[i].data.fd<<std::endl;
