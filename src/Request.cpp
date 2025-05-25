@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _connection_flag(false), _bad_request_flag(false), _multipart_flag(false), _progress_multipart_flag(false), _start_flag(false), _end_flag(false), _count_body(0)
+Request::Request() : _request_flag(false), _host_flag(false), _post_flag(false),  _chunk_flag(false), _chunk_finish_flag(false), _chunk_size(0), _status_number(0), _connection_flag(false), _bad_request_flag(false), _multipart_flag(false), _progress_multipart_flag(false), _start_flag(false), _end_flag(false), _count_body(0), _max_body_size(-1)
 {
 	std::cout << "Request object created argument" << std::endl;
 }
@@ -228,6 +228,12 @@ bool Request::getProgressMultipartFlag()
 {
 	return (this->_progress_multipart_flag);
 }
+
+void Request::setMaxBodySize(const long& max_body_size)
+{
+	this->_max_body_size = max_body_size;
+}
+
 
 // bool Request::SearchHeaderKey(std::string &key)
 // {
@@ -609,10 +615,17 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 
 bool Request::ValidVersion(const std::string& version)
 {
-	if (version == "HTTP/1.1")
-		return (true);
-	// Error::InvalidVersion();
-	return (false);
+	std::string object;
+	std::string::iterator it;
+
+	object = version;
+	if (ParseUtils::parse_object(object, "HTTP/") == false)
+		return (false);
+	if (ParseUtils::check_valid_version(object, "1.1") == false)
+		return (false);
+	if (!object.empty())
+		return (false);
+	return (true);
 }
 
 bool Request::checkBodyHeader(void)
@@ -810,6 +823,8 @@ bool Request::parsePostBody(const std::string& request)
 	if (this->_chunk_flag == true)
 		return (parseChunk(request));
 	this->_body += request;
+	if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
+		throw RequestException(413, "large request body");
 	if (this->_body.length() > this->_body_size)
 		throw RequestException(400, "body size");
 	return (true);
@@ -859,7 +874,7 @@ void Request::reSetRequest(void)
 	this->_boundary.clear();
 	this->_start_flag = false;
 	this->_end_flag = false;
-
+	this->_max_body_size = -1;
 }
 
 std::string Request::substringCarrigereturn(const std::string request)
@@ -918,7 +933,6 @@ void Request::parseMultipart(const std::string request)
 
 bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 {
-	std::cout <<request<<std::endl;
 	if (parse_post_flag == true)
 	{
 		if (this->_multipart_flag == true)

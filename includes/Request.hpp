@@ -11,6 +11,7 @@
 #include "RequestException.hpp"
 #include <cstdlib>
 #include <cctype>
+#include "ParseUtils.hpp"
 
 class Request
 {
@@ -42,6 +43,7 @@ class Request
 		bool _end_flag;
 		std::string _boundary;
 		size_t _count_body;
+		long _max_body_size;
 
 		// LocationConfig _conf;
 	public:
@@ -129,7 +131,7 @@ bool getMultipartFlag();
 
 size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);
-
+void setMaxBodySize(const long& max_body_size);
 
 
 

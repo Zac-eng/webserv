@@ -18,6 +18,8 @@ void ClientSocket::setRequest(Request& request)
 	return ;
 }
 
+
+
 Response ClientSocket::getResponse(void) const
 {
 	return (this->_response);
@@ -115,6 +117,8 @@ bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& 
 		return (false);
 	if (this->_request.getPostFlag() == true)
 	{
+		// this->_request.setMaxBodySize(this->_conf.getMaxBodySize());
+		this->_request.setMaxBodySize(10);
 		this->_progress_post_flag = true;
 		if (this->_request.checkPostContentLength() == true)
 		{
@@ -290,20 +294,30 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	return ;
 }
 
-// bool ClientSocket::checkAllowMethod(const std::vector<std::string>& allow_method)
-// {
-// 	std::vector<std::string>::iterator it;
+bool ClientSocket::checkAllowMethod(const std::vector<std::string>& allow_method)
+{
+	std::vector<std::string>::const_iterator it;
 
-// 	if (allow_method.empty())
-// 		return (true);
-// 	it = allow_method.begin();
-// 	for (; it != allow_method.end(); it++)
-// 	{
-// 		if (*it == this->_request.getMethod())
-// 			return (true);
-// 	}
-// 	return (false);
-// }
+	if (allow_method.empty())
+		return (true);
+	it = allow_method.begin();
+	for (; it != allow_method.end(); it++)
+	{
+		if (*it == this->_request.getMethod())
+			return (true);
+	}
+	return (false);
+}
+
+void ClientSocket::parseRedirect(LocationConfig& location)
+{
+	(void)location;
+	// this->_response.setRedirectUri(location.getRedirectUri());
+	// this->_request.setStatusNumber(location.getRedirectNumber());
+	this->_response.setRedirectUri("https://profile.intra.42.fr");
+	this->_request.setStatusNumber(301);
+	return ;
+}
 
 
 bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& location, const std::string& uri)
@@ -329,9 +343,14 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 	}
 	if (length == 0)
 		return (false);
-	// if (checkAllowMethod(location_tmp.getMethod()) == false)
-	// 	throw (RequestException(405, "Allow method"));
-	CombineUriAndLocationRoot(location_tmp);
+	if (checkAllowMethod(location_tmp.getMethod()) == false)
+		throw (RequestException(405, "Allow method"));
+	// if (location_tmp.getRedirectFlag() == true)
+	// {
+		// parseRedirect(location_tmp);
+	// }
+	// else
+		CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
 
@@ -530,13 +549,17 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
 			ChangeConfUri(this->_request.getPath());
-			if (this->_request.getExtension() == "php")
+			if (!(this->_response.getRedirectUri()).empty())
+			{
+			}
+			else if (this->_request.getExtension() == "php")
 			{
 				// if (this->_request.getPostFlag() == true)
 				// 	throw (RequestException(405, "extension"));
 				// ExecuteCgi(this->_request, server_conf, this->address, this->_response);
 			}
-			this->checkReadFile();
+			else
+				this->checkReadFile();
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
 			}
@@ -635,15 +658,15 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		{
 			throw (ResponseException(this->_request.getStatusNumber()));
 		}
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+			throw (ResponseException(500));
+		}
+		this->_response.ExecuteResponse(this->_request);
 		if (this->_request.getConnectionFlag() == true)
 		{
 			closeAndDeleteSocket(socket);
 			return ;
 		}
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-			throw (ResponseException(500));
-		}
-		this->_response.ExecuteResponse(this->_request);
 	}
 	catch (const ResponseException& e)
 	{
@@ -651,8 +674,9 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 				this->_response.setStatusCode(500);
 			}
-		checkErrorPages(this->_response.getStatusCode());
-		this->_response.ResponseError(this->_error_file_flag);
+		if ((this->_response.getRedirectUri()).empty())
+			checkErrorPages(this->_response.getStatusCode());
+		this->_response.closeResponse(this->_error_file_flag);
 		closeAndDeleteSocket(socket);
 		return ;
 	}
@@ -663,7 +687,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 			}
 		this->_response.setStatusCode(500);
 		checkErrorPages(500);
-		this->_response.ResponseError(this->_error_file_flag);
+		this->_response.closeResponse(this->_error_file_flag);
 		closeAndDeleteSocket(socket);
 		return ;
 	}

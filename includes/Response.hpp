@@ -37,6 +37,7 @@ class Response
 		std::string _body;
 		std::string _cgi_buffer;
 		bool _error_file_flag;
+		std::string _redirect_uri;
 
 
 		Response ();
@@ -67,10 +68,15 @@ void createDateHeader(void);
 void ErrorResponse(size_t code, const std::string& title);
 void ResponseBadRequest(void);
 void ResponseFileNotFound(void);
+void responseLargeRequestBody(void);
 void ResponseMethodNotAloowed(void);
 void ResponseInternalServerError(void);
 void ResponseNotImplemented(void);
 void ResponseBadGateway(void);
+void ResponseVersionNotSupported(void);
+void executeRedirectResponse(size_t code, const std::string& title);
+void responseRedirect(void);
+void closeResponse(bool flag);
 void reSetResponse(void);
 
 
@@ -106,7 +112,8 @@ std::string getBody(void) const;
 void setBody(const std::string& body);
 std::string getCgiBuffer(void) const;
 void setCgiBuffer(const std::string& cgi_buffer);
-
+void setRedirectUri(const std::string& uri);
+std::string getRedirectUri(void);
 
 		// void Post(std::string::iterator it, std::string request);
 		// void Delete(std::string::iterator it, std::string request);

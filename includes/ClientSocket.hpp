@@ -72,6 +72,7 @@ bool getFileSize(int fd);
 bool readFile(int fd);
 void checkErrorPages(size_t status);
 void checkReadFile(void);
+void parseRedirect(LocationConfig& location);
 
 Request getRequest(void) const;
 void setRequest(Request& request);
