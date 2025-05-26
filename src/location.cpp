@@ -121,6 +121,48 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 			}
 			location_config.fastcgi_param[param_first] = param_second;
 		}
+		else if (keyword == "return") {
+			std::string code_str, url;
+			stream >> code_str >> url;
+
+			if (url.empty()) {
+				std::cerr << "Error: Missing URL in 'return' directive." << std::endl;
+				return false;
+			}
+
+			if (!url.empty() && url[url.length() - 1] == ';') {
+				url.erase(url.length() - 1);
+			} else {
+				std::cerr << "Error: Missing semicolon after 'return' directive." << std::endl;
+				return false;
+			}
+
+			int code;
+			try {
+				code = std::stoi(code_str);
+				if (code < 100 || code > 599) {
+					std::cerr << "Error: Invalid HTTP status code in 'return': " << code_str << std::endl;
+					return false;
+				}
+			} catch (...) {
+				std::cerr << "Error: Non-numeric status code in 'return': " << code_str << std::endl;
+				return false;
+			}
+
+			location_config.redirect_flag = true;
+			location_config.redirect_map[code] = url;
+		}
+		else if (keyword == "path_parser") {
+			std::string path_parser;
+			stream >> path_parser;
+			if (!path_parser.empty() && path_parser[path_parser.size() - 1] == ';')
+				path_parser.erase(path_parser.size() - 1);
+			else {
+				std::cerr << "Error: Missing semicolon after 'path_parser' directive." << std::endl;
+				return false;
+			}
+			location_config.path_parser = trim(path_parser);
+		}
 		else {
 			std::cerr << "Error: Unknown directive in location block: " << line << std::endl;
 			return false;

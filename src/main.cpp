@@ -23,7 +23,6 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 		std::cout << "    Location " << j + 1 << ":" << std::endl;
 		std::cout << "      Path: " << loc.getPath() << std::endl;
 		std::cout << "      Root: " << loc.getRoot() << std::endl;
-
 		std::cout << "      Index: ";
 		if (!loc.getIndexPushCount().empty()) {
 			size_t count = loc.getIndexPushCount().back();
@@ -58,7 +57,6 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 				std::cout << "        " << it->first << " : " << it->second << std::endl;
 			}
 		}
-
 		std::cout << std::endl;
 	}
 }
