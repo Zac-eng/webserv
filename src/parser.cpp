@@ -41,12 +41,8 @@ void LocationConfig::parseReturnDirective(const std::string& line, LocationConfi
 		if (url[url.length() - 1] == ';')
 			url.erase(url.length() - 1);
 
-		std::string host = extractHost(url);
-		if (host.empty())
-			return;
-
 		config.redirect_flag = true;
-		config.redirect_map[status_code] = host;
+		config.redirect_map[status_code] = url;  // URL全体を保存
 	}
 }
 
@@ -63,30 +59,19 @@ void LocationConfig::parseConfFile(const std::string& filename, std::vector<Loca
 	std::string line;
 	LocationConfig current;
 	bool in_location = false;
-	bool in_http = false;
-	bool in_server = false;
 
 	while (std::getline(infile, line)) {
 		if (line.find_first_not_of(" \t\n\r") == std::string::npos)
 			continue;
-
-		if (line.find("http") != std::string::npos && line.find("{") != std::string::npos) {
-			in_http = true;
-		} else if (in_http && line.find("server") != std::string::npos && line.find("{") != std::string::npos) {
-			in_server = true;
-		} else if (in_server && line.find("location") != std::string::npos) {
+		if (line.find("location") != std::string::npos) {
 			current = LocationConfig();
-			current.path_parser = extractLocationPath(line);
+			current.path = extractLocationPath(line);
 			in_location = true;
 		} else if (in_location && line.find("return") != std::string::npos) {
 			parseReturnDirective(line, current);
 		} else if (in_location && line.find("}") != std::string::npos) {
 			configs.push_back(current);
 			in_location = false;
-		} else if (in_server && line.find("}") != std::string::npos) {
-			in_server = false;
-		} else if (in_http && line.find("}") != std::string::npos) {
-			in_http = false;
 		}
 	}
 }

@@ -8,6 +8,7 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 
 	std::cout << "  Listen Port: " << listenPort << std::endl;
 	std::cout << "  Server Name: " << server.getServerName() << std::endl;
+	std::cout << "  Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
 
 	const std::map<int, std::string>& errorPages = server.getErrorPages();
 	for (std::map<int, std::string>::const_iterator it = errorPages.begin(); it != errorPages.end(); ++it) {
