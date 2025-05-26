@@ -12,7 +12,7 @@
 class ServerConfig
 {
 	public:
-		ServerConfig() : listen_port(0) {}
+		ServerConfig() : listen_port(0) , client_max_body_size(-1) {}
 		void validate() const;
 		void addListenPort(int port);
 		void setIndex(const std::vector<std::string>& indexes);
@@ -27,13 +27,16 @@ class ServerConfig
 		const std::vector<int>& getListenPorts() const;
 		const std::vector<int>& getListenCounts() const;
 		const std::vector<LocationConfig>& getLocations() const;
+		long int getClientMaxBodySize() const;
 
 		void setListenPort(int port);
 		void setServerName(const std::string& name);
 		void setRootServer(const std::string& root);
 		void setErrorPages(const std::map<int, std::string>& errors);
+		void setClientMaxBodySize(long int size);
 	private:
 		int listen_port;
+		long int client_max_body_size;
 		std::string server_name;
 		std::string root_server;
 		std::vector<std::string> index_server;

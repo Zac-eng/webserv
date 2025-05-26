@@ -315,7 +315,7 @@ void ClientSocket::parseRedirect(LocationConfig& location)
 
 	// (void)location;
 	// redirect_map = location.getRedirect();
-	redirect_map = (location.redirect_map).begin();
+	redirect_map = (location.getRedirectMap()).begin();
 
 	// // this->_response.setRedirectUri(location.getRedirectUri());
 	// // this->_request.setStatusNumber(location.getRedirectNumber());
@@ -350,13 +350,11 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 		return (false);
 	if (checkAllowMethod(location_tmp.getMethod()) == false)
 		throw (RequestException(405, "Allow method"));
-	// if (location_tmp.getRedirectFlag() == true)
-	// {
-	// 	parseRedirect(location_tmp);
-	// }
-	// if (location_tmp.redirect_flag == true)
-	// 	parseRedirect(location_tmp);
-	// else
+	if (location_tmp.getRedirectFlag() == true)
+	{
+		parseRedirect(location_tmp);
+	}
+	else
 	CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }

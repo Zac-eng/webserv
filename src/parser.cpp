@@ -42,7 +42,7 @@ void LocationConfig::parseReturnDirective(const std::string& line, LocationConfi
 			url.erase(url.length() - 1);
 
 		config.redirect_flag = true;
-		config.redirect_map[status_code] = url;
+		config.redirect_map[status_code] = url;  // URL全体を保存
 	}
 }
 
@@ -65,7 +65,7 @@ void LocationConfig::parseConfFile(const std::string& filename, std::vector<Loca
 			continue;
 		if (line.find("location") != std::string::npos) {
 			current = LocationConfig();
-			current.path_parser = extractLocationPath(line);
+			current.path = extractLocationPath(line);
 			in_location = true;
 		} else if (in_location && line.find("return") != std::string::npos) {
 			parseReturnDirective(line, current);

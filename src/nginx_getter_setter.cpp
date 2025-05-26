@@ -15,6 +15,10 @@ std::string ServerConfig::getRootServer() const {
 	return root_server;
 }
 
+long int ServerConfig::getClientMaxBodySize() const {
+	return client_max_body_size;
+}
+
 const std::map<int, std::string> ServerConfig::getErrorPages() const {
 	return error_pages;
 }
@@ -45,4 +49,8 @@ void ServerConfig::setRootServer(const std::string& root) {
 
 void ServerConfig::setErrorPages(const std::map<int, std::string>& errors) {
 	error_pages = errors;
+}
+
+void ServerConfig::setClientMaxBodySize(long int size) {
+	client_max_body_size = size;
 }

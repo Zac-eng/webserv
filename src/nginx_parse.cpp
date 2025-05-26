@@ -173,6 +173,49 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				return false;
 			}
 		}
+		else if (block_keyword == "client_max_body_size") {
+			std::string size_str;
+			block_line_stream >> size_str;
+			if (!size_str.empty() && size_str[size_str.size() - 1] == ';')
+				size_str.erase(size_str.size() - 1);
+			else {
+				std::cerr << "Error: Missing semicolon after 'client_max_body_size' directive." << std::endl;
+				return false;
+			}
+			try {
+				char unit = '\0';
+				if (!size_str.empty() && std::isalpha(size_str[size_str.size() - 1])) {
+					unit = std::toupper(size_str[size_str.size() - 1]);
+					size_str = size_str.substr(0, size_str.size() - 1);  // 単位を除く
+				}
+				long int base_size = my_stoi(size_str);
+				if (base_size < 0) {
+					std::cerr << "Error: Invalid value for 'client_max_body_size': " << size_str << std::endl;
+					return false;
+				}
+				long int final_size = base_size;
+				switch (unit) {
+					case 'K':
+						final_size *= 1024;
+						break;
+					case 'M':
+						final_size *= 1024 * 1024;
+						break;
+					case 'G':
+						final_size *= 1024 * 1024 * 1024;
+						break;
+					case '\0':
+						break;
+					default:
+						std::cerr << "Error: Invalid unit for 'client_max_body_size': " << unit << std::endl;
+						return false;
+				}
+				config.client_max_body_size = final_size;
+			} catch (const std::exception& e) {
+				std::cerr << "Error: Invalid value for 'client_max_body_size': " << size_str << std::endl;
+				return false;
+			}
+		}
 		else if (block_keyword == "server_name") {
 			std::string value;
 			std::getline(block_line_stream, value, ';');
@@ -344,6 +387,7 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 	bool	http_found = false;
 	while (std::getline(config_file, line))
 	{
+		// std::cout << "11"<<std::endl;
 		line = trim(line);
 		if (line.empty())
 			continue;
