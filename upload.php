@@ -1,20 +1,23 @@
-Content-Disposition: form-data; name="file"; filename="index.html"
-Content-Type: text/html
+Content-Disposition: form-data; name="file"; filename="nginx.conf"
+Content-Type: application/octet-stream
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ファイルアップロード</title>
-</head>
-<body>
-    <h1>ファイルをアップロード</h1>
-    <form action="/upload.php" method="post" enctype="multipart/form-data">
-        <label for="file">ファイル選択:</label>
-        <input type="file" name="file" id="file" required><br><br>
-        <input type="submit" value="アップロード">
-    </form>
-</body>
-</html>
+http 
+{
+server 
+{
+    listen 8080;
+    server_name 127.0.0.1;
+    error_page 404 /404.html;
+    error_page 500 /500.html;
+    client_max_body_size 10;
+    location /
+    {
+        root /Users/yusukesato/Desktop/ytm_webserve;
+        index index.html;
+    }
+    location /redirect {
+            return 301 https://profile.intra.42.fr/;
+        }
+}
+}
 

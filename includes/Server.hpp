@@ -11,6 +11,8 @@
 
 #define MAX_EVENTS 10
 #define EPOLL_TIME 1
+#define TIMEOUT 3
+
 
 class Server
 {
@@ -27,6 +29,7 @@ class Server
 	Server(std::vector<ServerConfig>& conf);
 	bool epollCreate(void);
 	bool setMonitoringFd(ASocket* socket);
+	void checkTimeOut();
 
 	std::vector<ServerConfig> getConf(void);
 	void setConf(std::vector<ServerConfig>& conf);

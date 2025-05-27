@@ -15,8 +15,10 @@ class ASocket
 	protected:
 		ServerConfig _conf;
 		int _fd;
+		time_t _start_time;
 		std::string _host_name;
 		int _port;
+		bool _time_out_flag;
 
 	public:
 		ASocket();
@@ -30,6 +32,12 @@ class ASocket
 		void setHostName(std::string& host_name);
 		int getPort(void) const;
 		void setPort(int port);
+		void setStartTime(time_t start_time);
+		time_t getStartTime(void);
+
+		bool getTimeOut(void) const;
+		void setTimeOut(bool time_out_flag);
+		
 		virtual bool createSocket() = 0;
 		virtual void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 		virtual void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;

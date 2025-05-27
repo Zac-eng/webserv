@@ -90,16 +90,7 @@ void Response::setContentLength(const std::string& content_length)
 	return ;
 }
 
-std::string Response::getResponseMessage(void) const
-{
-	return (this->_response_message);
-}
 
-void Response::setResponseMessage(const std::string& response_message)
-{
-	this->_response_message = response_message;
-	return ;
-}
 
 std::vector<std::string> Response::getHeader(void) const
 {
@@ -219,6 +210,7 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 {
 	std::ostringstream response;
 
+	this->_response.clear();
 	response << "HTTP/1.1 "<<code<<" " <<title<<"\r\n";
 	response << "Content-Type: text/html\r\n";
 	response << "Connection: close\r\n";
@@ -235,6 +227,7 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 		response << "</body></html>";
 	}
 	this->_response = response.str();
+	std::cout << "aaa"<<this->_fd<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -252,6 +245,7 @@ void Response::executeRedirectResponse(size_t code, const std::string& title)
 		response << "<h1>" << code << " " << title << "</h1>";
 		response << "</body></html>";
 	this->_response = response.str();
+	std::cout << this->_fd<<"111"<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -295,6 +289,11 @@ void Response::ResponseVersionNotSupported(void)
 	ErrorResponse(505, "HTTP Version Not Supported");
 }
 
+void Response::ResponseRequestTimeOut(void)
+{
+	ErrorResponse(408, "HTTP Request TimeOut");
+}
+
 void Response::responseLargeRequestBody(void)
 {
 	ErrorResponse(413, "Request Entity Too Large");
@@ -309,7 +308,6 @@ void Response::reSetResponse(void)
 	this->_filename.clear();
 	this->_path.clear();
 	this->_content_length.clear();
-	this->_response_message.clear();
 	this->_header.clear();
 	this->_body.clear();
 	this->_cgi_buffer.clear();
@@ -333,6 +331,8 @@ void Response::closeResponse(bool flag)
 		ResponseFileNotFound();
 	else if(this->_status_code == 405)
 		ResponseMethodNotAloowed();
+	else if(this->_status_code == 408)
+		ResponseRequestTimeOut();
 	else if (this->_status_code == 413)
 		responseLargeRequestBody();
 	else if(this->_status_code == 500)

@@ -76,6 +76,7 @@ bool Server::epollCreate(void)
 void Server::createListenServer(void)
 {
 	std::vector<ServerConfig>::iterator it;
+	time_t start_time;
 
 	it = this->_conf.begin();
 	for (; this->_conf.end() != it; it++)
@@ -91,11 +92,39 @@ void Server::createListenServer(void)
 			delete socket;
 			throw ServerException();
 		}
+		socket->setStartTime(-1);
 		this->_socket.insert(std::make_pair(socket->getFd(), socket));
 	}
 	if (epollCreate() == false)
 		throw ServerException();
 	return ;
+}
+
+void Server::checkTimeOut(void)
+{
+	std::map<int, ASocket*>::iterator it;
+	time_t start;
+	time_t end;
+	struct epoll_event ev;
+	ev.events = EPOLLOUT;
+
+	it = this->_socket.begin();
+	for (; it != this->_socket.end(); it++)
+	{
+		ev.data.fd = it->first;
+		end = time(NULL);
+		start = it->second->getStartTime();
+		// std::cout << end - start << std::endl;
+		if (start != -1 && (end - start) > TIMEOUT)
+		{
+			if (it->second->getTimeOut() == true)
+				continue ;
+			if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_MOD, it->first, &ev) == -1) {
+				it->second->setTimeOut(true);
+			}
+			it->second->setTimeOut(true);
+		}
+	}
 }
 
 void Server::executeServer(void)
@@ -106,6 +135,7 @@ void Server::executeServer(void)
 	while (g_stop)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, EPOLL_TIME);
+		this->checkTimeOut();
 		if (event_counts == -1)
 		{
 			if (g_stop == 1)

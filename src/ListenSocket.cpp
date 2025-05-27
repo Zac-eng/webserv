@@ -87,7 +87,9 @@ void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	struct sockaddr_in address;
 	socklen_t len = sizeof(address);
 	struct epoll_event event;
+	time_t start_time;
 
+	start_time = 0;
 	memset(&address, 0 ,len);
 	fd = accept(this->_fd, (struct sockaddr *)&address, &len);
 	if (fd < 0)
@@ -106,9 +108,9 @@ void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 	{
 		delete (client);
 		socket.erase(client->getFd());
-		return ;
 	}
-	std::cout << "2回目がきてる"<<fd<<std::endl;
+	start_time = time(NULL);
+	client->setStartTime(start_time);
 	return;
 }
 

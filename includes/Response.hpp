@@ -32,7 +32,6 @@ class Response
 		std::string _filename;
 		std::string _path;
 		std::string _content_length;
-		std::string _response_message;
 		std::vector<std::string> _header;
 		std::string _body;
 		std::string _cgi_buffer;
@@ -78,7 +77,7 @@ void executeRedirectResponse(size_t code, const std::string& title);
 void responseRedirect(void);
 void closeResponse(bool flag);
 void reSetResponse(void);
-
+void ResponseRequestTimeOut(void);
 
 
 
@@ -104,8 +103,6 @@ std::string getPath(void) const;
 void setPath(const std::string& path);
 std::string getContentLength(void) const;
 void setContentLength(const std::string& content_length);
-std::string getResponseMessage(void) const;
-void setResponseMessage(const std::string& response_message);
 std::vector<std::string> getHeader(void) const;
 void setHeader(const std::vector<std::string>& header);
 std::string getBody(void) const;

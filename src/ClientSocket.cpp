@@ -18,8 +18,6 @@ void ClientSocket::setRequest(Request& request)
 	return ;
 }
 
-
-
 Response ClientSocket::getResponse(void) const
 {
 	return (this->_response);
@@ -118,7 +116,7 @@ bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& 
 	if (this->_request.getPostFlag() == true)
 	{
 		// this->_request.setMaxBodySize(this->_conf.getMaxBodySize());
-		this->_request.setMaxBodySize(10);
+		this->_request.setMaxBodySize(this->_conf.getClientMaxBodySize());
 		this->_progress_post_flag = true;
 		if (this->_request.checkPostContentLength() == true)
 		{
@@ -530,6 +528,7 @@ void ClientSocket::checkReadFile(void)
 	// 	throw RequestException(500, "file open error");
 	// }
 	this->_response_flag = true;
+	this->_start_time = -1;
 	return ;
 }
 
@@ -569,6 +568,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 				throw RequestException(500, "Parse not finish");
 			}
 			this->_response_flag = true;
+			this->_start_time = -1;
 			this->_response.setFd(this->_fd);
 			return ;
 		}
@@ -598,10 +598,11 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		pos = this->_buffer.find("\r\n");
 		if (pos == std::string::npos)
 		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				return ;
-				}
-			closeAndDeleteSocket(_socket);
+			// std::cout << "---"<<std::endl;
+			// if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+			// 	return ;
+			// 	}
+			// closeAndDeleteSocket(_socket);
 			return ;
 		}
 		else
@@ -618,12 +619,14 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
+		
 		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
 			}
 		this->_request.setStatusNumber(e.getStatus());
 		this->_response_flag = true;
+		this->_start_time = -1;;
 		this->_response.setFd(this->_fd);
 	}
 	catch (std::exception& e)
@@ -633,6 +636,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 			}
 		this->_request.setStatusNumber(500);
 		this->_response_flag = true;
+		this->_start_time = -1;;
 		this->_response.setFd(this->_fd);
 	}
 }
@@ -660,6 +664,8 @@ void ClientSocket::reSetClientSocket()
 	this->_other_fd = -1;
 	this->_error_file_path.clear();
 	this->_multipart_flag = false;
+	this->_start_time = time(NULL);
+	this->_time_out_flag = false;
 }
 
 void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
@@ -670,16 +676,22 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
-		std::cout << this->_fd <<"--"<<this->_request.getStatusNumber()<<std::endl;
+		// std::cout << this->_fd <<"--"<<this->_request.getStatusNumber()<<std::endl;
+		if (this->_time_out_flag == true)
+		{
+			this->_response.setFd(this->_fd);
+			throw (ResponseException(408));
+		}
 		if (this->_response_flag == false)
 			throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)
 		{
 			throw (ResponseException(this->_request.getStatusNumber()));
+			
 		}
 		if (this->_request.getConnectionFlag() == true)
 		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
 				throw (ResponseException(500));
 			}
 		}
@@ -696,7 +708,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	catch (const ResponseException& e)
 	{
 		this->_response.setStatusCode(e.getStatus());
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
 				this->_response.setStatusCode(500);
 			}
 		if ((this->_response.getRedirectUri()).empty())
@@ -707,7 +719,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, nullptr) == -1) {
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
 				this->_response.setStatusCode(500);
 			}
 		this->_response.setStatusCode(500);

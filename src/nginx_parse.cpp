@@ -188,12 +188,12 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 					unit = std::toupper(size_str[size_str.size() - 1]);
 					size_str = size_str.substr(0, size_str.size() - 1);  // 単位を除く
 				}
-				long int base_size = my_stoi(size_str);
+				long base_size = my_stoi(size_str);
 				if (base_size < 0) {
 					std::cerr << "Error: Invalid value for 'client_max_body_size': " << size_str << std::endl;
 					return false;
 				}
-				long int final_size = base_size;
+				long final_size = base_size;
 				switch (unit) {
 					case 'K':
 						final_size *= 1024;

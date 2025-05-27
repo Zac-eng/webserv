@@ -17,8 +17,10 @@
 #include <map>
 #include <sys/epoll.h>
 #include "Server.hpp"
+#include <ctime>
 
-#define BUFFER_SIZE 2000
+
+#define BUFFER_SIZE 20
 
 class ASocket;
 
@@ -38,6 +40,7 @@ class ClientSocket : public ASocket
 	std::string _error_file_path;
 	bool _multipart_flag;
 	bool _error_file_flag;
+
 
 
 	ClientSocket();

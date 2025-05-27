@@ -4,7 +4,7 @@ ASocket::ASocket() {};
 
 ASocket::~ASocket() {};
 
-ASocket::ASocket(ServerConfig& conf) : _conf(conf) {};
+ASocket::ASocket(ServerConfig& conf) : _conf(conf), _time_out_flag(false), _start_time(-1) {};
 
 int ASocket::getFd(void) const
 {
@@ -44,4 +44,25 @@ int ASocket::getPort(void) const
 void ASocket::setPort(int port)
 {
 	this->_port = port;
+}
+
+void ASocket::setStartTime(time_t start_time)
+{
+	this->_start_time = start_time;
+}
+
+time_t ASocket::getStartTime(void)
+{
+	return (this->_start_time);
+}
+
+bool ASocket::getTimeOut(void) const
+{
+	return (this->_time_out_flag);
+}
+
+
+void ASocket::setTimeOut(bool time_out_flag)
+{
+	this->_time_out_flag = time_out_flag;
 }
