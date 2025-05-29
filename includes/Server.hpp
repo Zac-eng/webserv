@@ -11,7 +11,7 @@
 
 #define MAX_EVENTS 10
 #define EPOLL_TIME 1
-#define TIMEOUT 3
+#define TIMEOUT 20
 
 
 class Server
