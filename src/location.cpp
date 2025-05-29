@@ -139,7 +139,7 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 
 			int code;
 			try {
-				code = std::stoi(code_str);
+				code = my_stoi(code_str);
 				if (code < 100 || code > 599) {
 					std::cerr << "Error: Invalid HTTP status code in 'return': " << code_str << std::endl;
 					return false;

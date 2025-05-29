@@ -49,6 +49,7 @@ class ServerConfig
 		bool check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& configs);
 };
 
+int my_stoi(const std::string& str);
 std::string trim(const std::string& str);
 std::string	extract_quoted_string(const std::string& str);
 
