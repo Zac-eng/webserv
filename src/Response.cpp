@@ -227,7 +227,6 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 		response << "</body></html>";
 	}
 	this->_response = response.str();
-	std::cout << "aaa"<<this->_fd<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -245,7 +244,6 @@ void Response::executeRedirectResponse(size_t code, const std::string& title)
 		response << "<h1>" << code << " " << title << "</h1>";
 		response << "</body></html>";
 	this->_response = response.str();
-	std::cout << this->_fd<<"111"<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -381,6 +379,10 @@ void Response::CreateResponse()
 	for (; it != this->_header.end(); it++)
 		this->_response += *it;
 	this->_response += "\r\n";
+	if (!this->_cgi_buffer.empty())
+	{
+		this->_response += this->_cgi_buffer;
+	}
 	this->_response += this->_body;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
@@ -409,7 +411,18 @@ void  Response::CreateResponseHeader(Request& req)
 	file = this->_filename;
 	// CheckFileType(file);
 	this->_header.push_back("Server: webserv/1.0\r\n");
-	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
+	if (!this->_cgi_buffer.empty())
+	{
+		std::ostringstream oss;
+oss << this->_cgi_buffer.length();
+std::string length_str = oss.str();
+
+		this->_header.push_back("Content-Length: " + length_str + "\r\n");
+	}
+	else
+	{
+		this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
+	}
 	createDateHeader();
 	// CheckConnectionHeader(header);
 	if (req.getConnectionFlag() == true)
@@ -448,12 +461,12 @@ void Response::handlePost(Request& req)
 
 void Response::HandleMethod(Request& req)
 {
-	if (!this->_cgi_buffer.empty())
-	{
-		// ReaponseHeader(req);
-		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
-		return ;
-	}
+	// if (!this->_cgi_buffer.empty())
+	// {
+	// 	// ReaponseHeader(req);
+	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+	// 	return ;
+	// }
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	else if (req.getMethod() == "POST")

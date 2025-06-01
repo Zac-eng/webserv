@@ -1,6 +1,6 @@
 #include "ASocket.hpp"
 
-ASocket::ASocket() {};
+ASocket::ASocket() : _time_out_flag(false) {};
 
 ASocket::~ASocket() {};
 
