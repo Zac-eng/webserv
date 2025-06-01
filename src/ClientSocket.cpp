@@ -533,7 +533,7 @@ void ClientSocket::checkReadFile(void)
 }
 
 
-void ClientSocket::checkExecuteResponse(int epoll_fd)
+void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& sock)
 {
 	std::string buffer = this->_buffer;
 	std::string::iterator it;
@@ -558,9 +558,28 @@ void ClientSocket::checkExecuteResponse(int epoll_fd)
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-				// if (this->_request.getPostFlag() == true)
+								// if (this->_request.getPostFlag() == true)
 				// 	throw (RequestException(405, "extension"));
-				// ExecuteCgi(this->_request, server_conf, this->address, this->_response);
+				this->_response_flag = true;
+				this->_response.setFd(this->_fd);
+				if (this->_request.getFile().empty())
+					this->_request.setFile("index.php");
+				if (!this->existUri(this->_response.getDirectory(), this->_request.getFile()))
+					throw RequestException(404, "default error");
+				this->_request.setFile(_response.getDirectory() + _request.getFile());
+				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_address, _response._cgi_buffer, this->_fd);
+				std::cout << cgi << cgi->getReadPipe() <<  cgi->getWritePipe() << std::endl;
+				if (cgi == NULL)
+					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
+				ev.events = EPOLLOUT;
+				ev.data.fd = cgi->getWritePipe();
+				std::cout << ev.data.fd << std::endl;
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+					throw RequestException(500, "Parse not finish");
+				}
+				if (sock.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
+					throw RequestException(500, "sock_map insertion failed");
+				return ;
 			}
 			else
 				this->checkReadFile();
@@ -616,7 +635,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 			// 	std::cout << buf <<std::endl;
 			// 	std::exit(1);
 			// }
-			this->checkExecuteResponse(epoll_fd);
+			this->checkExecuteResponse(epoll_fd, _socket);
 		}
 		return ;
 	}
@@ -686,7 +705,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 			throw (ResponseException(408));
 		}
 		if (this->_response_flag == false)
-			throw (ResponseException(500));
+		throw (ResponseException(500));
 		if (this->_request.getStatusNumber() != 0)
 		{
 			throw (ResponseException(this->_request.getStatusNumber()));
@@ -702,6 +721,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 			throw (ResponseException(500));
 		}
 		this->_response.ExecuteResponse(this->_request);
+		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
 		if (this->_request.getConnectionFlag() == true)
 		{
 			closeAndDeleteSocket(socket);

@@ -142,6 +142,7 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   if (self_pos != socket.end())
     socket.erase(self_pos);
   delete this;
+  std::cout << "cgi finished" << std::endl;
   return ;
 }
 
