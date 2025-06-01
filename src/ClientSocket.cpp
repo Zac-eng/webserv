@@ -593,7 +593,10 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 			return ;
-		buf[byte_size] = '\0';
+		if (byte_size != BUFFER_SIZE)
+		{
+			buf[byte_size] = '\0';
+		}
 		this->_buffer.append(buf, byte_size);
 		pos = this->_buffer.find("\r\n");
 		if (pos == std::string::npos)
