@@ -319,6 +319,8 @@ void Response::closeResponse(bool flag)
 	// std::cout << this->_body<<std::endl;
 	// if (flag == true && !this->_body.empty())
 	// 	write(this->_fd, this->_body.c_str(), this->_body.length());
+	if (this->_cgi_buffer)
+		responseErrorrResponse();
 	if (flag == true)
 		this->_error_file_flag = true;
 	if (this->_status_code == 301)
@@ -335,10 +337,10 @@ void Response::closeResponse(bool flag)
 		responseLargeRequestBody();
 	else if(this->_status_code == 500)
 		ResponseInternalServerError();
-	else if(this->_status_code == 501)
-		ResponseNotImplemented();
-	else if(this->_status_code == 502)
-		ResponseBadGateway();
+	// else if(this->_status_code == 501)
+	// 	ResponseNotImplemented();
+	// else if(this->_status_code == 502)
+	// 	ResponseBadGateway();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;
@@ -467,30 +469,18 @@ void Response::HandleMethod(Request& req)
 	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 	// 	return ;
 	// }
+	if (!this->_cgi_buffer.empty())
+		cgiRespose();
 	if (req.getMethod() == "GET")
 		handleGet(req);
-	else if (req.getMethod() == "POST")
-		handlePost(req);
-	else if (req.getMethod() == "DELETE")
-		handleDelete();
 	return ;
 }
 
-void Response::ExecuteAndGetStatusCode(Request& req)
-{
-	// bool type = false;
 
-	// type = IsDynamicFileType(this->_filename);
-	// if (type == true)
-	// 	ExecuteCGI(req);
-	// else
-		HandleMethod(req);
-	return ;
-}
 
 
 void Response::ExecuteResponse(Request& req)
 {
-	this->ExecuteAndGetStatusCode(req);
+	this->HandleMethod(req);
 		// Createresponse(req);
 }
