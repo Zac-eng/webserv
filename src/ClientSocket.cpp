@@ -555,11 +555,13 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			ChangeConfUri(this->_request.getPath());
 			if (!(this->_response.getRedirectUri()).empty())
 			{
+				if (this->_request.getMethod() != "GET")
+				{
+					this->_request.setMethod("GET");
+				}
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-								// if (this->_request.getPostFlag() == true)
-				// 	throw (RequestException(405, "extension"));
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())
@@ -582,7 +584,11 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				return ;
 			}
 			else
+			{
+				if (this->_request.getMethod() == "GET")
+					throw RequestException(400, "cgi method error");
 				this->checkReadFile();
+			}
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
 			}
@@ -620,7 +626,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		pos = this->_buffer.find("\r\n");
 		if (pos == std::string::npos)
 		{
-			// std::cout << "---"<<std::endl;
 			// if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
 			// 	return ;
 			// 	}
@@ -629,12 +634,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		}
 		else
 		{
-			// if (this->_fd == 5)
-			// {
-			// 	std::cout << pos << std::endl;
-			// 	std::cout << buf <<std::endl;
-			// 	std::exit(1);
-			// }
 			this->checkExecuteResponse(epoll_fd, _socket);
 		}
 		return ;
