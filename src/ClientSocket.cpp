@@ -698,7 +698,6 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
-		// std::cout << this->_fd <<"--"<<this->_request.getStatusNumber()<<std::endl;
 		if (this->_time_out_flag == true)
 		{
 			this->_response.setFd(this->_fd);

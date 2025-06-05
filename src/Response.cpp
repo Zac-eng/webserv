@@ -374,47 +374,56 @@ std::string Response::getRedirectUri(void)
 
 void Response::CreateResponse()
 {
-	std::vector<std::string>::iterator it;
+std::vector<std::string>::iterator it;
 
-	it = this->_header.begin();
-	this->_response = "HTTP/1.1 200 OK\r\n";
-	for (; it != this->_header.end(); it++)
-		this->_response += *it;
-	this->_response += "\r\n";
-	this->_response += this->_body;
-	write(this->_fd, this->_response.c_str(), this->_response.length());
+std::cout << "response" << std::endl;
+it = this->_header.begin();
+this->_response = "HTTP/1.1 200 OK\r\n";
+for (; it != this->_header.end(); it++)
+this->_response += *it;
+if (!this->_cgi_buffer.empty())
+{
+this->_response += this->_cgi_buffer;
+}
+else
+{
+this->_response += "\r\n";
+this->_response += this->_body;
+}
+write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
 void Response::createDateHeader(void)
 {
-	time_t now;
-	struct tm n_time;
-	char buf[80];
-	std::string date;
+time_t now;
+struct tm n_time;
+char buf[80];
+std::string date;
 
-	now = time(0);
-	n_time = *gmtime(&now);
-	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
-	date = "Date: ";
-	date += buf;
-	date += "\r\n";
-	this->_header.push_back(date);
+now = time(0);
+n_time = *gmtime(&now);
+strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
+date = "Date: ";
+date += buf;
+date += "\r\n";
+this->_header.push_back(date);
 }
 
 void  Response::CreateResponseHeader(Request& req)
 {
-	std::map<std::string, std::string> header;
-	std::string file;
+std::map<std::string, std::string> header;
+std::string file;
 
-	file = this->_filename;
-	// CheckFileType(file);
-	this->_header.push_back("Server: webserv/1.0\r\n");
-	this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
-	createDateHeader();
-	// CheckConnectionHeader(header);
-	if (req.getConnectionFlag() == true)
-		this->_header.push_back("Connection: close\r\n");
-	CreateResponse();
+file = this->_filename;
+// CheckFileType(file);
+this->_header.push_back("Server: webserv/1.0\r\n");
+if (this->_cgi_buffer.empty())
+this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
+createDateHeader();
+// CheckConnectionHeader(header);
+if (req.getConnectionFlag() == true)
+this->_header.push_back("Connection: close\r\n");
+CreateResponse();
 }
 
 void Response::handleGet(Request& req)
@@ -448,12 +457,13 @@ void Response::handlePost(Request& req)
 
 void Response::HandleMethod(Request& req)
 {
-	if (!this->_cgi_buffer.empty())
-	{
-		// ReaponseHeader(req);
-		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
-		return ;
-	}
+	std::cout << this->_cgi_buffer << std::endl;
+	// if (!this->_cgi_buffer.empty())
+	// {
+	// 	// ReaponseHeader(req);
+	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+	// 	return ;
+	// }
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	else if (req.getMethod() == "POST")
