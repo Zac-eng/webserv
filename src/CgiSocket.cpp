@@ -65,16 +65,14 @@ CgiSocket* CgiSocket::createCgiSocket(
     return NULL;
   }
   else if (pid == 0) {
-    // not sure since req.getPath does not always return the "path" we need here
-    // const char *args[] = {CMD_PATH, req.getFile().c_str(), NULL};
-    const char *args[] = {"/home/hmiyazak/Dev/42/webserv/abc.php", NULL};
+    const char *args[] = {req.getFile().c_str(), NULL};
     std::cout << req.getFile() << std::endl;
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(500);
     }
     const char **meta_vars = create_meta_vars(conf, req, client_addr);
-    if (execve("/home/hmiyazak/Dev/42/webserv/abc.php", (char **)args, (char **)meta_vars) != 0) {
+    if (execve(req.getFile().c_str(), (char **)args, (char **)meta_vars) != 0) {
       switch (errno) {
         case ENOENT:
           perror("noent");

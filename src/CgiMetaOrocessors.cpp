@@ -26,7 +26,9 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   int meta_var_num = meta_vars.size();
   const char **meta_var_array = new const char*[meta_var_num];
   for (int i = 0; i < meta_var_num; ++i) {
-    meta_var_array[i] = meta_vars[i].c_str();
+    meta_var_array[i] = new char[meta_vars[i].length() + 1];
+    std::memset((char*)meta_var_array[i], '\0', meta_vars[i].length() + 1);
+    std::strncpy((char*)meta_var_array[i], meta_vars[i].c_str(), meta_vars[i].length() + 1);
   }
   return meta_var_array;
 }
@@ -72,7 +74,6 @@ CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request
       size_t border_pos = script_path_pos + sizeof(CGI_EXTENTION) / sizeof(char);
       ret_val.script_name = filepath.substr(0, border_pos);
       // ret_val.path_info = filepath.substr(border_pos + 1, filepath.length());
-      std::cerr << "meta" << std::endl;
     }
     for (; it != conf.getLocations().end(); ++it) {
       if (it->getPath().length() < matching_prefix_len)
@@ -131,7 +132,9 @@ std::string CgiMetaProcessors::get_request_method(const Request& req) {
 }
 
 std::string CgiMetaProcessors::get_server_name(const ServerConfig& conf) {
-  return conf.getServerName();
+  // return conf.getServerName();
+  std::cerr << conf.getServerName() << std::endl;
+  return "localhost";
 }
 
 std::string CgiMetaProcessors::get_server_port(const ServerConfig& conf) {

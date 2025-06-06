@@ -1,23 +1,47 @@
-Content-Disposition: form-data; name="file"; filename="nginx.conf"
+Content-Disposition: form-data; name="file"; filename="Makefile"
 Content-Type: application/octet-stream
 
-http 
-{
-server 
-{
-    listen 8080;
-    server_name 127.0.0.1;
-    error_page 404 /404.html;
-    error_page 500 /500.html;
-    client_max_body_size 10;
-    location /
-    {
-        root /Users/yusukesato/Desktop/ytm_webserve;
-        index index.html;
-    }
-    location /redirect {
-            return 301 https://profile.intra.42.fr/;
-        }
-}
-}
+CXX=g++
+CXXFLAGS=-Wall -Wextra -Werror
+SENDER=sender
+RECEIVER=receiver
+SRC_DIR=./src
+OBJ_DIR=./object
+RM=rm -rf
 
+build: $(SENDER) $(RECEIVER)
+
+S_SRC_DIR=$(SRC_DIR)/$(SENDER)
+S_OBJ_DIR=$(OBJ_DIR)/$(SENDER)
+S_SRCS=$(wildcard $(S_SRC_DIR)/*.cc)
+S_OBJS=$(subst $(S_SRC_DIR),$(S_OBJ_DIR),$(S_SRCS:.cc=.o))
+
+$(S_OBJ_DIR)/%.o: $(S_SRC_DIR)/%.cc
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(SENDER): $(S_OBJS)
+	$(CXX) $(CXXFLAGS) $(S_OBJS) -o $(S_OBJ_DIR)/$@
+
+R_SRC_DIR=$(SRC_DIR)/$(RECEIVER)
+R_OBJ_DIR=$(OBJ_DIR)/$(RECEIVER)
+R_SRCS=$(wildcard $(R_SRC_DIR)/*.cc)
+R_OBJS=$(subst $(R_SRC_DIR),$(R_OBJ_DIR),$(R_SRCS:.cc=.o))
+
+$(R_OBJ_DIR)/%.o: $(R_SRC_DIR)/%.cc
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(RECEIVER): $(R_OBJS)
+	$(CXX) $(CXXFLAGS) $(R_OBJS) -o $(R_OBJ_DIR)/$@
+
+run: build
+	$(S_OBJ_DIR)/$(SENDER) & $(R_OBJ_DIR)/$(RECEIVER) & wait
+
+clean:
+	$(RM) $(S_OBJS) $(R_OBJS)
+
+fclean: clean
+	$(RM) $(OBJ_DIR)
+
+re: fclean all
