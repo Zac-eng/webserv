@@ -539,6 +539,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 	std::string::iterator it;
 	struct epoll_event ev;
 
+	std::cout << buffer << std::endl;
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
 	it = buffer.begin();

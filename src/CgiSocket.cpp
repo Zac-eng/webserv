@@ -119,7 +119,6 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
       break;
   }
   this->_response_body = response_body;
-  std::cout << "res body: " << this->_response_body << std::endl;
   // while (true) {
   //   if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
   //     std::cout << "wait finished: " << status << std::endl;
@@ -166,11 +165,11 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
     perror("epoll_ctl: add");
     return ;
   }
-  std::cout << _req.getBoundary() << std::endl;
-  std::cout << _req.getBody() << std::endl;
   if (this->_req.getBody().empty())
     return ;
-  if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0) {
+  std::string cgi_input = _req.getBoundary() + "\n" + _req.getBody() + _req.getBoundary() + "--\n";
+  std::cout << cgi_input << std::endl;
+  if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), this->_req.getBody().length()) < 0) {
     perror("write failed");
     return ;
   }
