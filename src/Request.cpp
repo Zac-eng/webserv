@@ -43,7 +43,7 @@ void Request::setDirectory(const std::string& directory)
 	return ;
 }
 
-std::string Request::getFile(void) const
+const std::string& Request::getFile(void) const
 {
 	return (this->_file);
 }
@@ -87,7 +87,7 @@ void Request::setBody(const std::string& body)
 	return ;
 }
 
-std::map<std::string, std::string> Request::getHeader(void) const
+const std::map<std::string, std::string>& Request::getHeader(void) const
 {
 	return (this->_header);
 }

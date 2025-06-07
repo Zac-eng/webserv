@@ -5,6 +5,7 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   std::vector<std::string> meta_vars;
   Auth auth_info = CgiMetaProcessors::get_auth_info(req);
   CgiPath cgi_path = CgiMetaProcessors::get_path_info(conf, req);
+
   // RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
   meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
@@ -24,7 +25,8 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   meta_vars.push_back("SERVER_SOFTWARE=" + CgiMetaProcessors::get_server_software());
 
   int meta_var_num = meta_vars.size();
-  const char **meta_var_array = new const char*[meta_var_num];
+  const char **meta_var_array = new const char*[meta_var_num + 1];
+  meta_var_array[meta_var_num] = NULL;
   for (int i = 0; i < meta_var_num; ++i) {
     meta_var_array[i] = new char[meta_vars[i].length() + 1];
     std::memset((char*)meta_var_array[i], '\0', meta_vars[i].length() + 1);

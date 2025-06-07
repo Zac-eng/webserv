@@ -698,6 +698,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
+				std::cout << "res:::" << std::endl;
 		if (this->_time_out_flag == true)
 		{
 			this->_response.setFd(this->_fd);
@@ -719,6 +720,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		else if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			throw (ResponseException(500));
 		}
+
 		this->_response.ExecuteResponse(this->_request);
 		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
 		if (this->_request.getConnectionFlag() == true)

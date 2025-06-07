@@ -66,8 +66,8 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   else if (pid == 0) {
     const char *args[] = {req.getFile().c_str(), NULL};
-    std::cout << req.getFile() << std::endl;
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
+      perror("child pipes");
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(500);
     }
@@ -86,6 +86,7 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
     req.setStatusNumber(500);
+    perror("parent pipes");
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
     return NULL;
@@ -117,6 +118,7 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
       break;
   }
   this->_response_body = response_body;
+  std::cout << "res body: " << this->_response_body << std::endl;
   // while (true) {
   //   if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
   //     std::cout << "wait finished: " << status << std::endl;
@@ -165,8 +167,10 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   }
   if (this->_req.getBody().empty())
     return ;
-  if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0)
+  if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0) {
+    perror("write failed");
     return ;
+  }
   return ;
 }
 
