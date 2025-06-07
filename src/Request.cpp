@@ -958,3 +958,7 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 	}
 	return (true);
 }
+
+const std::string& Request::getBoundary() const {
+	return this->_boundary;
+}

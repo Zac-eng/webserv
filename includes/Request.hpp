@@ -133,7 +133,7 @@ size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);
 void setMaxBodySize(const long& max_body_size);
 
-
+const std::string& getBoundary() const;
 
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);

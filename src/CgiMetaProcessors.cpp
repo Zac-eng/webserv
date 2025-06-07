@@ -110,16 +110,18 @@ RemoteInfo CgiMetaProcessors::get_remote_info(const sockaddr_in& client_addr) {
 }
 
 std::string CgiMetaProcessors::get_content_length(const Request& req) {
-  std::map<std::string, std::string>::const_iterator cl_iter = req.getHeader().find("Content-Length");
+  std::map<std::string, std::string>::const_iterator cl_iter = req.getHeader().find("content-length");
   if (cl_iter != req.getHeader().end()) {
+    std::cerr << "length" << cl_iter->second << std::endl;
     return cl_iter->second;
   }
   return "";
 }
 
 std::string CgiMetaProcessors::get_content_type(const Request& req) {
-  std::map<std::string, std::string>::const_iterator ct_iter = req.getHeader().find("Content-Type");
+  std::map<std::string, std::string>::const_iterator ct_iter = req.getHeader().find("content-type");
   if (ct_iter != req.getHeader().end()) {
+    std::cerr << "content type" << ct_iter->second << std::endl;
     return ct_iter->second;
   }
   return "";

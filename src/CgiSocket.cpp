@@ -72,6 +72,7 @@ CgiSocket* CgiSocket::createCgiSocket(
       std::exit(500);
     }
     const char **meta_vars = create_meta_vars(conf, req, client_addr);
+    std::cerr << req.getFile().c_str() << std::endl;
     if (execve(req.getFile().c_str(), (char **)args, (char **)meta_vars) != 0) {
       switch (errno) {
         case ENOENT:
@@ -165,6 +166,8 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
     perror("epoll_ctl: add");
     return ;
   }
+  std::cout << _req.getBoundary() << std::endl;
+  std::cout << _req.getBody() << std::endl;
   if (this->_req.getBody().empty())
     return ;
   if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0) {
