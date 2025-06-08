@@ -18,6 +18,8 @@ class ServerConfig
 		void setIndex(const std::vector<std::string>& indexes);
 		bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
 		std::vector<int> listen_counts;
+		int num_open;
+		int num_close;
 
 		int getListenPort() const;
 		std::string getServerName() const;
@@ -37,8 +39,6 @@ class ServerConfig
 	private:
 		int listen_port;
 		long int client_max_body_size;
-		int num_open = 0;;
-		int num_close = 0;
 		std::string server_name;
 		std::string root_server;
 		std::vector<std::string> index_server;

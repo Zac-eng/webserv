@@ -107,7 +107,6 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 	std::string block_content;
 	bool has_open = false;
 	bool set_path = false;
-	bool close_server = false;
 	bool has_root = false;
 	int listen_number = 0;
 	size_t prev_size = index_server.size();
@@ -130,12 +129,8 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		std::string block_keyword;
 		block_line_stream >> block_keyword;
 		if (block_keyword == "server") {
-			if (close_server == false) {
-				std::cerr << "Error: Missing closing '}' in server block." << std::endl;
-				return false;
-			}
+	
 			has_root = false;
-			close_server = false;
 			if (config.listen_port == 0) {
 				listen_number++;
 				addListenPort(80);
@@ -309,6 +304,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 
 		}
 		else if (block_keyword == "}") {
+			num_close++;
 			if (config.listen_port == 0) {
 				listen_number++;
 				addListenPort(80);
@@ -316,7 +312,10 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			}
 			listen_counts.push_back(listen_number);
 			listen_number = 0;
-			close_server = true;
+		}
+		else {
+			std::cerr << "Error: Unexpected directive in server block: " << line << std::endl;
+			return false;
 		}
 		if (set_path == true && block_keyword == "location") {
 			if (has_open == false) {
@@ -372,8 +371,10 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 				{
 					line = trim(line);
 					if (!line.empty()) {
-						if (line == "{")
+						if (line == "{"){
+							num_open++;
 							break;
+						}
 						else {
 							std::cerr << "Error: Expected '{' after 'server' directive." << std::endl;
 							return false;
@@ -381,6 +382,8 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 					}
 				}
 			}
+			else
+				num_open++;
 			if (!check_listen_name(config_file, configs))
 				return false;
 		}
@@ -395,6 +398,8 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerConfig>& configs)
 {
 	std::ifstream config_file(filename);
+	num_open = 0;
+	num_close = 0;
 	if (!config_file.is_open()) {
 		std::cerr << "file can't open" << filename << std::endl;
 		return false;
@@ -420,8 +425,10 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 				{
 					line = trim(line);
 					if (!line.empty()) {
-						if (line == "{")
+						if (line == "{") {
+							num_open++;
 							break;
+						}
 						else {
 							std::cerr << "Error: Expected '{' after 'http' directive." << std::endl;
 							return false;
@@ -429,9 +436,20 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 					}
 				}
 			}
+			else
+				num_open++;
 			if (!check_server_block(config_file, configs))
 				return false;
 		}
+		else {
+			std::cerr << "Error: Unexpected directive outside 'http' block: " << line << std::endl;
+			return false;
+		}
+
+	}
+	if (num_open != num_close) {
+		std::cerr << "Error: Mismatched number of opening and closing braces." << std::endl;
+		return false;
 	}
 	return true;
 }
