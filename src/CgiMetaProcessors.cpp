@@ -5,6 +5,7 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   std::vector<std::string> meta_vars;
   Auth auth_info = CgiMetaProcessors::get_auth_info(req);
   CgiPath cgi_path = CgiMetaProcessors::get_path_info(conf, req);
+
   // RemoteInfo remote_info = CgiMetaProcessors::get_remote_info(addr);
   meta_vars.push_back("AUTH_TYPE=" + auth_info.auth_type);
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
@@ -17,16 +18,22 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   // meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
   meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
   meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
+  meta_vars.push_back("SCRIPT_FILENAME=/home/hmiyazak/Dev/webserv/upload.php");
+  meta_vars.push_back("REDIRECT_STATUS=200");
   meta_vars.push_back("SCRIPT_NAME=" + cgi_path.script_name);
   meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(conf));
   meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(conf));
   meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol());
   meta_vars.push_back("SERVER_SOFTWARE=" + CgiMetaProcessors::get_server_software());
+  std::cerr << "script" <<cgi_path.script_name << std::endl;
 
   int meta_var_num = meta_vars.size();
-  const char **meta_var_array = new const char*[meta_var_num];
+  const char **meta_var_array = new const char*[meta_var_num + 1];
+  meta_var_array[meta_var_num] = NULL;
   for (int i = 0; i < meta_var_num; ++i) {
-    meta_var_array[i] = meta_vars[i].c_str();
+    meta_var_array[i] = new char[meta_vars[i].length() + 1];
+    std::memset((char*)meta_var_array[i], '\0', meta_vars[i].length() + 1);
+    std::strncpy((char*)meta_var_array[i], meta_vars[i].c_str(), meta_vars[i].length() + 1);
   }
   return meta_var_array;
 }
@@ -72,7 +79,6 @@ CgiPath CgiMetaProcessors::get_path_info(const ServerConfig& conf, const Request
       size_t border_pos = script_path_pos + sizeof(CGI_EXTENTION) / sizeof(char);
       ret_val.script_name = filepath.substr(0, border_pos);
       // ret_val.path_info = filepath.substr(border_pos + 1, filepath.length());
-      std::cerr << "meta" << std::endl;
     }
     for (; it != conf.getLocations().end(); ++it) {
       if (it->getPath().length() < matching_prefix_len)
@@ -107,16 +113,18 @@ RemoteInfo CgiMetaProcessors::get_remote_info(const sockaddr_in& client_addr) {
 }
 
 std::string CgiMetaProcessors::get_content_length(const Request& req) {
-  std::map<std::string, std::string>::const_iterator cl_iter = req.getHeader().find("Content-Length");
+  std::map<std::string, std::string>::const_iterator cl_iter = req.getHeader().find("content-length");
   if (cl_iter != req.getHeader().end()) {
+    std::cerr << "length" << cl_iter->second << std::endl;
     return cl_iter->second;
   }
   return "";
 }
 
 std::string CgiMetaProcessors::get_content_type(const Request& req) {
-  std::map<std::string, std::string>::const_iterator ct_iter = req.getHeader().find("Content-Type");
+  std::map<std::string, std::string>::const_iterator ct_iter = req.getHeader().find("content-type");
   if (ct_iter != req.getHeader().end()) {
+    std::cerr << "content type" << ct_iter->second << std::endl;
     return ct_iter->second;
   }
   return "";
@@ -131,7 +139,9 @@ std::string CgiMetaProcessors::get_request_method(const Request& req) {
 }
 
 std::string CgiMetaProcessors::get_server_name(const ServerConfig& conf) {
-  return conf.getServerName();
+  // return conf.getServerName();
+  std::cerr << conf.getServerName() << std::endl;
+  return "localhost";
 }
 
 std::string CgiMetaProcessors::get_server_port(const ServerConfig& conf) {
@@ -141,7 +151,7 @@ std::string CgiMetaProcessors::get_server_port(const ServerConfig& conf) {
 }
 
 std::string CgiMetaProcessors::get_server_protocol(void) {
-  return "http/1.1";
+  return "HTTP/1.1";
 }
 
 std::string CgiMetaProcessors::get_server_software(void) {

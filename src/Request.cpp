@@ -43,7 +43,7 @@ void Request::setDirectory(const std::string& directory)
 	return ;
 }
 
-std::string Request::getFile(void) const
+const std::string& Request::getFile(void) const
 {
 	return (this->_file);
 }
@@ -87,7 +87,7 @@ void Request::setBody(const std::string& body)
 	return ;
 }
 
-std::map<std::string, std::string> Request::getHeader(void) const
+const std::map<std::string, std::string>& Request::getHeader(void) const
 {
 	return (this->_header);
 }
@@ -620,6 +620,7 @@ bool Request::ValidVersion(const std::string& version)
 	object = version;
 	if (ParseUtils::parse_object(object, "HTTP/") == false)
 		return (false);
+	std::cout << object << std::endl;
 	if (ParseUtils::check_valid_version(object, "1.1") == false)
 		return (false);
 	if (!object.empty())
@@ -742,8 +743,11 @@ bool Request::parseChunkSize(const std::string& request)
 	}
 	for (; it != request.end() && *it != '\r'; it++)
 	{
+		std::cout << "iterator:" <<*it<< std::endl;
 		if (checkHexadecimal(*it) == false)
+		{
 			return (false);
+		}
 	}
 	if (it == request.end())
 		return (false);
@@ -797,14 +801,18 @@ bool Request::executeChunk(const std::string& request)
 	if (this->_chunk_size == 0)
 	{
 		if (parseChunkSize(request) == false)
-			return (false);
+		return (false);
 		if (this->_chunk_finish_flag == true)
 			return (true);
 		this->_chunk_size = convertDecimal(request);
 		return (true);
 	}
 	if (parseChunkValue(request) == false)
+	{
+		std::cout << "chunk_body parse" << std::endl;
+
 		return (false);
+	}
 	return (true);
 }
 
@@ -957,4 +965,8 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
+}
+
+const std::string& Request::getBoundary() const {
+	return this->_boundary;
 }

@@ -1,23 +1,19 @@
-Content-Disposition: form-data; name="file"; filename="nginx.conf"
-Content-Type: application/octet-stream
+#!/usr/bin/php
+<?php
+$method = $_FILES['file'];
+fwrite(STDERR, "method: $method");
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+    fwrite("inside the block\n");
+    // アップロードされたファイルの保存先ディレクトリ
+    $target_dir = "/home/hmiyazak/Dev/42/webserv/uploads/";
+    $target_file = $target_dir . basename($_FILES["file"]["name"]);
+    fwrite(STDERR, "target: $target_file");
 
-http 
-{
-server 
-{
-    listen 8080;
-    server_name 127.0.0.1;
-    error_page 404 /404.html;
-    error_page 500 /500.html;
-    client_max_body_size 10;
-    location /
-    {
-        root /Users/yusukesato/Desktop/ytm_webserve;
-        index index.html;
+    // ファイルを保存
+    if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
+        echo "ファイルがアップロードされました: " . htmlspecialchars(basename($_FILES["file"]["name"]));
+    } else {
+        echo "ファイルのアップロードに失敗しました。";
     }
-    location /redirect {
-            return 301 https://profile.intra.42.fr/;
-        }
 }
-}
-
+?>

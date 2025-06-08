@@ -3,6 +3,7 @@
 #include "nginx.hpp"
 #include "Request.hpp"
 #include <string>
+#include <cstring>
 #include <sstream>
 #include <unistd.h>
 #include <arpa/inet.h>
