@@ -96,7 +96,7 @@ std::string getPath(void) const;
 void setPath(const std::string& path);
 std::string getDirectory(void) const;
 void setDirectory(const std::string& directory);
-std::string getFile(void) const;
+const std::string& getFile(void) const;
 void setFile(const std::string& file);
 std::string getExtension(void) const;
 void setExtension(const std::string& extension);
@@ -104,7 +104,7 @@ std::string getVersion(void) const;
 void setVersion(const std::string& version);
 std::string getBody(void) const;
 void setBody(const std::string& body);
-std::map<std::string, std::string> getHeader(void) const;
+const std::map<std::string, std::string>& getHeader(void) const;
 void setHeader(const std::map<std::string, std::string>& header);
 bool getRequestFlag(void) const;
 void setRequestFlag(const bool& request_flag);
@@ -133,7 +133,7 @@ size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);
 void setMaxBodySize(const long& max_body_size);
 
-
+const std::string& getBoundary() const;
 
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);

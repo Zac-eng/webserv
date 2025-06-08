@@ -1,8 +1,8 @@
 #!/usr/bin/php
 <?php
-header("Content-Type: text/html");
+echo "Content-Type: text/html\n";
+echo "Content-Length: 100\n\n";
 
-echo "<!DOCTYPE html>";
 echo "<html>";
 echo "<head><title>Simple CGI</title></head>";
 echo "<body>";

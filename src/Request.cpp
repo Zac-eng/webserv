@@ -43,7 +43,7 @@ void Request::setDirectory(const std::string& directory)
 	return ;
 }
 
-std::string Request::getFile(void) const
+const std::string& Request::getFile(void) const
 {
 	return (this->_file);
 }
@@ -87,7 +87,7 @@ void Request::setBody(const std::string& body)
 	return ;
 }
 
-std::map<std::string, std::string> Request::getHeader(void) const
+const std::map<std::string, std::string>& Request::getHeader(void) const
 {
 	return (this->_header);
 }
@@ -764,8 +764,10 @@ bool Request::parseChunkValue(const std::string& request)
 	it = request.begin();
 	if (GetSubstringUntilCarriageReturn(request, it, object) == false)
 		return (false);
-	if (object.length() != this->_chunk_size)
+		
+		if (object.length() != this->_chunk_size)
 		return (false);
+		std::cout << "aa"<< std::endl;
 	object += "\r\n";
 	if (request != object)
 		return (false);
@@ -957,4 +959,8 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			// return (Error::MissingRequestLineAndHost());
 	}
 	return (true);
+}
+
+const std::string& Request::getBoundary() const {
+	return this->_boundary;
 }

@@ -319,8 +319,8 @@ void Response::closeResponse(bool flag)
 	// std::cout << this->_body<<std::endl;
 	// if (flag == true && !this->_body.empty())
 	// 	write(this->_fd, this->_body.c_str(), this->_body.length());
-	if (this->_cgi_buffer)
-		responseErrorrResponse();
+	// if (this->_cgi_buffer)
+	// 	responseErrorrResponse();
 	if (flag == true)
 		this->_error_file_flag = true;
 	if (this->_status_code == 301)
@@ -374,7 +374,7 @@ std::string Response::getRedirectUri(void)
 
 void Response::CreateResponse()
 {
-	std::vector<std::string>::iterator it;
+std::vector<std::string>::iterator it;
 
 	it = this->_header.begin();
 	this->_response = "HTTP/1.1 200 OK\r\n";
@@ -391,24 +391,24 @@ void Response::CreateResponse()
 
 void Response::createDateHeader(void)
 {
-	time_t now;
-	struct tm n_time;
-	char buf[80];
-	std::string date;
+time_t now;
+struct tm n_time;
+char buf[80];
+std::string date;
 
-	now = time(0);
-	n_time = *gmtime(&now);
-	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
-	date = "Date: ";
-	date += buf;
-	date += "\r\n";
-	this->_header.push_back(date);
+now = time(0);
+n_time = *gmtime(&now);
+strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
+date = "Date: ";
+date += buf;
+date += "\r\n";
+this->_header.push_back(date);
 }
 
 void  Response::CreateResponseHeader(Request& req)
 {
-	std::map<std::string, std::string> header;
-	std::string file;
+std::map<std::string, std::string> header;
+std::string file;
 
 	file = this->_filename;
 	// CheckFileType(file);
@@ -469,8 +469,8 @@ void Response::HandleMethod(Request& req)
 	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 	// 	return ;
 	// }
-	if (!this->_cgi_buffer.empty())
-		cgiRespose();
+	// if (!this->_cgi_buffer.empty())
+	// 	cgiRespose();
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	return ;

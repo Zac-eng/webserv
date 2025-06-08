@@ -539,6 +539,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 	std::string::iterator it;
 	struct epoll_event ev;
 
+	std::cout << buffer << std::endl;
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
 	it = buffer.begin();
@@ -585,7 +586,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else
 			{
-				if (this->_request.getMethod() == "GET")
+				if (this->_request.getMethod() != "GET")
 					throw RequestException(400, "cgi method error");
 				this->checkReadFile();
 			}
@@ -697,7 +698,6 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	ev.data.fd = this->_fd;
 	try
 	{
-		// std::cout << this->_fd <<"--"<<this->_request.getStatusNumber()<<std::endl;
 		if (this->_time_out_flag == true)
 		{
 			this->_response.setFd(this->_fd);
@@ -719,6 +719,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		else if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			throw (ResponseException(500));
 		}
+
 		this->_response.ExecuteResponse(this->_request);
 		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
 		if (this->_request.getConnectionFlag() == true)

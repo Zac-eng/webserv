@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Signal.hpp"
+#include "CgiSocket.hpp"
 
 Server::Server(std::vector<ServerConfig>& conf) : _conf(conf)
 {
@@ -153,6 +154,19 @@ void Server::executeServer(void)
 			else if (event[i].events == EPOLLOUT)
 			{
 				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
+			}
+			else if (event[i].events == EPOLLHUP)
+			{
+				std::cout << "epoll hup" << std::endl;
+				CgiSocket* sock = dynamic_cast<CgiSocket*>(this->_socket[event[i].data.fd]);
+				if (sock != NULL) {
+					sock->waitChildProcess();
+				}
+				if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL) != 0) {
+					perror("epoll delete, cgi");
+				}
+				delete this->_socket[event[i].data.fd];
+				this->_socket.erase(event[i].data.fd);
 			}
 		}
 	}

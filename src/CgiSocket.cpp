@@ -65,16 +65,15 @@ CgiSocket* CgiSocket::createCgiSocket(
     return NULL;
   }
   else if (pid == 0) {
-    // not sure since req.getPath does not always return the "path" we need here
-    // const char *args[] = {CMD_PATH, req.getFile().c_str(), NULL};
-    const char *args[] = {CMD_PATH, "/home/hmiyazak/Dev/42/webserv/abc.php", NULL};
-    std::cout << req.getFile() << std::endl;
+    const char *args[] = {req.getFile().c_str(), NULL};
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
+      perror("child pipes");
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(500);
     }
     const char **meta_vars = create_meta_vars(conf, req, client_addr);
-    if (execve(CMD_PATH, (char **)args, (char **)meta_vars) != 0) {
+    std::cerr << req.getFile().c_str() << std::endl;
+    if (execve(req.getFile().c_str(), (char **)args, (char **)meta_vars) != 0) {
       switch (errno) {
         case ENOENT:
           perror("noent");
@@ -88,6 +87,7 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
     req.setStatusNumber(500);
+    perror("parent pipes");
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
     return NULL;
@@ -102,7 +102,6 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   int read_count;
   int status;
 
-  std::cout << "cgi in event" << std::endl;
   while (true) {
     if (isTimeout()) {
       perror("timeout");
@@ -120,28 +119,27 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
       break;
   }
   this->_response_body = response_body;
-  std::cout << "cgibody" << this->_response_body << std::endl;
-  while (true) {
-    if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
-      std::cout << "wait finished: " << status << std::endl;
-      break;
-    }
-    if (isTimeout())
-      kill(this->_cgi_pid, SIGINT);
-  }
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
-    std::cout << epoll_fd << this->_pipe_fds[READ] << std::endl;
-    perror("epollin_ctl: del");
-  }
+  // while (true) {
+  //   if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
+  //     std::cout << "wait finished: " << status << std::endl;
+  //     break;
+  //   }
+  //   if (isTimeout())
+  //     kill(this->_cgi_pid, SIGINT);
+  // }
+  // if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
+  //   std::cout << epoll_fd << this->_pipe_fds[READ] << std::endl;
+  //   perror("epollin_ctl: del");
+  // }
   ev.events = EPOLLOUT;
   ev.data.fd = this->_client_fd;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev) == -1) {
     perror("epoll_ctl: add");
   }
-  std::map<int, ASocket*>::iterator self_pos = socket.find(_pipe_fds[READ]);
-  if (self_pos != socket.end())
-    socket.erase(self_pos);
-  delete this;
+  // std::map<int, ASocket*>::iterator self_pos = socket.find(_pipe_fds[READ]);
+  // if (self_pos != socket.end())
+  //   socket.erase(self_pos);
+  // delete this;
   std::cout << "cgi finished" << std::endl;
   return ;
 }
@@ -151,7 +149,6 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   ev.events = EPOLLIN;
   ev.data.fd = this->_pipe_fds[READ];
 
-  std::cerr << "cgi out event" << std::endl;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
     return ;
@@ -170,8 +167,12 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   }
   if (this->_req.getBody().empty())
     return ;
-  if (write(this->_pipe_fds[WRITE], this->_req.getBody().c_str(), this->_req.getBody().length()) < 0)
+  std::string cgi_input = _req.getBoundary() + "\n" + _req.getBody() + _req.getBoundary() + "--\n";
+  std::cout << cgi_input << std::endl;
+  if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), this->_req.getBody().length()) < 0) {
+    perror("write failed");
     return ;
+  }
   return ;
 }
 
@@ -218,8 +219,8 @@ int		CgiSocket::getWritePipe() const {
 }
 
 int		CgiSocket::waitChildProcess() const {
-  int status;
-  waitpid(this->_cgi_pid, &status, WNOHANG);
+  int status = 0;
+  std::cout << "wait return: " << waitpid(this->_cgi_pid, &status, WNOHANG) << std::endl;
   std::cout << "wait finished: " << status << std::endl;
   return status;
 }
