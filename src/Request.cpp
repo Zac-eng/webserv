@@ -234,6 +234,11 @@ void Request::setMaxBodySize(const long& max_body_size)
 	this->_max_body_size = max_body_size;
 }
 
+void Request::setBoundary(const std::string& boundary)
+{
+	this->_boundary = boundary;
+}
+
 
 // bool Request::SearchHeaderKey(std::string &key)
 // {

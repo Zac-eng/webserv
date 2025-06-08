@@ -132,7 +132,7 @@ bool getMultipartFlag();
 size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);
 void setMaxBodySize(const long& max_body_size);
-
+void setBoundary(const std::string& boundary);
 const std::string& getBoundary() const;
 
 };
@@ -143,3 +143,4 @@ bool GetSubstringUntilCarriageReturn(const std::string& request, std::string::co
 size_t string_to_int(const std::string &str);
 void debug(const std::string& str);
 bool isSlash(const std::string& uri, std::string::const_iterator& it);
+void convertLower(std::string& key);
