@@ -620,6 +620,7 @@ bool Request::ValidVersion(const std::string& version)
 	object = version;
 	if (ParseUtils::parse_object(object, "HTTP/") == false)
 		return (false);
+	std::cout << object << std::endl;
 	if (ParseUtils::check_valid_version(object, "1.1") == false)
 		return (false);
 	if (!object.empty())
@@ -742,8 +743,11 @@ bool Request::parseChunkSize(const std::string& request)
 	}
 	for (; it != request.end() && *it != '\r'; it++)
 	{
+		std::cout << "iterator:" <<*it<< std::endl;
 		if (checkHexadecimal(*it) == false)
+		{
 			return (false);
+		}
 	}
 	if (it == request.end())
 		return (false);
@@ -764,10 +768,8 @@ bool Request::parseChunkValue(const std::string& request)
 	it = request.begin();
 	if (GetSubstringUntilCarriageReturn(request, it, object) == false)
 		return (false);
-		
-		if (object.length() != this->_chunk_size)
+	if (object.length() != this->_chunk_size)
 		return (false);
-		std::cout << "aa"<< std::endl;
 	object += "\r\n";
 	if (request != object)
 		return (false);
@@ -799,14 +801,18 @@ bool Request::executeChunk(const std::string& request)
 	if (this->_chunk_size == 0)
 	{
 		if (parseChunkSize(request) == false)
-			return (false);
+		return (false);
 		if (this->_chunk_finish_flag == true)
 			return (true);
 		this->_chunk_size = convertDecimal(request);
 		return (true);
 	}
 	if (parseChunkValue(request) == false)
+	{
+		std::cout << "chunk_body parse" << std::endl;
+
 		return (false);
+	}
 	return (true);
 }
 

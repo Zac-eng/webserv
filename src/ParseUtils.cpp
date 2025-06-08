@@ -19,10 +19,11 @@ bool ParseUtils::check_valid_version(std::string& input, const std::string& obje
 	it = input.begin();
 	if (input.substr(0, object.length()) == object)
 	{
+		std::cout << input << std::endl;
 		input = input.substr(object.length());
 		return (true);
 	}
-	for (; it != input.end() || *it != ' '; it++)
+	for (; it != input.end() && *it != ' '; it++)
 	{
 		if (std::isdigit(*it) == false)
 		{
