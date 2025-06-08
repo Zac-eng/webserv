@@ -227,6 +227,7 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 		response << "</body></html>";
 	}
 	this->_response = response.str();
+	std::cout << "aaa"<<this->_fd<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -244,6 +245,7 @@ void Response::executeRedirectResponse(size_t code, const std::string& title)
 		response << "<h1>" << code << " " << title << "</h1>";
 		response << "</body></html>";
 	this->_response = response.str();
+	std::cout << this->_fd<<"111"<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -319,8 +321,6 @@ void Response::closeResponse(bool flag)
 	// std::cout << this->_body<<std::endl;
 	// if (flag == true && !this->_body.empty())
 	// 	write(this->_fd, this->_body.c_str(), this->_body.length());
-	// if (this->_cgi_buffer)
-	// 	responseErrorrResponse();
 	if (flag == true)
 		this->_error_file_flag = true;
 	if (this->_status_code == 301)
@@ -337,10 +337,10 @@ void Response::closeResponse(bool flag)
 		responseLargeRequestBody();
 	else if(this->_status_code == 500)
 		ResponseInternalServerError();
-	// else if(this->_status_code == 501)
-	// 	ResponseNotImplemented();
-	// else if(this->_status_code == 502)
-	// 	ResponseBadGateway();
+	else if(this->_status_code == 501)
+		ResponseNotImplemented();
+	else if(this->_status_code == 502)
+		ResponseBadGateway();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;
@@ -376,17 +376,21 @@ void Response::CreateResponse()
 {
 std::vector<std::string>::iterator it;
 
-	it = this->_header.begin();
-	this->_response = "HTTP/1.1 200 OK\r\n";
-	for (; it != this->_header.end(); it++)
-		this->_response += *it;
-	this->_response += "\r\n";
-	if (!this->_cgi_buffer.empty())
-	{
-		this->_response += this->_cgi_buffer;
-	}
-	this->_response += this->_body;
-	write(this->_fd, this->_response.c_str(), this->_response.length());
+std::cout << "response" << std::endl;
+it = this->_header.begin();
+this->_response = "HTTP/1.1 200 OK\r\n";
+for (; it != this->_header.end(); it++)
+this->_response += *it;
+if (!this->_cgi_buffer.empty())
+{
+this->_response += this->_cgi_buffer;
+}
+else
+{
+this->_response += "\r\n";
+this->_response += this->_body;
+}
+write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
 void Response::createDateHeader(void)
@@ -410,26 +414,16 @@ void  Response::CreateResponseHeader(Request& req)
 std::map<std::string, std::string> header;
 std::string file;
 
-	file = this->_filename;
-	// CheckFileType(file);
-	this->_header.push_back("Server: webserv/1.0\r\n");
-	if (!this->_cgi_buffer.empty())
-	{
-		std::ostringstream oss;
-oss << this->_cgi_buffer.length();
-std::string length_str = oss.str();
-
-		this->_header.push_back("Content-Length: " + length_str + "\r\n");
-	}
-	else
-	{
-		this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
-	}
-	createDateHeader();
-	// CheckConnectionHeader(header);
-	if (req.getConnectionFlag() == true)
-		this->_header.push_back("Connection: close\r\n");
-	CreateResponse();
+file = this->_filename;
+// CheckFileType(file);
+this->_header.push_back("Server: webserv/1.0\r\n");
+if (this->_cgi_buffer.empty())
+this->_header.push_back("Content-Length: " + this->_content_length + "\r\n");
+createDateHeader();
+// CheckConnectionHeader(header);
+if (req.getConnectionFlag() == true)
+this->_header.push_back("Connection: close\r\n");
+CreateResponse();
 }
 
 void Response::handleGet(Request& req)
@@ -463,24 +457,37 @@ void Response::handlePost(Request& req)
 
 void Response::HandleMethod(Request& req)
 {
+	std::cout << this->_cgi_buffer << std::endl;
 	// if (!this->_cgi_buffer.empty())
 	// {
 	// 	// ReaponseHeader(req);
 	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
 	// 	return ;
 	// }
-	// if (!this->_cgi_buffer.empty())
-	// 	cgiRespose();
 	if (req.getMethod() == "GET")
 		handleGet(req);
+	else if (req.getMethod() == "POST")
+		handlePost(req);
+	else if (req.getMethod() == "DELETE")
+		handleDelete();
+	return ;
+}
+
+void Response::ExecuteAndGetStatusCode(Request& req)
+{
+	// bool type = false;
+
+	// type = IsDynamicFileType(this->_filename);
+	// if (type == true)
+	// 	ExecuteCGI(req);
+	// else
+		HandleMethod(req);
 	return ;
 }
 
 
-
-
 void Response::ExecuteResponse(Request& req)
 {
-	this->HandleMethod(req);
+	this->ExecuteAndGetStatusCode(req);
 		// Createresponse(req);
 }
