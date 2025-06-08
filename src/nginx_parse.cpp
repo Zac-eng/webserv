@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include <algorithm> // std::remove_if
+#include <algorithm>
 #include <functional>
 #include <stdexcept>
 
@@ -108,6 +108,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 	bool has_open = false;
 	bool set_path = false;
 	bool close_server = false;
+	bool has_root = false;
 	int listen_number = 0;
 	size_t prev_size = index_server.size();
 
@@ -133,6 +134,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				std::cerr << "Error: Missing closing '}' in server block." << std::endl;
 				return false;
 			}
+			has_root = false;
 			close_server = false;
 			if (config.listen_port == 0) {
 				listen_number++;
@@ -217,14 +219,24 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		}
 		else if (block_keyword == "server_name") {
 			std::string value;
-			std::getline(block_line_stream, value, ';');
+			std::getline(block_line_stream, value);
+			if (value.empty() || value.back() != ';') {
+				std::cerr << "Error: Missing semicolon after 'server_name' directive." << std::endl;
+				return false;
+			}
+			value.pop_back();
 			config.server_name = extract_quoted_string(value);
 		}
 		else if (block_keyword == "error_page") {
 			int error_code;
 			std::string error_path;
 			block_line_stream >> error_code;
-			std::getline(block_line_stream, error_path, ';');
+			std::getline(block_line_stream, error_path);
+			if (error_path.empty() || error_path.back() != ';') {
+				std::cerr << "Error: Missing semicolon after 'error_page' directive." << std::endl;
+				return false;
+			}
+			error_path.pop_back();
 			error_path = trim(error_path);
 			if (error_code >= 400 && error_code <= 599)
 				config.error_pages[error_code] = error_path;
@@ -235,6 +247,7 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		}
 		else if (block_keyword == "root") {
 			std::string root_path;
+			has_root = true;
 			block_line_stream >> root_path;
 			if (!root_path.empty() && root_path[root_path.size() - 1] == ';')
 				root_path.erase(root_path.size() - 1);
@@ -261,6 +274,10 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			}
 		}
 		else if (block_keyword == "location") {
+			if (has_root != true) {
+				std::cerr << "Error: 'root' directive is missing in server block, required for location '/'." << std::endl;
+				return false;
+			}
 			int i = 0;
 			std::string location_path;
 			std::string rest;

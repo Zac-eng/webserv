@@ -37,6 +37,8 @@ class ServerConfig
 	private:
 		int listen_port;
 		long int client_max_body_size;
+		int num_open = 0;;
+		int num_close = 0;
 		std::string server_name;
 		std::string root_server;
 		std::vector<std::string> index_server;
