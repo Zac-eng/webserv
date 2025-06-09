@@ -167,9 +167,9 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   }
   if (this->_req.getBody().empty())
     return ;
-  std::string cgi_input = _req.getBoundary() + "\n" + _req.getBody() + _req.getBoundary() + "--\n";
-  std::cout << cgi_input << std::endl;
-  if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), this->_req.getBody().length()) < 0) {
+  std::string cgi_input = _req.getBoundary() + "\r\n" + _req.getBody() + _req.getBoundary() + "--\r\n";
+  std::cout << cgi_input << " : " << cgi_input.length() << std::endl;
+  if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), cgi_input.length()) < 0) {
     perror("write failed");
     return ;
   }
