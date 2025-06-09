@@ -1,0 +1,3 @@
+/Users/yusukesato/Desktop/ytm_webserve/build/CMakeFiles/WEBSERV_TEST.dir
+/Users/yusukesato/Desktop/ytm_webserve/build/CMakeFiles/edit_cache.dir
+/Users/yusukesato/Desktop/ytm_webserve/build/CMakeFiles/rebuild_cache.dir

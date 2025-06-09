@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  # Nginx サーバーの設定
+  nginx:
+    build: ./nginx  # nginx コンテナ用の Dockerfile が ./nginx にあることを前提
+    volumes:
+      - ./nginx/html:/var/www/html  # ホストのHTMLディレクトリをnginxコンテナにマウント
+      - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf  # Nginx設定ファイル
+    ports:
+      - "80:80"  # ホストのポート 80 をコンテナのポート 80 にマッピング
+    depends_on:
+      - php-fpm  # php-fpmサービスが先に立ち上がっている必要がある
+
+  # PHP-FPM サーバーの設定
+  php-fpm:
+    build: ./php_fpm  # PHP-FPM コンテナ用の Dockerfile が ./php_fpm にあることを前提
+    volumes:
+      - ./php_fpm:/var/www/html  # PHPファイル（例えばupload.php）をコンテナにマウント
+    expose:
+      - "9000"  # PHP-FPM は内部の 9000 ポートで動作
