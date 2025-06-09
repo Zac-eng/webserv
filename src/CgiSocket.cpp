@@ -151,6 +151,7 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
 
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
     perror("epoll_ctl: del");
+    close(this->_pipe_fds[WRITE]);
     return ;
   }
   std::map<int, ASocket*>::iterator write_epoll = socket.find(this->_pipe_fds[WRITE]);
@@ -159,20 +160,26 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   }
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
     perror("epoll_ctl: add");
+    close(this->_pipe_fds[WRITE]);
     return ;
   }
   if (socket.insert(std::make_pair(this->_pipe_fds[READ], this)).second == false) {
     perror("epoll_ctl: add");
+    close(this->_pipe_fds[WRITE]);
     return ;
   }
-  if (this->_req.getBody().empty())
+  if (this->_req.getBody().empty()) {
+    close(this->_pipe_fds[WRITE]);
     return ;
+  }
   std::string cgi_input = _req.getBoundary() + "\r\n" + _req.getBody() + _req.getBoundary() + "--\r\n";
   std::cout << cgi_input << " : " << cgi_input.length() << std::endl;
   if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), cgi_input.length()) < 0) {
     perror("write failed");
+    close(this->_pipe_fds[WRITE]);
     return ;
   }
+  close(this->_pipe_fds[WRITE]);
   return ;
 }
 
@@ -220,7 +227,9 @@ int		CgiSocket::getWritePipe() const {
 
 int		CgiSocket::waitChildProcess() const {
   int status = 0;
-  std::cout << "wait return: " << waitpid(this->_cgi_pid, &status, WNOHANG) << std::endl;
+  if (waitpid(this->_cgi_pid, &status, WNOHANG) == 0) {
+    waitpid(this->_cgi_pid, &status, 0);
+  }
   std::cout << "wait finished: " << status << std::endl;
   return status;
 }

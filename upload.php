@@ -1,13 +1,13 @@
-#!/usr/bin/php
+#!/usr/bin/php-cgi
 <?php
-$method = $_FILES['file'];
-fwrite(STDERR, "method: $method");
+// $input = file_get_contents("php://stdin");
+// fwrite(STDERR, "child content: $input");
+$file = $_FILES["file"]["name"];
+echo "filename:::$file";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
-    fwrite("inside the block\n");
     // アップロードされたファイルの保存先ディレクトリ
-    $target_dir = "/home/hmiyazak/Dev/42/webserv/uploads/";
+    $target_dir = "/home/hmiyazak/Dev/webserv/uploads/";
     $target_file = $target_dir . basename($_FILES["file"]["name"]);
-    fwrite(STDERR, "target: $target_file");
 
     // ファイルを保存
     if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
