@@ -18,14 +18,13 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   // meta_vars.push_back("REMOTE_HOST=" + remote_info.remote_host);
   meta_vars.push_back("REMOTE_USER=" + auth_info.remote_user);
   meta_vars.push_back("REQUEST_METHOD=" + CgiMetaProcessors::get_request_method(req));
-  meta_vars.push_back("SCRIPT_FILENAME=/home/hmiyazak/Dev/webserv/upload.php");
+  meta_vars.push_back("SCRIPT_FILENAME=" + req.getFile());
   meta_vars.push_back("REDIRECT_STATUS=200");
   meta_vars.push_back("SCRIPT_NAME=" + cgi_path.script_name);
   meta_vars.push_back("SERVER_NAME=" + CgiMetaProcessors::get_server_name(conf));
   meta_vars.push_back("SERVER_PORT=" + CgiMetaProcessors::get_server_port(conf));
   meta_vars.push_back("SERVER_PROTOCOL=" + CgiMetaProcessors::get_server_protocol());
   meta_vars.push_back("SERVER_SOFTWARE=" + CgiMetaProcessors::get_server_software());
-  std::cerr << "script" <<cgi_path.script_name << std::endl;
 
   int meta_var_num = meta_vars.size();
   const char **meta_var_array = new const char*[meta_var_num + 1];
@@ -35,6 +34,7 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
     std::memset((char*)meta_var_array[i], '\0', meta_vars[i].length() + 1);
     std::strncpy((char*)meta_var_array[i], meta_vars[i].c_str(), meta_vars[i].length() + 1);
   }
+  std::cerr << "meta vars: " << meta_var_array[2] << meta_var_array[11] << meta_var_array[1] << std::endl;
   return meta_var_array;
 }
 

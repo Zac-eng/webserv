@@ -21,7 +21,7 @@
 #include <ctime>
 
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 2048
 
 class ASocket;
 
