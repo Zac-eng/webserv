@@ -10,6 +10,7 @@ RUN mkdir -p /var/www/html/uploads
 # PHPの設定ファイルをコンテナにコピー
 COPY ./upload.php /var/www/html/upload.php
 COPY ./delete.php /var/www/html/delete.php
+RUN chmod +x /var/www/html/upload.php && chmod +x /var/www/html/delete.php
 
 RUN chown www-data:www-data /var/www/html/uploads
 
