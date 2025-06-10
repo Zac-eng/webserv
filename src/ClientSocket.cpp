@@ -260,7 +260,11 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	path = object;
 	if (!(this->_request.getFile()).empty())
 	{
-		if (this->existUri(this->_response.getDirectory(), this->_request.getFile()) == false)
+		if (this->_request.getExtension() == "php" && !(this->_request.getQuery()).empty())
+		{
+			return ;
+		}
+		else if (this->existUri(this->_response.getDirectory(), this->_request.getFile()) == false)
 		{
 			throw RequestException(404,"uri fileaa not");
 		}
@@ -563,6 +567,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else if (this->_request.getExtension() == "php")
 			{
+				std::cout << this->_request.getQuery()<<std::endl;
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())

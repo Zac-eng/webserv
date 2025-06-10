@@ -136,7 +136,7 @@ void Server::executeServer(void)
 	while (g_stop)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, EPOLL_TIME);
-		// this->checkTimeOut();
+		this->checkTimeOut();
 		if (event_counts == -1)
 		{
 			if (g_stop == 1)

@@ -191,6 +191,14 @@ bool Request::getConnectionFlag(void) const
 	return (this->_connection_flag);
 }
 
+void Request::setQuery(const std::string& query)
+{
+	this->_query = query;
+}
+std::string Request::getQuery(void) const
+{
+	return (this->_query);
+}
 void Request::setConnectionFlag(const bool& connection_flag)
 {
 	this->_connection_flag = connection_flag;
@@ -504,99 +512,151 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 	return (false);
 }
 
-bool Request::CheckUriExtension(const std::string& uri, std::string::const_iterator& it_tmp)
+void Request::CheckUriExtensionAndQuery(const std::string& uri, std::string::const_iterator& it_tmp)
 {
-	size_t result;
+	std::string::const_iterator it;
+	std::string extension;
 
 	it_tmp++;
 	if (it_tmp == uri.end())
-		return (false);
-	result = uri.find('.', it_tmp - uri.begin());
-	if (result == std::string::npos)
-		return (true);
-	return (false);
-}
-
-bool Request::ValidUri(const std::string& uri)
-{
-	std::string::const_iterator it;
-	std::string::const_iterator it_tmp;
-	bool index_flag = false;
-	it = uri.begin();
-
-	if (isSlash(uri, it) == false)
-		return (false);
-	for (; it != uri.end(); it++)
 	{
-		if (*it == '/')
-			it_tmp = it;
-		if (*it == '.')
-			index_flag = true;
-	}
-	if (index_flag == false)
-	{
-		this->_directory = uri;
-		this->_path = uri;
-		return (true);
-	}
-	if (*it_tmp == '/')
-		it_tmp++;
-	this->_directory = uri.substr(0, it_tmp - uri.begin());
-	if (it_tmp == uri.end())
-	{
-		this->_path = this->_directory;
-		return (true);
+		this->_file = uri.substr(it_tmp - uri.begin());
+		return ;
 	}
 	it = it_tmp;
-	if (index_flag == true)
-		this->_file = uri.substr(it_tmp - uri.begin());
 	for (; it != uri.end(); it++)
 	{
-		if (*it == '.')
-			it_tmp = it;
+		if (*it == '?')
+		{
+			break ;
+		}
+		extension += *it;
 	}
-	if (CheckUriExtension(uri, it_tmp) == false)
-		return (false);
-	this->_extension = uri.substr(it_tmp - uri.begin());
-	this->_path = uri;
-	return (true);
+	this->_extension = extension;
+	if (it == uri.end())
+		this->_file = uri.substr(it_tmp - uri.begin());
+	else
+	{
+		this->_file = uri.substr(it_tmp - uri.begin(), it - it_tmp);
+		this->_query = uri.substr(it - uri.begin());
+	}
+	return ;
 }
 
 // bool Request::ValidUri(const std::string& uri)
 // {
 // 	std::string::const_iterator it;
 // 	std::string::const_iterator it_tmp;
-// 	bool index_flag;
+// 	bool index_flag = false;
 // 	it = uri.begin();
 
 // 	if (isSlash(uri, it) == false)
 // 		return (false);
-	
 // 	for (; it != uri.end(); it++)
 // 	{
-// 		if (*it == '/' || *it == '.')
+// 		if (*it == '/')
 // 			it_tmp = it;
+// 		if (*it == '.')
+// 			index_flag = true;
 // 	}
-// 	// std::cout <<"bbbb"<<this->_directory<<std::endl;
-// 	// 最後が/で終わっているか
-// 	if (*it_tmp == '/')
+// 	if (index_flag == false)
 // 	{
 // 		this->_directory = uri;
+// 		this->_path = uri;
 // 		return (true);
 // 	}
-// 	this->_file = uri.substr(it_tmp - uri.begin());
-// 	if (*it_tmp == '.')
+// 	if (*it_tmp == '/')
+// 		it_tmp++;
+// 	this->_directory = uri.substr(0, it_tmp - uri.begin());
+// 	if (it_tmp == uri.end())
 // 	{
-// 		if (CheckUriExtension(uri, it_tmp) == false)
-// 			return (false);
-// 		this->_directory = uri.substr(0, it_tmp - uri.begin());
-// 		this->_extension = uri.substr(it_tmp - uri.begin());
-// 		// this->_file = 
-// 		std::cout <<this->_directory<<std::endl;
-// 		std::cout <<this->_file<<std::endl;
+// 		this->_path = this->_directory;
+// 		return (true);
 // 	}
-// 	return (false);
+// 	it = it_tmp;
+// 	if (index_flag == true)
+// 		this->_file = uri.substr(it_tmp - uri.begin());
+// 	for (; it != uri.end(); it++)
+// 	{
+// 		if (*it == '.')
+// 			it_tmp = it;
+// 	}
+// 	if (CheckUriExtension(uri, it_tmp) == false)
+// 		return (false);
+// 	this->_extension = uri.substr(it_tmp - uri.begin());
+// 	this->_path = uri;
+// 	return (true);
 // }
+
+
+bool Request::ValidUri(const std::string& uri)
+{
+	std::string::const_iterator it;
+	std::string::const_iterator file_tmp;
+	std::string::const_iterator dir_tmp;
+	it = uri.begin();
+
+	if (isSlash(uri, it) == false)
+		return (false);
+	dir_tmp = it;
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '/')
+		{
+			dir_tmp = it;
+		}
+	}
+	if (dir_tmp == uri.begin())
+	{
+		this->_directory = *dir_tmp;
+	}
+	else
+		this->_directory = uri.substr(0, dir_tmp - uri.begin());
+	if (dir_tmp == uri.end())
+	{
+		this->_path = this->_directory;
+		return (true);
+	}
+	dir_tmp++;
+	it = dir_tmp;
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '.')
+		{
+			file_tmp = it;
+			break ;
+		}
+	}
+	if (it == uri.end())
+		this->_file = uri.substr(dir_tmp - uri.begin());
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '?')
+		{
+			break ;
+		}
+	}
+	if (it == uri.end())
+	{
+		this->_file = uri.substr(dir_tmp - uri.begin());
+		file_tmp++;
+		this->_extension = uri.substr(file_tmp - uri.begin());
+	}
+	else
+	{
+		this->_file = uri.substr(dir_tmp - uri.begin(), it - dir_tmp);
+		file_tmp++;
+		this->_extension = uri.substr(file_tmp - uri.begin() , it - file_tmp);
+		if (this->_extension == "php")
+		{
+			this->_query = uri.substr(it - uri.begin());
+		}
+		else
+			this->_file = uri.substr(dir_tmp - uri.begin());
+	}
+	this->_path = uri;
+	return (true);
+}
 
 
 
@@ -877,6 +937,7 @@ void Request::reSetRequest(void)
 	this->_directory.clear();
 	this->_file.clear();
 	this->_extension.clear();
+	this->_query.clear();
 	this->_version.clear();
 	this->_body.clear();
 	this->_header.clear();

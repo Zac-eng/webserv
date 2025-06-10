@@ -22,6 +22,7 @@ class Request
 		std::string _directory;
 		std::string _file;
 		std::string _extension;
+		std::string _query;
 		std::string _version;
 		std::string _body;
 		std::map<std::string, std::string> _header;
@@ -55,7 +56,7 @@ class Request
 		bool parseHeader(const std::string& request);
 		bool ParseRequestLine(const std::string& request);
 		bool ParseRequest(const std::string& request, bool parse_post_flag);
-bool CheckUriExtension(const std::string& uri, std::string::const_iterator& it_tmp);
+void CheckUriExtensionAndQuery(const std::string& uri, std::string::const_iterator& it_tmp);
 bool SearchHeaderKey(std::string &key);
 bool HandleHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
 bool parseHeaderKey(const std::string& request, std::string::const_iterator& it, std::string& key);
@@ -100,6 +101,8 @@ const std::string& getFile(void) const;
 void setFile(const std::string& file);
 std::string getExtension(void) const;
 void setExtension(const std::string& extension);
+void setQuery(const std::string& file);
+std::string getQuery(void) const;
 std::string getVersion(void) const;
 void setVersion(const std::string& version);
 std::string getBody(void) const;

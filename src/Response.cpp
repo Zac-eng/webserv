@@ -227,7 +227,6 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 		response << "</body></html>";
 	}
 	this->_response = response.str();
-	std::cout << "aaa"<<this->_fd<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
