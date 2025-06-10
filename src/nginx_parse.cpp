@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <functional>
 #include <stdexcept>
+#include <climits>
 
 
 void	ServerConfig::validate() const
@@ -215,11 +216,11 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 		else if (block_keyword == "server_name") {
 			std::string value;
 			std::getline(block_line_stream, value);
-			if (value.empty() || value.back() != ';') {
+			if (value.empty() || value[value.size() - 1] != ';') {
 				std::cerr << "Error: Missing semicolon after 'server_name' directive." << std::endl;
 				return false;
 			}
-			value.pop_back();
+			value.erase(value.size() - 1);
 			config.server_name = extract_quoted_string(value);
 		}
 		else if (block_keyword == "error_page") {
@@ -227,11 +228,11 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 			std::string error_path;
 			block_line_stream >> error_code;
 			std::getline(block_line_stream, error_path);
-			if (error_path.empty() || error_path.back() != ';') {
+			if (error_path.empty() || error_path[error_path.size() - 1] != ';') {
 				std::cerr << "Error: Missing semicolon after 'error_page' directive." << std::endl;
 				return false;
 			}
-			error_path.pop_back();
+			error_path.erase(error_path.size() - 1);
 			error_path = trim(error_path);
 			if (error_code >= 400 && error_code <= 599)
 				config.error_pages[error_code] = error_path;
@@ -268,6 +269,8 @@ bool ServerConfig::check_listen_name(std::ifstream& config_file, std::vector<Ser
 				config.setIndex(index_server);
 			}
 		}
+		else if (block_keyword == "#")
+			continue;
 		else if (block_keyword == "location") {
 			if (has_root != true) {
 				std::cerr << "Error: 'root' directive is missing in server block, required for location '/'." << std::endl;
@@ -397,7 +400,7 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 
 bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerConfig>& configs)
 {
-	std::ifstream config_file(filename);
+	std::ifstream config_file(filename.c_str());
 	num_open = 0;
 	num_close = 0;
 	if (!config_file.is_open()) {
@@ -414,6 +417,8 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 		std::stringstream stream(line);
 		std::string keyword;
 		stream >> keyword;
+		if (keyword == "#")
+			continue;
 		if (keyword == "http") {
 			if (http_found) {
 				std::cerr << "Errpr: Multiple 'http' blocks are not allowed." << std::endl;
