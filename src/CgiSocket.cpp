@@ -98,6 +98,7 @@ CgiSocket* CgiSocket::createCgiSocket(
 void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
   struct epoll_event ev;
   std::string response_body;
+  std::stringstream ss;
   char read_buf[BUFFER_SIZE];
   int read_count;
   int status;
@@ -118,7 +119,22 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
     if (read_count < BUFFER_SIZE - 1)
       break;
   }
-  this->_response_body = response_body;
+  std::string crlf = "\r\n\r\n";
+  std::size_t header_end = response_body.find(crlf);
+
+  if (header_end != std::string::npos) {
+    std::string body = response_body.substr(header_end + crlf.length());
+    ss << "Content-Length: ";
+    ss << body.length();
+    ss << "\n";
+  } else {
+    ss << "Content-Length: ";
+    ss << response_body.length();
+    ss << "\n\n";
+  }
+  ss << response_body;
+  this->_response_body = ss.str();
+  std::cout << this->_response_body << std::endl;
   // while (true) {
   //   if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
   //     std::cout << "wait finished: " << status << std::endl;

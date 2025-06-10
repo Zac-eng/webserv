@@ -467,7 +467,7 @@ void Response::HandleMethod(Request& req)
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	else if (req.getMethod() == "POST")
-		handlePost(req);
+		handleGet(req);
 	else if (req.getMethod() == "DELETE")
 		handleDelete();
 	return ;
