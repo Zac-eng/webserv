@@ -538,6 +538,7 @@ void Request::CheckUriExtensionAndQuery(const std::string& uri, std::string::con
 	else
 	{
 		this->_file = uri.substr(it_tmp - uri.begin(), it - it_tmp);
+		it++;
 		this->_query = uri.substr(it - uri.begin());
 	}
 	return ;
