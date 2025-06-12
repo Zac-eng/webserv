@@ -1,8 +1,5 @@
-#!/usr/bin/php
+#!/usr/bin/php-cgi
 <?php
-echo "Content-Type: text/html\n";
-echo "Content-Length: 100\n\n";
-
 echo "<html>";
 echo "<head><title>Simple CGI</title></head>";
 echo "<body>";
