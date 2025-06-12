@@ -1,7 +1,13 @@
-#include <iostream>
-#include <vector>
-#include "nginx.hpp"
+#include "Server.hpp"
+#include "ASocket.hpp"
+#include "ListenSocket.hpp"
+#include "CgiSocket.hpp"
+#include "ClientSocket.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
+#include "nginx.hpp" // ServerConfig クラスと LocationConfig クラスを定義
 #include "location.hpp"
+#include "Signal.hpp"
 
 void printServerConfig(const ServerConfig& server, int serverIndex, int listenPort) {
 	std::cout << "Server " << serverIndex << ":" << std::endl;
@@ -79,9 +85,10 @@ int main(int argc, char **argv) {
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;
 
+	
 	if (parser.parse_config(config_filename, configs)) {
 		std::cout << "Config file parsed successfully!" << std::endl;
-
+		
 		std::vector<int> listen_ports = parser.getListenPorts();
 		std::vector<int> listen_counts = parser.getListenCounts();
 		int portIndexOffset = 0;
@@ -93,9 +100,24 @@ int main(int argc, char **argv) {
 			}
 			portIndexOffset += listenCount;
 		}
+		
+		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
 	}
-
-	return 0;
+    try
+    {
+		Server server(configs);
+        server.createListenServer();
+		std::signal(SIGINT, Signal::signal_handler);
+        server.executeServer();
+    }
+    catch (const ServerException& e)
+    {
+		std::cout <<"aaa"<< e.what() << std::endl;
+    }
+    catch (std::exception& e)
+    {
+		std::cout << e.what() << std::endl;
+    }
 }

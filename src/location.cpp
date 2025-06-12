@@ -11,7 +11,7 @@
 
 void LocationConfig::setIndex(const std::vector<std::string>& indexes)
 {
-	index_files = indexes;
+	this->index_files = indexes;
 }
 
 void LocationConfig::setMethod(const std::vector<std::string>& methods)

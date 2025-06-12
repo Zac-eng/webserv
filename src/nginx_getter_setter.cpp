@@ -15,7 +15,7 @@ std::string ServerConfig::getRootServer() const {
 	return root_server;
 }
 
-long int ServerConfig::getClientMaxBodySize() const {
+long ServerConfig::getClientMaxBodySize() const {
 	return client_max_body_size;
 }
 

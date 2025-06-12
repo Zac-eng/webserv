@@ -268,6 +268,7 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 	bool	http_found = false;
 	while (std::getline(config_file, line))
 	{
+		// std::cout << "11"<<std::endl;
 		line = trim(line);
 		if (line.empty())
 			continue;
