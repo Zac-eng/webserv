@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete File</title>
+</head>
+<body>
+    <h1>Delete File</h1>
+    <input type="text" id="filename" placeholder="Enter filename (e.g. file_1.txt)">
+    <button onclick="deleteFile()">Delete</button>
+    <p id="result"></p>
+
+    <script>
+        function deleteFile() {
+            const filename = document.getElementById('filename').value;
+            const resultElem = document.getElementById('result');
+
+            if (!filename) {
+                resultElem.textContent = "Please enter a filename.";
+                return;
+            }
+
+            const encodedFilename = encodeURIComponent(filename);
+            fetch(`querydelete.php?file=${encodedFilename}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.text())
+            .then(text => {
+                resultElem.textContent = text;
+            })
+            .catch(error => {
+                resultElem.textContent = "Error: " + error;
+            });
+        }
+    </script>
+</body>
+</html>
