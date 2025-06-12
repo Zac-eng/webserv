@@ -21,7 +21,7 @@
             }
 
             const encodedFilename = encodeURIComponent(filename);
-            fetch(`querydelete.php?file=${encodedFilename}`, {
+            fetch(`delete.php?file=${encodedFilename}`, {
                 method: 'DELETE'
             })
             .then(response => response.text())
