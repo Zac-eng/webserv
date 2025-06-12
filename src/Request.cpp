@@ -512,37 +512,40 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 	return (false);
 }
 
-void Request::CheckUriExtensionAndQuery(const std::string& uri, std::string::const_iterator& it_tmp)
-{
-	std::string::const_iterator it;
-	std::string extension;
+// void Request::CheckUriExtensionAndQuery(const std::string& uri, std::string::const_iterator& it_tmp)
+// {
+// 	std::string::const_iterator it;
+// 	std::string extension;
 
-	it_tmp++;
-	if (it_tmp == uri.end())
-	{
-		this->_file = uri.substr(it_tmp - uri.begin());
-		return ;
-	}
-	it = it_tmp;
-	for (; it != uri.end(); it++)
-	{
-		if (*it == '?')
-		{
-			break ;
-		}
-		extension += *it;
-	}
-	this->_extension = extension;
-	if (it == uri.end())
-		this->_file = uri.substr(it_tmp - uri.begin());
-	else
-	{
-		this->_file = uri.substr(it_tmp - uri.begin(), it - it_tmp);
-		it++;
-		this->_query = uri.substr(it - uri.begin());
-	}
-	return ;
-}
+// 	it_tmp++;
+// 	if (it_tmp == uri.end())
+// 	{
+// 		this->_file = uri.substr(it_tmp - uri.begin());
+// 		return ;
+// 	}
+// 	it = it_tmp;
+// 	for (; it != uri.end(); it++)
+// 	{
+// 		if (*it == '?')
+// 		{
+// 			break ;
+// 		}
+// 		extension += *it;
+// 	}
+// 	this->_extension = extension;
+// 	std::cout << "aa"<<std::endl;
+// 	if (it == uri.end())
+// 		this->_file = uri.substr(it_tmp - uri.begin());
+// 	else
+// 	{
+// 		this->_file = uri.substr(it_tmp - uri.begin(), it - it_tmp);
+// 		std::cout <<"aa"<< *it << std::endl;
+// 		it++;
+// 		std::cout << *it << std::endl;
+// 		this->_query = uri.substr(it - uri.begin());
+// 	}
+// 	return ;
+// }
 
 // bool Request::ValidUri(const std::string& uri)
 // {
@@ -650,6 +653,7 @@ bool Request::ValidUri(const std::string& uri)
 		this->_extension = uri.substr(file_tmp - uri.begin() , it - file_tmp);
 		if (this->_extension == "php")
 		{
+			it++;
 			this->_query = uri.substr(it - uri.begin());
 		}
 		else
