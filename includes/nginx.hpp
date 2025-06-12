@@ -47,7 +47,17 @@ class ServerConfig
 		std::vector<int> listen_ports;
 		std::vector<LocationConfig> locations;
 
+		bool handle_server(ServerConfig& config, std::vector<ServerConfig>& configs, int& listen_number);
+		bool handle_listen(std::stringstream& block_line_stream, ServerConfig& config, int& listen_number);
+		bool handle_root(std::stringstream& block_line_stream, ServerConfig& config);
+		bool handle_index(std::stringstream& block_line_stream, ServerConfig& config, size_t prev_size);
+		bool handle_error_page(std::stringstream& block_line_stream, ServerConfig& config);
+		bool handle_server_name(std::stringstream& block_line_stream, ServerConfig& config);
+		bool handle_client_max_body_size(std::stringstream& block_line_stream, ServerConfig& config);
+		bool handle_location(std::stringstream& block_line_stream, bool& has_root, std::string& line, bool& has_open, bool& set_path, LocationConfig& location_config);
+		bool handle_close_brace(ServerConfig& config, int& listen_number);
 		bool	check_server_block(std::ifstream& config_file, std::vector<ServerConfig>& configs);
+		bool process_server_blocks(const std::string& block_content, std::vector<ServerConfig>& configs);
 		bool check_listen_name(std::ifstream& config_file, std::vector<ServerConfig>& configs);
 };
 

@@ -70,8 +70,12 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 }
 
 
-int main() {
-	std::string config_filename = "nginx.conf";
+int main(int argc, char **argv) {
+	if (argc != 2) {
+		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+		return 1;
+	}
+	std::string config_filename = argv[1];
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;
 

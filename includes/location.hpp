@@ -59,6 +59,16 @@ class LocationConfig
 		std::vector<int> allow_method_count;
 		std::map<std::string, std::string> fastcgi_param;
 		std::vector<std::string> index_files;
+
+		void reset();
+		bool handle_root(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_index(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_allow_methods(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_fastcgi_index(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_fastcgi_pass(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_fastcgi_param(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_return(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_path_parser(std::stringstream& stream, LocationConfig& location_config);
 };
 
 
