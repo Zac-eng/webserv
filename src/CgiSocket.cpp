@@ -101,8 +101,8 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   std::stringstream ss;
   char read_buf[BUFFER_SIZE];
   int read_count;
-  int status;
 
+  (void)socket;
   while (true) {
     if (isTimeout()) {
       perror("timeout");

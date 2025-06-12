@@ -77,7 +77,6 @@ bool Server::epollCreate(void)
 void Server::createListenServer(void)
 {
 	std::vector<ServerConfig>::iterator it;
-	time_t start_time;
 
 	it = this->_conf.begin();
 	for (; this->_conf.end() != it; it++)

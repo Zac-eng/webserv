@@ -4,7 +4,7 @@ ASocket::ASocket() : _time_out_flag(false) {};
 
 ASocket::~ASocket() {};
 
-ASocket::ASocket(ServerConfig& conf) : _conf(conf), _time_out_flag(false), _start_time(-1) {};
+ASocket::ASocket(ServerConfig& conf) : _conf(conf), _start_time(-1), _time_out_flag(false) {};
 
 int ASocket::getFd(void) const
 {
