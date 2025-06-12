@@ -29,6 +29,7 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 		std::cout << "    Location " << j + 1 << ":" << std::endl;
 		std::cout << "      Path: " << loc.getPath() << std::endl;
 		std::cout << "      Root: " << loc.getRoot() << std::endl;
+
 		std::cout << "      Index: ";
 		if (!loc.getIndexPushCount().empty()) {
 			size_t count = loc.getIndexPushCount().back();
@@ -63,13 +64,24 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 				std::cout << "        " << it->first << " : " << it->second << std::endl;
 			}
 		}
+		if (loc.getRedirectFlag()) {
+			std::cout << "      Return:" << std::endl;
+			const std::map<int, std::string>& redirectMap = loc.getRedirectMap();
+			for (std::map<int, std::string>::const_iterator it = redirectMap.begin(); it != redirectMap.end(); ++it) {
+				std::cout << "        " << it->first << " -> " << it->second << std::endl;
+			}
+		}
 		std::cout << std::endl;
 	}
 }
 
 
-int main() {
-	std::string config_filename = "nginx.conf";
+int main(int argc, char **argv) {
+	if (argc != 2) {
+		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+		return 1;
+	}
+	std::string config_filename = argv[1];
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;
 
