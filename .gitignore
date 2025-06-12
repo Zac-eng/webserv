@@ -1,4 +1,5 @@
 webserv
+object
 *.o
 .vscode
 .DS_Store
