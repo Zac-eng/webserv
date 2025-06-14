@@ -613,18 +613,16 @@ bool Request::ValidUri(const std::string& uri)
 	if (dir_tmp == uri.begin())
 	{
 		this->_directory = *dir_tmp;
-		this->_path = *dir_tmp;
-		return (true);
 	}
 	else
 		this->_directory = uri.substr(0, dir_tmp - uri.begin());
+	dir_tmp++;
+	it = dir_tmp;
 	if (dir_tmp == uri.end())
 	{
 		this->_path = this->_directory;
 		return (true);
 	}
-	dir_tmp++;
-	it = dir_tmp;
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '.')
