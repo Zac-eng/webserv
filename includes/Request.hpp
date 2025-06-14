@@ -22,6 +22,7 @@ class Request
 		std::string _directory;
 		std::string _file;
 		std::string _extension;
+		std::string _path_info;
 		std::string _query;
 		std::string _version;
 		std::string _body;
@@ -63,7 +64,7 @@ bool parseHeaderKey(const std::string& request, std::string::const_iterator& it,
 bool HandleHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& value);
 bool parseHeaderValue(const std::string& request, std::string::const_iterator& it, std::string& key);
 bool ValidMethod(const std::string& method);
-bool ValidUri(const std::string& uri);
+bool validUri(const std::string& uri);
 bool ValidVersion(const std::string& version);
 bool ParseBody(const std::string& request);
 bool SkipColon(const std::string& request, std::string::const_iterator& it);
@@ -86,6 +87,8 @@ void reSetRequest(void);
 void parseMultipart(const std::string request);
 std::string substringCarrigereturn(const std::string request);
 void checkMultipartHeader(std::string& value);
+bool parseOtherUri(const std::string& uri);
+bool parseUriPathInfoPhp(const std::string& uri);
 
 
 
@@ -137,6 +140,9 @@ void setBodySize(const size_t& body_size);
 void setMaxBodySize(const long& max_body_size);
 void setBoundary(const std::string& boundary);
 const std::string& getBoundary() const;
+
+std::string getPathInfo(void) const;
+void setPathInfo(const std::string& body);
 
 };
 bool SkipSpaceAndCheckEnd(const std::string& request, std::string::const_iterator& it);

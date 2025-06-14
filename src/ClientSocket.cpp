@@ -568,6 +568,13 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			else if (this->_request.getExtension() == "php")
 			{
 				std::cout << this->_request.getQuery()<<std::endl;
+				std::cout << this->_request.getDirectory()<<std::endl;
+
+				std::cout << this->_request.getFile()<<std::endl;
+
+				std::cout << this->_request.getPath()<<std::endl;
+				std::cout << this->_request.getPathInfo()<<std::endl;
+
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())

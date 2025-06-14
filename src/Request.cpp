@@ -87,6 +87,18 @@ void Request::setBody(const std::string& body)
 	return ;
 }
 
+std::string Request::getPathInfo(void) const
+{
+	return (this->_path_info);
+}
+
+void Request::setPathInfo(const std::string& body)
+{
+	this->_path_info = body;
+	return ;
+}
+
+
 const std::map<std::string, std::string>& Request::getHeader(void) const
 {
 	return (this->_header);
@@ -593,13 +605,14 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 // }
 
 
-bool Request::ValidUri(const std::string& uri)
+bool Request::parseOtherUri(const std::string& uri)
 {
 	std::string::const_iterator it;
 	std::string::const_iterator file_tmp;
 	std::string::const_iterator dir_tmp;
 	it = uri.begin();
 
+	
 	if (isSlash(uri, it) == false)
 		return (false);
 	dir_tmp = it;
@@ -663,7 +676,88 @@ bool Request::ValidUri(const std::string& uri)
 	return (true);
 }
 
+bool Request::parseUriPathInfoPhp(const std::string& uri)
+{
+	std::string::const_iterator it;
+	std::string::const_iterator dir_it;
+	size_t pos;
+	std::string tmp;
+	it = uri.begin();
 
+	it++;
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '/')
+		{
+			pos = tmp.find(".php");
+			if (pos != std::string::npos)
+				break ;
+			dir_it = it;
+			tmp.clear();
+			continue ;
+		}
+		tmp += *it;
+	}
+	this->_directory = uri.substr(0, dir_it - uri.begin());
+	dir_it++;
+	it = dir_it;
+	tmp.clear();
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '/')
+		{
+			dir_it = it;
+			break ;
+		}
+		tmp += *it;
+	}
+	it--;
+	this->_file = tmp;
+	it+=2;
+	tmp.clear();
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '?')
+		{
+			dir_it = it;
+			break ;
+		}
+		tmp += *it;
+	}
+	if (it == uri.end())
+	{
+		this->_path_info = tmp;
+	}
+	else
+	{
+		it--;
+		this->_path_info = tmp;
+		it += 2;
+	}
+	this->_query = uri.substr(it - uri.begin());
+	this->_path = uri;
+	return (true);
+}
+
+bool Request::validUri(const std::string& uri)
+{
+	size_t pos;
+	std::string::const_iterator it;
+
+	pos = uri.find(".php");
+	if (pos != std::string::npos)
+	{
+		it = uri.begin() + pos;
+		it += 4;
+		if (it != uri.end() && *it == '/')
+		{
+			this->_extension = "php";
+			return (parseUriPathInfoPhp(uri));
+		}
+	}
+		return (parseOtherUri(uri));
+	return (true);
+}
 
 bool Request::ParseUri(const std::string& request, std::string::const_iterator& it)
 {
@@ -673,7 +767,7 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 		return (false);
 	if (GetSubstringUntilSpace(request, it, uri) == false)
 		return (false);
-	if (ValidUri(uri) == false)
+	if (validUri(uri) == false)
 		return (false);
 	this->_path = uri;
 	// if (CheckRootPath(uri) == true)
@@ -943,6 +1037,7 @@ void Request::reSetRequest(void)
 	this->_file.clear();
 	this->_extension.clear();
 	this->_query.clear();
+	this->_path_info.clear();
 	this->_version.clear();
 	this->_body.clear();
 	this->_header.clear();
