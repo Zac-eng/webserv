@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
 		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
+		return (0);
 	}
     try
     {
