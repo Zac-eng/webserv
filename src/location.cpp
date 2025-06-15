@@ -28,13 +28,15 @@ void LocationConfig::reset() {
 	fastcgi_param.clear();
 	redirect_map.clear();
 	path_parser.clear();
+	on_off = false;
 }
 
-bool LocationConfig::check_location(std::istream& config_file, LocationConfig& location_config)
+bool LocationConfig::check_location(std::istream& config_file, LocationConfig& location_config, const ServerConfig& config)
 {
 	location_config.reset();
 	std::string line;
 	bool has_closing = false;
+	bool has_location_root = false;
 
 	while (std::getline(config_file, line))
 	{
@@ -49,7 +51,9 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 		std::string keyword;
 		stream >> keyword;
 		if (keyword == "root") {
-			if (!handle_root(stream, location_config)) return false;
+			if (!handle_root(stream, location_config))
+				return false;
+			has_location_root = true;
 		} else if (keyword == "index") {
 			if (!handle_index(stream, location_config)) return false;
 		} else if (keyword == "autoindex") {
@@ -74,6 +78,9 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 	if (!has_closing) {
 		std::cerr << "Error: Missing closing '}' in location block." << std::endl;
 		return false;
+	}
+	if (!has_location_root) {
+		location_config.root = config.root_server;
 	}
 	return true;
 }

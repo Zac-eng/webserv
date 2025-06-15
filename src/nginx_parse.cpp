@@ -183,7 +183,7 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 					}
 				}
 			}
-			if (!(location_config.check_location(block_stream, location_config)))
+			if (!(location_config.check_location(block_stream, location_config, config)))
 				return false;
 			has_open = false;
 			set_path = false;

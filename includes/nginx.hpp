@@ -8,6 +8,7 @@
 #include <map>
 #include "location.hpp"
 
+class LocationConfig;
 
 class ServerConfig
 {
@@ -20,6 +21,7 @@ class ServerConfig
 		std::vector<int> listen_counts;
 		int num_open;
 		int num_close;
+		std::string root_server;
 
 		int getListenPort() const;
 		std::string getServerName() const;
@@ -29,18 +31,18 @@ class ServerConfig
 		const std::vector<int>& getListenPorts() const;
 		const std::vector<int>& getListenCounts() const;
 		const std::vector<LocationConfig>& getLocations() const;
-		long getClientMaxBodySize() const;
+		long int getClientMaxBodySize() const;
 
 		void setListenPort(int port);
 		void setServerName(const std::string& name);
 		void setRootServer(const std::string& root);
 		void setErrorPages(const std::map<int, std::string>& errors);
-		void setClientMaxBodySize(long size);
+		void setClientMaxBodySize(long int size);
 	private:
 		int listen_port;
-		long client_max_body_size;
+		long int client_max_body_size;
 		std::string server_name;
-		std::string root_server;
+		// std::string root_server;
 		std::vector<std::string> index_server;
 		std::vector<int> index_server_count;
 		std::map<int, std::string> error_pages;

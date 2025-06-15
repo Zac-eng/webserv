@@ -29,7 +29,7 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 		std::cout << "    Location " << j + 1 << ":" << std::endl;
 		std::cout << "      Path: " << loc.getPath() << std::endl;
 		std::cout << "      Root: " << loc.getRoot() << std::endl;
-
+		std::cout << "      Autoindex: " << (loc.getautoindex() ? "on" : "off") << std::endl;
 		std::cout << "      Index: ";
 		if (!loc.getIndexPushCount().empty()) {
 			size_t count = loc.getIndexPushCount().back();
@@ -104,7 +104,6 @@ int main(int argc, char **argv) {
 		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
-		return (0);
 	}
     try
     {

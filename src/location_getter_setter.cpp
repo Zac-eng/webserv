@@ -35,6 +35,10 @@ void LocationConfig::setMethodCount(const std::vector<int>& counts) {
 	allow_method_count = counts;
 }
 
+void LocationConfig::setautoindex(bool on_off) {
+	this->on_off = on_off;
+}
+
 // Getters
 const std::string& LocationConfig::getPath() const {
 	return path;
@@ -54,6 +58,10 @@ const std::string& LocationConfig::getFastcgiPass() const {
 
 const std::vector<std::string>& LocationConfig::getIndexFiles() const {
 	return index_files;
+}
+
+bool LocationConfig::getautoindex() const {
+	return on_off;
 }
 
 const std::vector<int>& LocationConfig::getIndexCount() const {
