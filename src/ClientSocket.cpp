@@ -558,13 +558,13 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
 			std::cout << "conf 前です" << std::endl;
-			ChangeConfUri(this->_request.getPath());
-			std::cout << this->_request.getQuery()<<std::endl;
-			std::cout << this->_request.getDirectory()<<std::endl;
+			std::cout << "query"<<this->_request.getQuery()<<std::endl;
+			std::cout <<  "directory"<<this->_request.getDirectory()<<std::endl;
 	
 			std::cout << this->_request.getFile()<<std::endl;
 			std::cout << this->_request.getPath()<<std::endl;
 			std::cout << this->_request.getPathInfo()<<std::endl;
+			ChangeConfUri(this->_request.getPath());
 			if (!(this->_response.getRedirectUri()).empty())
 			{
 				if (this->_request.getMethod() != "GET")
@@ -674,7 +674,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (std::exception& e)
 	{
-		std::cout << "------" << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}

@@ -144,7 +144,6 @@ void Server::executeServer(void)
 			fd = event[i].data.fd;
 			if (event[i].events == EPOLLIN)
 			{
-				std::cout << "thsi->fd:" << event[i].data.fd<<std::endl;
 				if (this->_socket.find(fd) != this->_socket.end())
 				{
 					this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);

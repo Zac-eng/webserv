@@ -19,4 +19,5 @@ googletest-1.15.2/
 build/
 test.sh
 tester
-uploads
+/uploads
+/uploads/*

@@ -612,7 +612,6 @@ bool Request::parseOtherUri(const std::string& uri)
 	std::string::const_iterator dir_tmp;
 	it = uri.begin();
 
-	
 	if (isSlash(uri, it) == false)
 		return (false);
 	dir_tmp = it;
@@ -679,7 +678,7 @@ bool Request::parseOtherUri(const std::string& uri)
 	return (true);
 }
 
-bool Request::parseUriPathInfoPhp(const std::string& uri)
+bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
 {
 	std::string::const_iterator it;
 	std::string::const_iterator dir_it;
@@ -687,22 +686,32 @@ bool Request::parseUriPathInfoPhp(const std::string& uri)
 	std::string tmp;
 	it = uri.begin();
 
-	if (it == uri.end())
+	std::cout << "uri:"<<uri<<"length"<<uri.length()<<std::endl;
+	if (isSlash(uri, it) == false)
 		return (false);
+	std::cout << "path:"<<*it<<std::endl;
+	tmp = *it;
+	dir_it = it;
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '/')
 		{
+			std::cout << "---"<< std::endl;
 			pos = tmp.find(".php");
 			if (pos != std::string::npos)
 				break ;
+			std::cout << "---下"<< std::endl;
 			dir_it = it;
 			tmp.clear();
 			continue ;
 		}
 		tmp += *it;
 	}
-	this->_directory = uri.substr(0, dir_it - uri.begin());
+	if (dir_it == uri.begin())
+		this->_directory = *dir_it;
+	else
+		this->_directory = uri.substr(0, dir_it - uri.begin());
+	std::cout << "dyir"<<this->_directory<<std::endl;
 	dir_it++;
 	it = dir_it;
 	tmp.clear();
@@ -713,16 +722,32 @@ bool Request::parseUriPathInfoPhp(const std::string& uri)
 	}
 	for (; it != uri.end(); it++)
 	{
-		if (*it == '/')
+		if (query_flag == true)
 		{
-			dir_it = it;
-			break ;
+			if (*it == '?')
+			{
+				dir_it = it;
+				break ;
+			}
+		}
+		else
+		{
+			if (*it == '/')
+			{
+				dir_it = it;
+				break ;
+			}
 		}
 		tmp += *it;
 	}
 	it--;
 	this->_file = tmp;
 	it+=2;
+	if (query_flag == true)
+	{
+		this->_query = uri.substr(it - uri.begin());
+		return (true);
+	}
 	tmp.clear();
 	for (; it != uri.end(); it++)
 	{
@@ -758,14 +783,17 @@ bool Request::validUri(const std::string& uri)
 	{
 		it = uri.begin() + pos;
 		it += 4;
-		if (it != uri.end() && *it == '/')
+		if (it != uri.end() && (*it == '/' || *it == '?'))
 		{
 			this->_extension = "php";
-			return (parseUriPathInfoPhp(uri));
+			if (*it == '?')
+				return (parseUriPathInfoPhp(uri, true));
+			else
+				return (parseUriPathInfoPhp(uri, false));
 		}
+
 	}
-		return (parseOtherUri(uri));
-	return (true);
+	return (parseOtherUri(uri));
 }
 
 bool Request::ParseUri(const std::string& request, std::string::const_iterator& it)

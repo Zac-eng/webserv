@@ -88,7 +88,7 @@ void parseMultipart(const std::string request);
 std::string substringCarrigereturn(const std::string request);
 void checkMultipartHeader(std::string& value);
 bool parseOtherUri(const std::string& uri);
-bool parseUriPathInfoPhp(const std::string& uri);
+bool parseUriPathInfoPhp(const std::string& uri, bool query_flag);
 
 
 
