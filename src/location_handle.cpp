@@ -36,6 +36,12 @@ bool LocationConfig::handle_autoindex(std::stringstream& stream, LocationConfig&
 	if (!autoindex_path.empty() && autoindex_path[autoindex_path.size() - 1] == '/')
 		autoindex_path.erase(autoindex_path.size() - 1);
 	location_config.autoindex = trim(autoindex_path);
+	if (location_config.autoindex != "on" && location_config.autoindex != "off")
+	{
+		std::cerr << "Error: Invalid value for 'autoindex'. Expected 'on' or 'off', but got '" 
+			<< location_config.autoindex << "'." << std::endl;
+		return false;
+	}
 	return true;
 }
 
