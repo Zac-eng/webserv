@@ -78,7 +78,7 @@ void responseRedirect(void);
 void closeResponse(bool flag);
 void reSetResponse(void);
 void ResponseRequestTimeOut(void);
-
+void ResponseCgiTimeOut(void);
 
 
 

@@ -283,10 +283,16 @@ void Response::ResponseBadGateway(void)
 	ErrorResponse(501, "Bad Gateway");
 }
 
+void Response::ResponseCgiTimeOut(void)
+{
+	ErrorResponse(504, "Cgi Time Out");
+}
+
 void Response::ResponseVersionNotSupported(void)
 {
 	ErrorResponse(505, "HTTP Version Not Supported");
 }
+
 
 void Response::ResponseRequestTimeOut(void)
 {
@@ -340,6 +346,8 @@ void Response::closeResponse(bool flag)
 		ResponseNotImplemented();
 	else if(this->_status_code == 502)
 		ResponseBadGateway();
+	else if(this->_status_code == 504)
+		ResponseCgiTimeOut();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;

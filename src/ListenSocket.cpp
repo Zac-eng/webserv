@@ -120,3 +120,12 @@ void ListenSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _s
 	(void)_socket;
 	return ;
 }
+
+bool ListenSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
+{
+
+	(void)epoll_fd;
+	(void)_socket;
+	(void)fd;
+	return (true);
+}

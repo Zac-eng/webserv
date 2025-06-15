@@ -11,6 +11,7 @@ class ListenSocket : public ASocket
 	void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	// 何もなし
 	void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
 
 
 	ListenSocket();
@@ -22,4 +23,5 @@ class ListenSocket : public ASocket
 	bool createListenSocket();
 	bool socketCreate(void);
 	ServerConfig getConf() const;
+
 };

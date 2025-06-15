@@ -46,6 +46,7 @@ public:
 	int		getWritePipe() const;
 	void	handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
 
 };
 

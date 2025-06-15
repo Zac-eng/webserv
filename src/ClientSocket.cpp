@@ -98,7 +98,6 @@ bool ClientSocket::CloseClientFd()
 	return (true);
 }
 
-
 bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it)
 {
 	//ポストを実行中で、キャリッジリターンが送られた時の処理。chunkが終わっているか終わっていないかの確認。
@@ -553,6 +552,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			return ;
 		if (this->_complete_parse_flag == true)
 		{
+			this->_start_time = -1;
 			if (it != buffer.end())
 				throw RequestException(400, "Parse not finish");
 			// if (this->_request.CheckMethodAndHeader() == false)
@@ -592,8 +592,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
 					throw RequestException(500, "Parse not finish");
 				}
+				
 				if (sock.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
 					throw RequestException(500, "sock_map insertion failed");
+				cgi->setStartTime(time(NULL));
 				return ;
 			}
 			else
@@ -685,6 +687,7 @@ void ClientSocket::closeAndDeleteSocket(std::map<int, ASocket*>& socket)
 		return ;
 	close(it->first);
 	delete (it->second);
+	std::cout << "削除"<<it->first<<std::endl;
 	socket.erase(it);
 	return ;
 }
@@ -768,4 +771,22 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	this->_response.reSetResponse();
 	this->reSetClientSocket();
 	return ;
+}
+
+bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
+{
+		struct epoll_event ev;
+	ev.events = EPOLLOUT;
+		ev.data.fd = fd;
+
+	(void)_socket;
+	(void)fd;
+	if (this->getTimeOut() == true)	
+		return (true);
+	std::cout <<"client timeout"<< this->_fd << std::endl;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+			this->setTimeOut(true);
+		}
+	this->setTimeOut(true);
+	return (true);
 }
