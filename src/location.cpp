@@ -52,6 +52,8 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 			if (!handle_root(stream, location_config)) return false;
 		} else if (keyword == "index") {
 			if (!handle_index(stream, location_config)) return false;
+		} else if (keyword == "autoindex") {
+			if (!handle_autoindex(stream, location_config)) return false;
 		} else if (keyword == "allow_methods") {
 			if (!handle_allow_methods(stream, location_config)) return false;
 		} else if (keyword == "fastcgi_index") {
