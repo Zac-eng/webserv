@@ -642,10 +642,10 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		this->_start_time = time(NULL);
 		if (pos == std::string::npos)
 		{
-			// if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-			// 	return ;
-			// 	}
-			// closeAndDeleteSocket(_socket);
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+				return ;
+				}
+			closeAndDeleteSocket(_socket);
 			return ;
 		}
 		else
