@@ -78,7 +78,7 @@ void checkErrorPages(size_t status);
 void checkReadFile(void);
 void parseRedirect(LocationConfig& location);
 bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
-
+void generateAutoIndex(const std::string directory, const std::string uri);
 
 
 Request getRequest(void) const;

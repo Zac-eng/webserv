@@ -134,6 +134,7 @@ bool getBadRequestFlag(void) const;
 void setBadRequestFlag(const bool& bad_request_flag);
 bool getProgressMultipartFlag();
 bool getMultipartFlag();
+const long& getMaxBodySize();
 
 size_t getBodySize(void) const;
 void setBodySize(const size_t& body_size);

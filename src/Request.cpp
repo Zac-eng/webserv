@@ -254,6 +254,12 @@ void Request::setMaxBodySize(const long& max_body_size)
 	this->_max_body_size = max_body_size;
 }
 
+const long& Request::getMaxBodySize()
+{
+	return (this->_max_body_size);
+}
+
+
 void Request::setBoundary(const std::string& boundary)
 {
 	this->_boundary = boundary;
@@ -645,7 +651,7 @@ bool Request::parseOtherUri(const std::string& uri)
 	}
 	if (it == uri.end())
 	{
-		this->_file = uri.substr(dir_tmp - uri.begin());
+		this->_directory += uri.substr(dir_tmp - uri.begin());
 		return (true);
 	}
 	for (; it != uri.end(); it++)
@@ -686,7 +692,6 @@ bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
 	std::string tmp;
 	it = uri.begin();
 
-	std::cout << "uri:"<<uri<<"length"<<uri.length()<<std::endl;
 	if (isSlash(uri, it) == false)
 		return (false);
 	std::cout << "path:"<<*it<<std::endl;
@@ -711,7 +716,6 @@ bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
 		this->_directory = *dir_it;
 	else
 		this->_directory = uri.substr(0, dir_it - uri.begin());
-	std::cout << "dyir"<<this->_directory<<std::endl;
 	dir_it++;
 	it = dir_it;
 	tmp.clear();

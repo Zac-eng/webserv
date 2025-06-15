@@ -21,3 +21,5 @@ test.sh
 tester
 /uploads
 /uploads/*
+abc.php
+simple-nginx.conf

@@ -216,6 +216,7 @@ std::string getStatusMessage(int statuscode) {
 		case 500: return "Internal Server Error";
 		case 501: return "Not Implemented";
 		case 502: return "Bad Gateway";
+		case 504: return "CGI Timeout";
 		case 505: return "HTTP Version Not Supported";
 		default: return "Unknown Error";
 	}
@@ -328,6 +329,11 @@ void Response::ResponseRequestTimeOut(void)
 	ErrorResponse(408, "HTTP Request TimeOut");
 }
 
+void Response::ResponseCgiTimeOut(void)
+{
+	ErrorResponse(504, "Cgi TimeOut");
+}
+
 void Response::responseLargeRequestBody(void)
 {
 	ErrorResponse(413, "Request Entity Too Large");
@@ -375,6 +381,8 @@ void Response::closeResponse(bool flag)
 		ResponseNotImplemented();
 	else if(this->_status_code == 502)
 		ResponseBadGateway();
+	else if(this->_status_code == 504)
+		ResponseCgiTimeOut();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;
@@ -446,8 +454,15 @@ void  Response::CreateResponseHeader(Request& req)
 {
 std::map<std::string, std::string> header;
 std::string file;
+std::stringstream ss;
+
 
 file = this->_filename;
+if (this->_content_length.empty())
+{
+	ss << this->_body.length();
+	this->_content_length = ss.str();
+}
 // CheckFileType(file);
 this->_header.push_back("Server: webserv/1.0\r\n");
 if (this->_cgi_buffer.empty())
@@ -465,27 +480,6 @@ void Response::handleGet(Request& req)
 	// 	throw ResponseException(404);
 	CreateResponseHeader(req);
 	// return (StatusMessage::OK())
-}
-
-
-void Response::handleDelete(void)
-{
-	if (remove(this->_path.c_str()) != 0)
-		throw ResponseException(400);
-	this->_status_code = 200;
-	return ;
-}
-
-void Response::handlePost(Request& req)
-{
-	std::ofstream file(this->_path.c_str());
-
-	if (!file.is_open())
-		throw std::runtime_error("error");
-	file << req.getBody();
-	file.close();
-	this->_status_code = 200;
-	return ;
 }
 
 void Response::HandleMethod(Request& req)
