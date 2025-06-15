@@ -1,6 +1,7 @@
 #ifndef LOCATION_HPP
 #define LOCATION_HPP
 
+#include "nginx.hpp"
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -15,7 +16,6 @@ class LocationConfig
 	public:
 		void setPath(const std::string& p);
 		void setRoot(const std::string& r);
-		void setautoindex(const std::string& aidx);
 		void setPathParser(const std::string& path);
 		void setRedirectFlag(bool flag);
 		void setRedirectMap(int status_code, const std::string& url);
@@ -25,10 +25,10 @@ class LocationConfig
 		void setIndexPushCount(const std::vector<int>& counts);
 		void setFastcgiParam(const std::map<std::string, std::string>& params);
 		void setMethodCount(const std::vector<int>& counts);
+		void setautoindex(bool on_off);
 		
 		const std::string& getPath() const;
 		const std::string& getRoot() const;
-		const std::string& getautoindex() const;
 		const std::string& getFastcgiIndex() const;
 		const std::string& getFastcgiPass() const;
 		const std::vector<std::string>& getIndexFiles() const;
@@ -40,8 +40,8 @@ class LocationConfig
 		const std::string& getPathParser() const;
 		const std::map<int, std::string>& getRedirectMap() const;
 		bool getRedirectFlag() const;
-	
-		bool check_location(std::istream& config_file, LocationConfig& location_config);
+		bool getautoindex() const;	
+		bool check_location(std::istream& config_file, LocationConfig& location_config, const ServerConfig& config);
 		void setIndex(const std::vector<std::string>& indexes);
 		void setMethod(const std::vector<std::string>& methods);
 		void parseReturnDirective(const std::string& line, LocationConfig& config);
@@ -51,6 +51,7 @@ class LocationConfig
 		std::string path;
 		std::string root;
 		std::string autoindex;
+		bool on_off;
 		std::string path_parser;
 		bool redirect_flag;
 		std::map<int, std::string> redirect_map;

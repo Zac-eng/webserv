@@ -24,27 +24,6 @@ bool LocationConfig::handle_root(std::stringstream& stream, LocationConfig& loca
 	return true;
 }
 
-bool LocationConfig::handle_autoindex(std::stringstream& stream, LocationConfig& location_config) {
-	std::string autoindex_path;
-	stream >> autoindex_path;
-	if (!autoindex_path.empty() && autoindex_path[autoindex_path.size() - 1] == ';')
-		autoindex_path.erase(autoindex_path.size() - 1);
-	else {
-		std::cerr << "Error: Missing semicolon after 'autoindex' directive." << std::endl;
-		return false;
-	}
-	if (!autoindex_path.empty() && autoindex_path[autoindex_path.size() - 1] == '/')
-		autoindex_path.erase(autoindex_path.size() - 1);
-	location_config.autoindex = trim(autoindex_path);
-	if (location_config.autoindex != "on" && location_config.autoindex != "off")
-	{
-		std::cerr << "Error: Invalid value for 'autoindex'. Expected 'on' or 'off', but got '" 
-			<< location_config.autoindex << "'." << std::endl;
-		return false;
-	}
-	return true;
-}
-
 bool LocationConfig::handle_index(std::stringstream& stream, LocationConfig& location_config) {
 	std::string file;
 	size_t prev_size = index_files.size();
@@ -59,6 +38,30 @@ bool LocationConfig::handle_index(std::stringstream& stream, LocationConfig& loc
 	if (index_files.size() >= prev_size)
 		index_push_count.push_back(index_files.size() - prev_size);
 	location_config.setIndex(index_files);
+	return true;
+}
+
+bool LocationConfig::handle_autoindex(std::stringstream& stream, LocationConfig& location_config) {
+	std::string autoindex_path;
+	stream >> autoindex_path;
+	if (!autoindex_path.empty() && autoindex_path[autoindex_path.size() - 1] == ';')
+		autoindex_path.erase(autoindex_path.size() - 1);
+	else {
+		std::cerr << "Error: Missing semicolon after 'autoindex' directive." << std::endl;
+		return false;
+	}
+	if (!autoindex_path.empty() && autoindex_path[autoindex_path.size() - 1] == '/')
+		autoindex_path.erase(autoindex_path.size() - 1);
+	location_config.autoindex = trim(autoindex_path);
+	if (location_config.autoindex == "on") {
+		on_off = true;
+	} else if (location_config.autoindex == "off") {
+		on_off = false;
+	} else {
+		std::cerr << "Error: Invalid value for 'autoindex'. Expected 'on' or 'off', but got '" 
+			<< location_config.autoindex << "'." << std::endl;
+		return false;
+	}
 	return true;
 }
 
