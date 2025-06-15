@@ -15,6 +15,7 @@ class LocationConfig
 	public:
 		void setPath(const std::string& p);
 		void setRoot(const std::string& r);
+		void setautoindex(const std::string& aidx);
 		void setPathParser(const std::string& path);
 		void setRedirectFlag(bool flag);
 		void setRedirectMap(int status_code, const std::string& url);
@@ -27,6 +28,7 @@ class LocationConfig
 		
 		const std::string& getPath() const;
 		const std::string& getRoot() const;
+		const std::string& getautoindex() const;
 		const std::string& getFastcgiIndex() const;
 		const std::string& getFastcgiPass() const;
 		const std::vector<std::string>& getIndexFiles() const;
@@ -48,6 +50,7 @@ class LocationConfig
 	private:
 		std::string path;
 		std::string root;
+		std::string autoindex;
 		std::string path_parser;
 		bool redirect_flag;
 		std::map<int, std::string> redirect_map;
@@ -63,6 +66,7 @@ class LocationConfig
 		void reset();
 		bool handle_root(std::stringstream& stream, LocationConfig& location_config);
 		bool handle_index(std::stringstream& stream, LocationConfig& location_config);
+		bool handle_autoindex(std::stringstream& stream, LocationConfig& location_config);
 		bool handle_allow_methods(std::stringstream& stream, LocationConfig& location_config);
 		bool handle_fastcgi_index(std::stringstream& stream, LocationConfig& location_config);
 		bool handle_fastcgi_pass(std::stringstream& stream, LocationConfig& location_config);

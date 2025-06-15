@@ -10,6 +10,10 @@ void LocationConfig::setRoot(const std::string& r) {
 	root = r;
 }
 
+void LocationConfig::setautoindex(const std::string& aidx) {
+	autoindex = aidx;
+}
+
 void LocationConfig::setFastcgiIndex(const std::string& idx) {
 	fastcgi_index = idx;
 }
@@ -42,6 +46,10 @@ const std::string& LocationConfig::getPath() const {
 
 const std::string& LocationConfig::getRoot() const {
 	return root;
+}
+
+const std::string& LocationConfig::getautoindex() const {
+	return autoindex;
 }
 
 const std::string& LocationConfig::getFastcgiIndex() const {
