@@ -7,5 +7,4 @@ echo "<h1>Hello World!</h1>";
 echo "<p>This is a basic PHP CGI program.</p>";
 echo "</body>";
 echo "</html>";
-while(true)
 ?>

@@ -238,6 +238,10 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 	std::ostringstream response;
 	std::string body = generateDefaultErrorBody(code);
 
+	if (this->_error_file_flag == true && !this->_body.empty())
+	{
+		body = this->_body;
+	}
 	this->_response.clear();
 	response << "HTTP/1.1 " << code << " " << title << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";

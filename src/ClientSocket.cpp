@@ -419,10 +419,11 @@ bool ClientSocket::checkExistErrorPages(const std::string& path, std::string dir
 		return (false);
 	if (*it_tmp == '/')
 		it_tmp++;
+		
 	directory = path.substr(0, it_tmp - path.begin());
 	file = path.substr(it_tmp - path.begin());
 	if (this->existUri(directory, file) == false)
-		return (false);
+	return (false);
 	this->_response.setDirectory(directory);
 	this->_response.setFilename(file);
 	this->_response.setPath(path);
@@ -444,10 +445,10 @@ void ClientSocket::checkErrorPages(size_t status)
 	for (; it != error_pages.end(); it++)
 	{
 		if (it->first == (int)status)
-			break ;
+		break ;
 	}
 	if (it == error_pages.end())
-		return ;
+	return ;
 	path = it->second;
 	if (this->checkExistErrorPages(path, directory, file) == false)
 		return ;
