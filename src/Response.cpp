@@ -206,27 +206,59 @@ void Response::setCgiBuffer(const std::string& cgi_buffer)
 // 		this->_header.push_back("Content-Type: text/html; charset=UTF-8\r\n");
 // }
 
+std::string getStatusMessage(int statuscode) {
+	switch (statuscode) {
+		case 400: return "Bad Request";
+		case 404: return "Not Found";
+		case 405: return "Method Not Allowed";
+		case 408: return "Request Timeout";
+		case 413: return "Request Entity Too Large";
+		case 500: return "Internal Server Error";
+		case 501: return "Not Implemented";
+		case 502: return "Bad Gateway";
+		case 505: return "HTTP Version Not Supported";
+		default: return "Unknown Error";
+	}
+}
+
+std::string generateDefaultErrorBody(int statuscode) {
+	std::string message = getStatusMessage(statuscode);
+	std::ostringstream html;
+	html << "<!DOCTYPE html>\n"
+		 << "<html><head><meta charset=\"UTF-8\"><title>"
+		 << statuscode << " " << message
+		 << "</title></head><body><h1>"
+		 << statuscode << " " << message
+		 << "</h1><p>The server encountered an error.</p></body></html>";
+	return html.str();
+}
+
 void Response::ErrorResponse(size_t code, const std::string& title)
 {
 	std::ostringstream response;
+	std::string body = generateDefaultErrorBody(code);
 
 	this->_response.clear();
-	response << "HTTP/1.1 "<<code<<" " <<title<<"\r\n";
-	response << "Content-Type: text/html\r\n";
+	response << "HTTP/1.1 " << code << " " << title << "\r\n";
+	response << "Content-Type: text/html; charset=UTF-8\r\n";
+	response << "Content-Length: " << body.size() << "\r\n";
 	response << "Connection: close\r\n";
 	response << "\r\n";
+	response << body;
 
-	if (this->_error_file_flag == true && !this->_body.empty())
-	{
-		response << this->_body;
-	}
-	else
-	{
-		response << "<html><body>";
-		response << "<h1>" << code << " " << title << "</h1>";
-		response << "</body></html>";
-	}
 	this->_response = response.str();
+	// if (this->_error_file_flag == true && !this->_body.empty())
+	// {
+	// 	response << this->_body;
+	// }
+	// else
+	// {
+	// 	response << "<html><body>";
+	// 	response << "<h1>" << code << " " << title << "</h1>";
+	// 	response << "</body></html>";
+	// }
+	// this->_response = response.str();
+	// std::cout << "aaa"<<this->_fd<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -240,11 +272,10 @@ void Response::executeRedirectResponse(size_t code, const std::string& title)
 	response << "Connection: close\r\n";
 	response << "\r\n";
 
-		response << "<html><body>";
-		response << "<h1>" << code << " " << title << "</h1>";
-		response << "</body></html>";
+	response << "<html><body>";
+	response << "<h1>" << code << " " << title << "</h1>";
+	response << "</body></html>";
 	this->_response = response.str();
-	std::cout << this->_fd<<"111"<<std::endl;
 	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
@@ -280,19 +311,13 @@ void Response::ResponseNotImplemented(void)
 
 void Response::ResponseBadGateway(void)
 {
-	ErrorResponse(501, "Bad Gateway");
-}
-
-void Response::ResponseCgiTimeOut(void)
-{
-	ErrorResponse(504, "Cgi Time Out");
+	ErrorResponse(502, "Bad Gateway");
 }
 
 void Response::ResponseVersionNotSupported(void)
 {
 	ErrorResponse(505, "HTTP Version Not Supported");
 }
-
 
 void Response::ResponseRequestTimeOut(void)
 {
@@ -346,8 +371,6 @@ void Response::closeResponse(bool flag)
 		ResponseNotImplemented();
 	else if(this->_status_code == 502)
 		ResponseBadGateway();
-	else if(this->_status_code == 504)
-		ResponseCgiTimeOut();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;
@@ -381,39 +404,31 @@ std::string Response::getRedirectUri(void)
 
 void Response::CreateResponse()
 {
-std::vector<std::string>::iterator it;
+	std::vector<std::string>::iterator it;
 
-std::cout << "response" << std::endl;
-it = this->_header.begin();
-this->_response = "HTTP/1.1 200 OK\r\n";
-for (; it != this->_header.end(); it++)
-this->_response += *it;
-if (!this->_cgi_buffer.empty())
-{
-this->_response += this->_cgi_buffer;
-}
-else
-{
-this->_response += "\r\n";
-this->_response += this->_body;
-}
-write(this->_fd, this->_response.c_str(), this->_response.length());
+	it = this->_header.begin();
+	this->_response = "HTTP/1.1 200 OK\r\n";
+	for (; it != this->_header.end(); it++)
+		this->_response += *it;
+	this->_response += "\r\n";
+	this->_response += this->_body;
+	write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
 void Response::createDateHeader(void)
 {
-time_t now;
-struct tm n_time;
-char buf[80];
-std::string date;
+	time_t now;
+	struct tm n_time;
+	char buf[80];
+	std::string date;
 
-now = time(0);
-n_time = *gmtime(&now);
-strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
-date = "Date: ";
-date += buf;
-date += "\r\n";
-this->_header.push_back(date);
+	now = time(0);
+	n_time = *gmtime(&now);
+	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
+	date = "Date: ";
+	date += buf;
+	date += "\r\n";
+	this->_header.push_back(date);
 }
 
 void  Response::CreateResponseHeader(Request& req)
@@ -464,19 +479,20 @@ void Response::handlePost(Request& req)
 
 void Response::HandleMethod(Request& req)
 {
-	std::cout << this->_cgi_buffer << std::endl;
-	// if (!this->_cgi_buffer.empty())
-	// {
-	// 	// ReaponseHeader(req);
-	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
-	// 	return ;
-	// }
+	if (!this->_cgi_buffer.empty())
+	{
+		// ReaponseHeader(req);
+		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+		return ;
+	}
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	else if (req.getMethod() == "POST")
-		handleGet(req);
+		handlePost(req);
 	else if (req.getMethod() == "DELETE")
-		handleGet(req);
+		handleDelete();
+	else 
+		this->_status_code = 405;
 	return ;
 }
 
