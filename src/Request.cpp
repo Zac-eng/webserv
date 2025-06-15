@@ -645,7 +645,10 @@ bool Request::parseOtherUri(const std::string& uri)
 		}
 	}
 	if (it == uri.end())
+	{
 		this->_file = uri.substr(dir_tmp - uri.begin());
+		return (true);
+	}
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '?')
@@ -684,7 +687,8 @@ bool Request::parseUriPathInfoPhp(const std::string& uri)
 	std::string tmp;
 	it = uri.begin();
 
-	it++;
+	if (it == uri.end())
+		return (false);
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '/')
@@ -702,6 +706,11 @@ bool Request::parseUriPathInfoPhp(const std::string& uri)
 	dir_it++;
 	it = dir_it;
 	tmp.clear();
+	if (it == uri.end())
+	{
+		this->_path = uri;
+		return (true);
+	}
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '/')

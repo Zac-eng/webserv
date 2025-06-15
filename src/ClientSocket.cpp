@@ -557,7 +557,14 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				throw RequestException(400, "Parse not finish");
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
+			std::cout << "conf 前です" << std::endl;
 			ChangeConfUri(this->_request.getPath());
+			std::cout << this->_request.getQuery()<<std::endl;
+			std::cout << this->_request.getDirectory()<<std::endl;
+	
+			std::cout << this->_request.getFile()<<std::endl;
+			std::cout << this->_request.getPath()<<std::endl;
+			std::cout << this->_request.getPathInfo()<<std::endl;
 			if (!(this->_response.getRedirectUri()).empty())
 			{
 				if (this->_request.getMethod() != "GET")
@@ -567,13 +574,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-				std::cout << this->_request.getQuery()<<std::endl;
-				std::cout << this->_request.getDirectory()<<std::endl;
-
-				std::cout << this->_request.getFile()<<std::endl;
-
-				std::cout << this->_request.getPath()<<std::endl;
-				std::cout << this->_request.getPathInfo()<<std::endl;
 
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
@@ -656,7 +656,13 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
-		
+					std::cout << this->_request.getQuery()<<std::endl;
+			std::cout << this->_request.getDirectory()<<std::endl;
+	
+			std::cout << this->_request.getFile()<<std::endl;
+			std::cout << this->_request.getPath()<<std::endl;
+			std::cout << this->_request.getPathInfo()<<std::endl;
+	
 		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
@@ -668,6 +674,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (std::exception& e)
 	{
+		std::cout << "------" << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			this->_request.setStatusNumber(500);
 			}
@@ -687,7 +694,6 @@ void ClientSocket::closeAndDeleteSocket(std::map<int, ASocket*>& socket)
 		return ;
 	close(it->first);
 	delete (it->second);
-	std::cout << "削除"<<it->first<<std::endl;
 	socket.erase(it);
 	return ;
 }
