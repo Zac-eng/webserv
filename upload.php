@@ -4,7 +4,7 @@
 // fwrite(STDERR, "child content: $input");
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
     // アップロードされたファイルの保存先ディレクトリ
-    $target_dir = "/home/yususato/Desktop/webserv/uploads/";
+    $target_dir = getcwd() . "/uploads/";
     $target_file = $target_dir . basename($_FILES["file"]["name"]);
 
     // ファイルを保存

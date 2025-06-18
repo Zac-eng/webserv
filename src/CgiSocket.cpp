@@ -2,7 +2,6 @@
 #include "ClientSocket.hpp"
 
 CgiSocket::CgiSocket(
-  // ServerConfig& conf,
   pid_t cgi_pid,
   int read_fd,
   int write_fd,
@@ -103,22 +102,20 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   int read_count;
 
   (void)socket;
-  while (true) {
-    if (isTimeout()) {
-      perror("timeout");
-      kill(this->_cgi_pid, SIGINT);
-      return ;
-    }
-    read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
-    if (read_count < 0) {
-      perror("read");
-      return ;
-    }
-    read_buf[read_count] = '\0';
-    response_body += read_buf;
-    if (read_count < BUFFER_SIZE - 1)
-      break;
+  if (isTimeout()) {
+    perror("timeout");
+    kill(this->_cgi_pid, SIGINT);
+    return ;
   }
+  read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
+  if (read_count < 0) {
+    perror("read");
+    return ;
+  }
+  read_buf[read_count] = '\0';
+  response_body += read_buf;
+  if (read_count == BUFFER_SIZE - 1)
+    return;
   std::string crlf = "\r\n\r\n";
   std::size_t header_end = response_body.find(crlf);
 
@@ -126,37 +123,20 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
     std::string body = response_body.substr(header_end + crlf.length());
     ss << "Content-Length: ";
     ss << body.length();
-    ss << "\n";
+    ss << "\r\n";
   } else {
     ss << "Content-Length: ";
     ss << response_body.length();
-    ss << "\n\n";
+    ss << "\r\n\r\n";
   }
   ss << response_body;
   this->_response_body = ss.str();
   std::cout << this->_response_body << std::endl;
-  // while (true) {
-  //   if (waitpid(this->_cgi_pid, &status, WNOHANG) != 0) {
-  //     std::cout << "wait finished: " << status << std::endl;
-  //     break;
-  //   }
-  //   if (isTimeout())
-  //     kill(this->_cgi_pid, SIGINT);
-  // }
-  // if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
-  //   std::cout << epoll_fd << this->_pipe_fds[READ] << std::endl;
-  //   perror("epollin_ctl: del");
-  // }
   ev.events = EPOLLOUT;
   ev.data.fd = this->_client_fd;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev) == -1) {
     perror("epoll_ctl: add");
   }
-  // std::map<int, ASocket*>::iterator self_pos = socket.find(_pipe_fds[READ]);
-  // if (self_pos != socket.end())
-  //   socket.erase(self_pos);
-  // delete this;
-  std::cout << "cgi finished" << std::endl;
   return ;
 }
 
@@ -241,7 +221,6 @@ int		CgiSocket::waitChildProcess() const {
   if (waitpid(this->_cgi_pid, &status, WNOHANG) == 0) {
     waitpid(this->_cgi_pid, &status, 0);
   }
-  std::cout << "wait finished: " << status << std::endl;
   return status;
 }
 
@@ -262,7 +241,6 @@ bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, in
 {
   	struct epoll_event ev;
 
-  // (void)_socket;
   if (this->getTimeOut() == true)
     return (true);
   {
