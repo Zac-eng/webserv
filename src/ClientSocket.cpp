@@ -268,8 +268,12 @@ void ClientSocket::generateAutoIndex(const std::string directory, const std::str
 			entry = readdir(dir);
 			continue ;
 		}
-		full_path = uri + name;
-		body << "<li><a href=\"" << full_path << "\">" << name << "</a><li>\n";
+		std::cout <<"uri:"<<uri<<std::endl;
+		if (uri.empty() || uri[uri.length() - 1] != '/')
+			full_path = uri + "/" + name;
+		else
+			full_path = uri + name;
+		body << "<li><a href=\"" << full_path << "\">" << name << "</a></li>\n";
 		entry = readdir(dir);
 	}
 	body << "</ul></body></html>\n";
@@ -287,7 +291,6 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	std::vector<std::string>::const_iterator it;
 
 	object = location.getRoot();
-	std::cout << location.getRoot()<<std::endl;
 	object += this->_request.getDirectory();
 	if (object[object.length() - 1] != '/')
 		object += '/';
@@ -645,6 +648,12 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else
 			{
+									std::cout << this->_request.getQuery()<<std::endl;
+			std::cout << this->_request.getDirectory()<<std::endl;
+	
+			std::cout << this->_request.getFile()<<std::endl;
+			std::cout << this->_request.getPath()<<std::endl;
+			std::cout << this->_request.getPathInfo()<<std::endl;
 				if (this->_request.getMethod() != "GET")
 					throw RequestException(400, "cgi method error");
 				if ((this->_response.getBody()).empty())
@@ -703,12 +712,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
-					std::cout << this->_request.getQuery()<<std::endl;
-			std::cout << this->_request.getDirectory()<<std::endl;
-	
-			std::cout << this->_request.getFile()<<std::endl;
-			std::cout << this->_request.getPath()<<std::endl;
-			std::cout << this->_request.getPathInfo()<<std::endl;
+
 	
 		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {

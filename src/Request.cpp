@@ -618,6 +618,7 @@ bool Request::parseOtherUri(const std::string& uri)
 	std::string::const_iterator dir_tmp;
 	it = uri.begin();
 
+	std::cout << uri<<std::endl;
 	if (isSlash(uri, it) == false)
 		return (false);
 	dir_tmp = it;
@@ -985,7 +986,7 @@ bool Request::parseChunkValue(const std::string& request)
 
 size_t convertDecimal(const std::string& request)
 {
-	char * end;
+	char *end;
 	long result;
 	std::string object;
 	std::string::const_iterator it;
@@ -1035,6 +1036,7 @@ bool Request::parsePostBody(const std::string& request)
 	if (this->_chunk_flag == true)
 		return (parseChunk(request));
 	this->_body += request;
+	std::cout <<"body_size:"<< this->_body.length() << std::endl;
 	if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
 		throw RequestException(413, "large request body");
 	if (this->_body.length() > this->_body_size)
@@ -1153,6 +1155,10 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 		{
 			this->_progress_multipart_flag = true;
 			this->parseMultipart(request);
+			if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
+				throw RequestException(413, "large request body");
+			if (this->_body.length() > this->_body_size)
+				throw RequestException(400, "body size");
 			return  (true);
 		}
 		if (parsePostBody(request) == false)
