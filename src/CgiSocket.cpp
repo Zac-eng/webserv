@@ -101,11 +101,6 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   int read_count;
 
   (void)socket, (void)epoll_fd;
-  // if (isTimeout()) {
-  //   perror("timeout");
-  //   kill(this->_cgi_pid, SIGINT);
-  //   return ;
-  // }
   read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
   if (read_count < 0) {
     perror("read");
@@ -166,6 +161,20 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   return ;
 }
 
+void	CgiSocket::handleEpollHupEvent(int epoll_fd, std::map<int, ASocket*>& _socket) {
+  int target_fd = this->_pipe_fds[READ];
+
+	waitChildProcess();
+	if (ctlClientEpollOut(epoll_fd) != 0) {
+    perror("epoll control, client, from cgi");
+  }
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, target_fd, NULL) != 0) {
+	  perror("epoll delete, cgi");
+	}
+	_socket.erase(target_fd);
+	delete this;
+}
+
 bool CgiSocket::initPipes(int ptc[], int ctp[]) {
   if (pipe(ptc) != 0) {
     return false;
@@ -192,13 +201,6 @@ bool CgiSocket::prepareParentPipes(int ptc[], int ctp[]) {
       return false;
   return true;
 }
-
-// bool CgiSocket::isTimeout() {
-//   time_t current_time;
-
-//   time(&current_time);
-//   return (current_time > this->_created_at + CGI_TIMEOUT);
-// }
 
 int		CgiSocket::getReadPipe() const {
   return this->_pipe_fds[READ];

@@ -10,12 +10,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-enum NextEvent {
-	CgiIn,
-	CgiOut,
-	ClientIn,
-};
-
 class CgiSocket : public ASocket
 {
 
@@ -31,7 +25,6 @@ private:
 	static bool initPipes(int ptc[], int ctp[]);
 	static bool prepareChildPipes(int ptc[], int ctp[]);
 	static bool prepareParentPipes(int ptc[], int ctp[]);
-	// bool isTimeout(void);
 
 public:
 	CgiSocket(pid_t cgi_pid, int read_fd, int write_fd, Request& req, std::string& response, int client_fd);
@@ -46,7 +39,8 @@ public:
 	int		getWritePipe() const;
 	void	handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
-	bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
+	void	handleEpollHupEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
+	bool 	handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
 
 };
 
