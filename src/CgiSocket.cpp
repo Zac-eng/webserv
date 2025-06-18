@@ -68,7 +68,7 @@ CgiSocket* CgiSocket::createCgiSocket(
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
       perror("child pipes");
       close_pipes(ptc_pipe, ctp_pipe);
-      std::exit(500);
+      std::exit(50);
     }
     const char **meta_vars = create_meta_vars(conf, req, client_addr);
     std::cerr << req.getFile().c_str() << std::endl;
@@ -76,10 +76,10 @@ CgiSocket* CgiSocket::createCgiSocket(
       switch (errno) {
         case ENOENT:
           perror("noent");
-          std::exit(404);
+          std::exit(44);
         default:
           perror("cgi error");
-          std::exit(502);
+          std::exit(52);
       }
     }
     std::exit(0);
@@ -95,18 +95,17 @@ CgiSocket* CgiSocket::createCgiSocket(
 }
 
 void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
-  struct epoll_event ev;
   std::string response_body;
   std::stringstream ss;
   char read_buf[BUFFER_SIZE];
   int read_count;
 
-  (void)socket;
-  if (isTimeout()) {
-    perror("timeout");
-    kill(this->_cgi_pid, SIGINT);
-    return ;
-  }
+  (void)socket, (void)epoll_fd;
+  // if (isTimeout()) {
+  //   perror("timeout");
+  //   kill(this->_cgi_pid, SIGINT);
+  //   return ;
+  // }
   read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
   if (read_count < 0) {
     perror("read");
@@ -131,12 +130,6 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   }
   ss << response_body;
   this->_response_body = ss.str();
-  std::cout << this->_response_body << std::endl;
-  ev.events = EPOLLOUT;
-  ev.data.fd = this->_client_fd;
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev) == -1) {
-    perror("epoll_ctl: add");
-  }
   return ;
 }
 
@@ -164,7 +157,6 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
     return ;
   }
   std::string cgi_input = _req.getBoundary() + "\r\n" + _req.getBody() + _req.getBoundary() + "--\r\n";
-  std::cout << cgi_input << " : " << cgi_input.length() << std::endl;
   if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), cgi_input.length()) < 0) {
     perror("write failed");
     close(this->_pipe_fds[WRITE]);
@@ -201,12 +193,12 @@ bool CgiSocket::prepareParentPipes(int ptc[], int ctp[]) {
   return true;
 }
 
-bool CgiSocket::isTimeout() {
-  time_t current_time;
+// bool CgiSocket::isTimeout() {
+//   time_t current_time;
 
-  time(&current_time);
-  return (current_time > this->_created_at + CGI_TIMEOUT);
-}
+//   time(&current_time);
+//   return (current_time > this->_created_at + CGI_TIMEOUT);
+// }
 
 int		CgiSocket::getReadPipe() const {
   return this->_pipe_fds[READ];
@@ -220,6 +212,17 @@ int		CgiSocket::waitChildProcess() const {
   int status = 0;
   if (waitpid(this->_cgi_pid, &status, WNOHANG) == 0) {
     waitpid(this->_cgi_pid, &status, 0);
+  }
+  if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+    status = WEXITSTATUS(status);
+    if (status == 44 || status == 52) {
+      status = status / 10 * 100 + status % 10;
+    } else {
+      status = 500;
+    }
+    this->_req.setStatusNumber(status);
+  } else if (WIFSIGNALED(status)) {
+    status = 500;
   }
   return status;
 }
@@ -237,6 +240,14 @@ void closeAndDeleteSocket(std::map<int, ASocket*>& socket, int fd)
 	return ;
 }
 
+int CgiSocket::ctlClientEpollOut(int epoll_fd) const {
+  struct epoll_event ev;
+
+  ev.events = EPOLLOUT;
+  ev.data.fd = this->_client_fd;
+  return epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev);
+}
+
 bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
 {
   	struct epoll_event ev;
@@ -244,7 +255,6 @@ bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, in
   if (this->getTimeOut() == true)
     return (true);
   {
-
       perror("timeout");
       kill(this->_cgi_pid, SIGINT);
       ev.events = EPOLLOUT;

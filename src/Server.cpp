@@ -163,6 +163,7 @@ void Server::executeServer(void)
 				CgiSocket* sock = dynamic_cast<CgiSocket*>(this->_socket[event[i].data.fd]);
 				if (sock != NULL) {
 					sock->waitChildProcess();
+					sock->ctlClientEpollOut(_epoll_fd);
 				}
 				if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL) != 0) {
 					perror("epoll delete, cgi");
