@@ -104,10 +104,12 @@ int main(int argc, char **argv) {
 		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
+		return (1);
 	}
     try
     {
 		Server server(configs);
+		std::cout << "-----" << std::endl;
         server.createListenServer();
 		std::signal(SIGINT, Signal::signal_handler);
         server.executeServer();

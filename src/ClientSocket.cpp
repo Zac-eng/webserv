@@ -254,7 +254,7 @@ void ClientSocket::generateAutoIndex(const std::string directory, const std::str
 	dir = opendir(directory.c_str());
 	if (dir == NULL)
 	{
-		throw RequestException(500, "open dir");
+		throw RequestException(404, "open dir");
 	}
 	body << "<html><head><title>Index of " << uri << "</title></head></body>\n";
 	body << "<h1>Index of "<< uri << "</h1><ul>\n";

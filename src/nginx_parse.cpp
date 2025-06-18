@@ -246,8 +246,10 @@ bool	ServerConfig::check_server_block(std::ifstream& config_file, std::vector<Se
 				num_open++;
 			if (!check_listen_name(config_file, configs))
 				return false;
-		}
-		else {
+
+		} else if (keyword == "#") {
+			continue;
+		} else {
 			std::cerr << "Error: Unexpected directive in http block: " << line << std::endl;
 			return false;
 		}
