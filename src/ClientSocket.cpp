@@ -619,6 +619,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				{
 					this->_request.setMethod("GET");
 				}
+				throw new RequestException(301, "redirect");
 			}
 			else if (this->_request.getExtension() == "php")
 			{
