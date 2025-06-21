@@ -677,6 +677,14 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 			return ;
+		else if (byte_size == 0)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+				return ;
+				}
+			closeAndDeleteSocket(_socket);
+			return ;
+		}
 		if (byte_size != BUFFER_SIZE)
 		{
 			buf[byte_size] = '\0';
