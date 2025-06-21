@@ -280,8 +280,9 @@ void ClientSocket::generateAutoIndex(const std::string directory, const std::str
 	}
 	body << "</ul></body></html>\n";
 	closedir(dir);
+		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
+
 	this->_response.setBody(body.str());
-	std::cout <<this->_response.getBody()<< std::endl;
 	return ;
 }
 
@@ -627,7 +628,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					throw RequestException(404, "default error");
 				this->_request.setFile(_response.getDirectory() + _request.getFile());
 				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_address, _response._cgi_buffer, this->_fd);
-				std::cout << cgi << cgi->getReadPipe() <<  cgi->getWritePipe() << std::endl;
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;
@@ -647,6 +647,7 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					throw RequestException(400, "cgi method error");
 				if ((this->_response.getBody()).empty())
 					this->checkReadFile();
+				std::cout << this->_request.getMaxBodySize()<<"max: net"<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");

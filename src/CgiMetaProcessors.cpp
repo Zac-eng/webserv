@@ -11,7 +11,7 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
   meta_vars.push_back("CONTENT_LENGTH=" + CgiMetaProcessors::get_content_length(req));
   meta_vars.push_back("CONTENT_TYPE=" + CgiMetaProcessors::get_content_type(req));
   meta_vars.push_back("GATEWAY_INTERFACE=" + CgiMetaProcessors::get_gateway_interface());
-  meta_vars.push_back("PATH_INFO=" + cgi_path.path_info);
+  meta_vars.push_back("PATH_INFO=" + req.getPathInfo());
   meta_vars.push_back("PATH_TRANSLATED=" + cgi_path.translated);
   meta_vars.push_back("QUERY_STRING=" + cgi_path.query_string);
   // meta_vars.push_back("REMOTE_ADDR=" + remote_info.remote_addr);
@@ -34,7 +34,7 @@ const char **create_meta_vars(const ServerConfig& conf, const Request& req, cons
     std::memset((char*)meta_var_array[i], '\0', meta_vars[i].length() + 1);
     std::strncpy((char*)meta_var_array[i], meta_vars[i].c_str(), meta_vars[i].length() + 1);
   }
-  std::cerr << "meta vars: " << meta_var_array[2] << meta_var_array[11] << meta_var_array[1] << std::endl;
+  std::cerr << "meta vars: " << meta_var_array[4] << meta_var_array[5] << meta_var_array[1] << std::endl;
   return meta_var_array;
 }
 

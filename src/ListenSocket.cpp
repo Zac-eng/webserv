@@ -109,10 +109,13 @@ void ListenSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& soc
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, &event) < 0)
 	{
 		delete (client);
+		socket.erase(client->getFd());
+
 		return ;
 	}
 		delete (client);
 		socket.erase(client->getFd());
+		return ;
 	}
 	start_time = time(NULL);
 	client->setStartTime(start_time);
