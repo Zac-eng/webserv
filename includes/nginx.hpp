@@ -40,6 +40,8 @@ class ServerConfig
 		void setClientMaxBodySize(long int size);
 	private:
 		int listen_port;
+		bool listen_dupli;
+		bool set_default_listen;
 		long int client_max_body_size;
 		std::string server_name;
 		// std::string root_server;
