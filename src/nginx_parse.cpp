@@ -94,10 +94,10 @@ void ServerConfig::addListenPort(int port)
 	listen_ports.push_back(port);	
 }
 
-void ServerConfig::setIndex(const std::vector<std::string>& indexes)
-{
-	index_server = indexes;
-}
+// void ServerConfig::setIndex(const std::vector<std::string>& indexes)
+// {
+// 	index_server = indexes;
+// }
 
 bool ServerConfig::process_server_blocks(const std::string& block_content, std::vector<ServerConfig>& configs)
 {
@@ -108,6 +108,7 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 	bool has_open = false;
 	bool set_path = false;
 	bool has_root = false;
+	config.has_index_server = false;
 	set_default_listen = false;
 	int listen_number = 0;
 	size_t prev_size = index_server.size();
@@ -123,6 +124,8 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 		block_line_stream >> block_keyword;
 
 		if (block_keyword == "server") {
+			config.has_index_server = false;
+			index_server.clear();
 			std::string next_token;
 			if (!(block_line_stream >> next_token) || next_token != "{") {
 				while (std::getline(block_stream, line)) {
@@ -155,7 +158,7 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 			has_root = true;
 			if (!handle_root(block_line_stream, config)) return false;
 		} else if (block_keyword == "index") {
-			handle_index(block_line_stream, config, prev_size);
+			if(!handle_index(block_line_stream, config, prev_size)) return false;
 		} else if (block_keyword == "#") {
 			continue;
 		} else if (block_keyword == "location") {

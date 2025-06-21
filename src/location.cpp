@@ -11,7 +11,7 @@
 
 void LocationConfig::setIndex(const std::vector<std::string>& indexes)
 {
-	this->index_files = indexes;
+	index_files = indexes;
 }
 
 void LocationConfig::setMethod(const std::vector<std::string>& methods)
@@ -29,7 +29,10 @@ void LocationConfig::reset() {
 	redirect_map.clear();
 	path_parser.clear();
 	on_off = false;
-	redirect_flag = false;
+}
+
+void LocationConfig::addIndexPushCount(size_t count) {
+	index_push_count.push_back(count);
 }
 
 bool LocationConfig::check_location(std::istream& config_file, LocationConfig& location_config, const ServerConfig& config)
@@ -38,6 +41,7 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 	std::string line;
 	bool has_closing = false;
 	bool has_location_root = false;
+	location_config.has_index_location = false;
 
 	while (std::getline(config_file, line))
 	{
@@ -74,6 +78,18 @@ bool LocationConfig::check_location(std::istream& config_file, LocationConfig& l
 		} else {
 			std::cerr << "Error: Unknown directive in location block: " << line << std::endl;
 			return false;
+		}
+		if (config.has_index_server == true && location_config.has_index_location == false) {
+			has_index_location = true;
+			const std::vector<std::string>& server_indexes = config.getIndexServer();
+			std::vector<std::string> current = location_config.getIndexFiles();
+			size_t prev_size = current.size();
+			for (size_t i = 0; i < server_indexes.size(); ++i) {
+				current.push_back(server_indexes[i]);
+			}
+			size_t added = current.size() - prev_size;
+			location_config.setIndex(current);
+			location_config.addIndexPushCount(added);
 		}
 	}
 	if (!has_closing) {

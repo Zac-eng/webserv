@@ -217,8 +217,10 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 	if (uri.empty() || path.empty())
 		return (0);
 	while (uri[i] != '\0' && path[i] != '\0' && uri[i] == path[i])
+	{
 		i++;
-	return (i);
+	}
+		return (i);
 }
 
 bool ClientSocket::existUri(const std::string& directory, const std::string& file)
@@ -363,10 +365,9 @@ void ClientSocket::parseRedirect(LocationConfig& location)
 
 	// (void)location;
 	// redirect_map = location.getRedirect();
+	if ((location.getRedirectMap().empty()))
+		throw RequestException(500, "redirect");
 	redirect_map = (location.getRedirectMap()).begin();
-
-	// // this->_response.setRedirectUri(location.getRedirectUri());
-	// // this->_request.setStatusNumber(location.getRedirectNumber());
 	this->_response.setRedirectUri(redirect_map->second);
 	this->_request.setStatusNumber(redirect_map->first);
 	return ;
@@ -392,7 +393,6 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 			length = result;
 			location_tmp = *it;
 		}
-		// ValidLocation(*it, location_tmp, location_flag);
 	}
 	if (length == 0)
 		return (false);
@@ -400,10 +400,12 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 		throw (RequestException(405, "Allow method"));
 	if (location_tmp.getRedirectFlag() == true)
 	{
+		std::cout << "aa"<<std::endl;
+		std::cout << location_tmp.getPath()<<std::endl;
 		parseRedirect(location_tmp);
 	}
 	else
-	CombineUriAndLocationRoot(location_tmp);
+		CombineUriAndLocationRoot(location_tmp);
 	return (true);
 }
 
@@ -426,7 +428,7 @@ void ClientSocket::ChangeConfUri(const std::string& uri)
 	// 	{
 	// 		if (existUri(this->_conf.at(404)) == true)
 	// 			throw (RequestException(404, "404 error"));
-	// if (CheckAndChangeRootUri(uri) == true)
+	// if (CheckAndChangeRootUriredirect_(uri) == true)
 	// 	return ;
 	ChangeDefaultPath(uri);
 }
@@ -590,7 +592,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 	std::string::iterator it;
 	struct epoll_event ev;
 
-	std::cout << buffer << std::endl;
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
 	it = buffer.begin();
@@ -603,15 +604,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			this->_start_time = -1;
 			if (it != buffer.end())
 				throw RequestException(400, "Parse not finish");
-			// if (this->_request.CheckMethodAndHeader() == false)
-				// 	return (false);
-			// std::cout << "conf 前です" << std::endl;
-			// std::cout << "query"<<this->_request.getQuery()<<std::endl;
-			// std::cout <<  "directory"<<this->_request.getDirectory()<<std::endl;
-	
-			// std::cout << this->_request.getFile()<<std::endl;
-			// std::cout << this->_request.getPath()<<std::endl;
-			// std::cout << this->_request.getPathInfo()<<std::endl;
+			if (this->_request.getMethod() == "POST" && this->_request.getExtension() == "php" && this->_request.getMultipartFlag() == false)
+			{
+				throw RequestException(400, "post");	
+			}
 			ChangeConfUri(this->_request.getPath());
 			if (!(this->_response.getRedirectUri()).empty())
 			{
@@ -619,11 +615,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				{
 					this->_request.setMethod("GET");
 				}
-				throw new RequestException(301, "redirect");
+				throw RequestException(301, "redirect");
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())
@@ -637,7 +632,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;
 				ev.data.fd = cgi->getWritePipe();
-				std::cout << ev.data.fd << std::endl;
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
 					throw RequestException(500, "Parse not finish");
 				}
@@ -649,17 +643,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else
 			{
-									std::cout << this->_request.getQuery()<<std::endl;
-			std::cout << this->_request.getDirectory()<<std::endl;
-	
-			std::cout << this->_request.getFile()<<std::endl;
-			std::cout << this->_request.getPath()<<std::endl;
-			std::cout << this->_request.getPathInfo()<<std::endl;
 				if (this->_request.getMethod() != "GET")
 					throw RequestException(400, "cgi method error");
 				if ((this->_response.getBody()).empty())
 					this->checkReadFile();
-				std::cout << this->_request.getMaxBodySize()<<": "<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
@@ -690,6 +677,14 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
 		if (byte_size < 0)
 			return ;
+		else if (byte_size == 0)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+				return ;
+				}
+			closeAndDeleteSocket(_socket);
+			return ;
+		}
 		if (byte_size != BUFFER_SIZE)
 		{
 			buf[byte_size] = '\0';
@@ -699,10 +694,10 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		this->_start_time = time(NULL);
 		if (pos == std::string::npos)
 		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-				return ;
-				}
-			closeAndDeleteSocket(_socket);
+			// if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+			// 	return ;
+			// 	}
+			// closeAndDeleteSocket(_socket);
 			return ;
 		}
 		else
@@ -713,8 +708,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
-
-	
 		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
@@ -781,7 +774,6 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		if (this->_request.getStatusNumber() != 0)
 		{
 			throw (ResponseException(this->_request.getStatusNumber()));
-			
 		}
 		if (this->_request.getConnectionFlag() == true)
 		{
@@ -792,9 +784,7 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		else if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 			throw (ResponseException(500));
 		}
-
 		this->_response.ExecuteResponse(this->_request);
-		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
 		if (this->_request.getConnectionFlag() == true)
 		{
 			closeAndDeleteSocket(socket);
@@ -840,7 +830,6 @@ bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket,
 	(void)fd;
 	if (this->getTimeOut() == true)	
 		return (true);
-	std::cout <<"client timeout"<< this->_fd << std::endl;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
 			this->setTimeOut(true);
 		}

@@ -15,7 +15,10 @@ void printServerConfig(const ServerConfig& server, int serverIndex) {
 	std::cout << "  Listen Port: " << server.getListenPort() << std::endl;
 	std::cout << "  Server Name: " << server.getServerName() << std::endl;
 	std::cout << "  Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
-
+	std::cout << "  Indexes:" << server.getIndexServer().size() << std::endl;
+	for (size_t i = 0; i < server.getIndexServer().size(); ++i) {
+		std::cout << "  Index: " << server.getIndexServer()[i] << std::endl;
+	}
 	const std::map<int, std::string>& errorPages = server.getErrorPages();
 	for (std::map<int, std::string>::const_iterator it = errorPages.begin(); it != errorPages.end(); ++it) {
 		std::cout << "  Error Page: " << it->first << " -> " << it->second << std::endl;

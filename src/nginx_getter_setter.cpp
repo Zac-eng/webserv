@@ -15,7 +15,7 @@ std::string ServerConfig::getRootServer() const {
 	return root_server;
 }
 
-long ServerConfig::getClientMaxBodySize() const {
+long int ServerConfig::getClientMaxBodySize() const {
 	return client_max_body_size;
 }
 
@@ -29,6 +29,10 @@ const std::vector<int>& ServerConfig::getListenPorts() const {
 
 const std::vector<int>& ServerConfig::getListenCounts() const {
 	return this->listen_counts;
+}
+
+const std::vector<std::string> ServerConfig::getIndexServer() const {
+	return index_server;
 }
 
 const std::vector<LocationConfig>& ServerConfig::getLocations() const { 
@@ -53,4 +57,9 @@ void ServerConfig::setErrorPages(const std::map<int, std::string>& errors) {
 
 void ServerConfig::setClientMaxBodySize(long int size) {
 	client_max_body_size = size;
+}
+
+void ServerConfig::setIndex(const std::vector<std::string>& indexes)
+{
+	index_server = indexes;
 }

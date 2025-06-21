@@ -25,6 +25,7 @@ bool LocationConfig::handle_root(std::stringstream& stream, LocationConfig& loca
 }
 
 bool LocationConfig::handle_index(std::stringstream& stream, LocationConfig& location_config) {
+	location_config.has_index_location = true;
 	std::string file;
 	size_t prev_size = index_files.size();
 	while (stream >> file) {

@@ -10,7 +10,7 @@
 #include "ServerException.hpp"
 
 #define MAX_EVENTS 10
-#define EPOLL_TIME 1
+#define EPOLL_TIME 10
 #define TIMEOUT 20
 
 

@@ -63,6 +63,7 @@ bool ServerConfig::handle_server_name(std::stringstream& block_line_stream, Serv
 }
 
 bool ServerConfig::handle_index(std::stringstream& block_line_stream, ServerConfig& config, size_t prev_size) {
+	config.has_index_server = true;
 	std::string file_index;
 	while (block_line_stream >> file_index) {
 		if (file_index[file_index.size() - 1] == ';') {
@@ -71,10 +72,10 @@ bool ServerConfig::handle_index(std::stringstream& block_line_stream, ServerConf
 			break;
 		}
 		index_server.push_back(file_index);
-		if (index_server.size() >= prev_size)
-			index_server_count.push_back(index_server.size());
-		config.setIndex(index_server);
 	}
+	if (index_server.size() >= prev_size)
+		index_server_count.push_back(index_server.size());
+	config.setIndex(index_server);
 	return true;
 }
 
