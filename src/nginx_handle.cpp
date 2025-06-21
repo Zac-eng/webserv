@@ -175,8 +175,8 @@ bool ServerConfig::handle_server(ServerConfig& config, std::vector<ServerConfig>
 	if (!listen_dupli) {
 		if (config.listen_port == 0) {
 			listen_number++;
-			addListenPort(80);
-			config.listen_port = 80;
+			addListenPort(8000);
+			config.listen_port = 8000;
 		}
 		try {
 			config.validate();
@@ -206,8 +206,8 @@ bool ServerConfig::handle_close_brace(ServerConfig& config, int& listen_number) 
 	const std::vector<int>& ports = config.getListenPorts();
 	if (config.listen_port == 0) {
 		set_default_listen = true;
-		addListenPort(80);
-		config.setListenPort(80);
+		addListenPort(8000);
+		config.setListenPort(8000);
 		listen_number = 1;
 
 	}
