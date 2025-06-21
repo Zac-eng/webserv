@@ -90,7 +90,6 @@ size_t string_to_int(const std::string &str)
 	convert_int >> num; 
 	if (convert_int.fail())
 	{
-		std::cout << "char: impossible" << std::endl;
 		return (-1);
 	}
 	return (num);

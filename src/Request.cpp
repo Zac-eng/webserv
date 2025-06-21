@@ -462,7 +462,6 @@ bool Request::parseHeader(const std::string& request)
 	if (parseHeaderKey(request, it, key) == false)
 	{
 		// Error::InvalidHeaderKey();
-		std::cout << request <<std::endl;
 		throw (RequestException(400,"header_key_error"));
 	}
 	if (SkipColon(request, it) == false)
@@ -530,85 +529,6 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 	return (false);
 }
 
-// void Request::CheckUriExtensionAndQuery(const std::string& uri, std::string::const_iterator& it_tmp)
-// {
-// 	std::string::const_iterator it;
-// 	std::string extension;
-
-// 	it_tmp++;
-// 	if (it_tmp == uri.end())
-// 	{
-// 		this->_file = uri.substr(it_tmp - uri.begin());
-// 		return ;
-// 	}
-// 	it = it_tmp;
-// 	for (; it != uri.end(); it++)
-// 	{
-// 		if (*it == '?')
-// 		{
-// 			break ;
-// 		}
-// 		extension += *it;
-// 	}
-// 	this->_extension = extension;
-// 	std::cout << "aa"<<std::endl;
-// 	if (it == uri.end())
-// 		this->_file = uri.substr(it_tmp - uri.begin());
-// 	else
-// 	{
-// 		this->_file = uri.substr(it_tmp - uri.begin(), it - it_tmp);
-// 		std::cout <<"aa"<< *it << std::endl;
-// 		it++;
-// 		std::cout << *it << std::endl;
-// 		this->_query = uri.substr(it - uri.begin());
-// 	}
-// 	return ;
-// }
-
-// bool Request::ValidUri(const std::string& uri)
-// {
-// 	std::string::const_iterator it;
-// 	std::string::const_iterator it_tmp;
-// 	bool index_flag = false;
-// 	it = uri.begin();
-
-// 	if (isSlash(uri, it) == false)
-// 		return (false);
-// 	for (; it != uri.end(); it++)
-// 	{
-// 		if (*it == '/')
-// 			it_tmp = it;
-// 		if (*it == '.')
-// 			index_flag = true;
-// 	}
-// 	if (index_flag == false)
-// 	{
-// 		this->_directory = uri;
-// 		this->_path = uri;
-// 		return (true);
-// 	}
-// 	if (*it_tmp == '/')
-// 		it_tmp++;
-// 	this->_directory = uri.substr(0, it_tmp - uri.begin());
-// 	if (it_tmp == uri.end())
-// 	{
-// 		this->_path = this->_directory;
-// 		return (true);
-// 	}
-// 	it = it_tmp;
-// 	if (index_flag == true)
-// 		this->_file = uri.substr(it_tmp - uri.begin());
-// 	for (; it != uri.end(); it++)
-// 	{
-// 		if (*it == '.')
-// 			it_tmp = it;
-// 	}
-// 	if (CheckUriExtension(uri, it_tmp) == false)
-// 		return (false);
-// 	this->_extension = uri.substr(it_tmp - uri.begin());
-// 	this->_path = uri;
-// 	return (true);
-// }
 
 
 bool Request::parseOtherUri(const std::string& uri)
@@ -618,7 +538,6 @@ bool Request::parseOtherUri(const std::string& uri)
 	std::string::const_iterator dir_tmp;
 	it = uri.begin();
 
-	std::cout << uri<<std::endl;
 	if (isSlash(uri, it) == false)
 		return (false);
 	dir_tmp = it;
@@ -695,7 +614,6 @@ bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
 
 	if (isSlash(uri, it) == false)
 		return (false);
-	std::cout << "path:"<<*it<<std::endl;
 	tmp = *it;
 	dir_it = it;
 	for (; it != uri.end(); it++)
@@ -824,7 +742,6 @@ bool Request::ValidVersion(const std::string& version)
 	object = version;
 	if (ParseUtils::parse_object(object, "HTTP/") == false)
 		return (false);
-	std::cout << object << std::endl;
 	if (ParseUtils::check_valid_version(object, "1.1") == false)
 		return (false);
 	if (!object.empty())
@@ -947,7 +864,6 @@ bool Request::parseChunkSize(const std::string& request)
 	}
 	for (; it != request.end() && *it != '\r'; it++)
 	{
-		std::cout << "iterator:" <<*it<< std::endl;
 		if (checkHexadecimal(*it) == false)
 		{
 			return (false);
@@ -1013,8 +929,6 @@ bool Request::executeChunk(const std::string& request)
 	}
 	if (parseChunkValue(request) == false)
 	{
-		std::cout << "chunk_body parse" << std::endl;
-
 		return (false);
 	}
 	return (true);
@@ -1158,9 +1072,6 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 				throw RequestException(413, "large request body");
 			if (this->_body.length() > this->_body_size)
 			{
-				std::cout << this->_body.length() <<std::endl;
-				std::cout << this->_body_size <<std::endl;
-
 				throw RequestException(400, "body size");
 			}
 			return  (true);
