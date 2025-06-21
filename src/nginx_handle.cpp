@@ -27,7 +27,7 @@ bool ServerConfig::handle_listen(std::stringstream& block_line_stream, ServerCon
 			return false;
 		}
 		config.listen_port = port;
-		addListenPort(port);
+		config.addListenPort(port);
 	} catch (const std::exception& e) {
 		std::cerr << "Error: Invalid port value in 'listen': " << port_str << std::endl;
 		return false;
@@ -172,33 +172,50 @@ bool ServerConfig::handle_location(std::stringstream& block_line_stream, bool& h
 }
 
 bool ServerConfig::handle_server(ServerConfig& config, std::vector<ServerConfig>& configs, int& listen_number) {
-	if (config.listen_port == 0) {
-		listen_number++;
-		addListenPort(80);
-		config.listen_port = 80;
+	if (!listen_dupli) {
+		if (config.listen_port == 0) {
+			listen_number++;
+			addListenPort(8000);
+			config.listen_port = 8000;
+		}
+		try {
+			config.validate();
+			configs.push_back(config);
+		} catch (const std::runtime_error& e) {
+			std::cerr << "Error: " << e.what() << std::endl;
+			return false;
+		}
 	}
-
-	try {
-		config.validate();
-		configs.push_back(config);
-	} catch (const std::runtime_error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
-		return false;
-	}
-
+	set_default_listen = false;
 	config = ServerConfig();
+	listen_dupli = false;
 	return true;
 }
 
 bool ServerConfig::handle_close_brace(ServerConfig& config, int& listen_number) {
-	if (config.listen_port == 0) {
-		listen_number++;
-		addListenPort(80);
-		config.listen_port = 80;
-	}
+	// if (config.listen_port == 0) {
+	// 	listen_number++;
+	// 	addListenPort(80);
+	// 	config.listen_port = 80;
+	// }
 
+	// listen_counts.push_back(listen_number);
+	// listen_number = 0;
+
+	// return true;
+	const std::vector<int>& ports = config.getListenPorts();
+	if (config.listen_port == 0) {
+		set_default_listen = true;
+		addListenPort(8000);
+		config.setListenPort(8000);
+		listen_number = 1;
+
+	}
+	else {
+		config.setListenPort(ports[0]);
+		listen_number = ports.size();
+	}
 	listen_counts.push_back(listen_number);
 	listen_number = 0;
-
 	return true;
 }

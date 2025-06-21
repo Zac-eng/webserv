@@ -85,18 +85,18 @@ void Server::createListenServer(void)
 		if (socket->createSocket() == false)
 		{
 			delete socket;
-			throw ServerException();
+			throw ServerException("Socket Error");
 		}
 		if (set_nonblocking(socket->getFd()) == false)
 		{
 			delete socket;
-			throw ServerException();
+			throw ServerException("nonblock error");
 		}
 		socket->setStartTime(-1);
 		this->_socket.insert(std::make_pair(socket->getFd(), socket));
 	}
 	if (epollCreate() == false)
-		throw ServerException();
+		throw ServerException("epoll error");
 	return ;
 }
 
@@ -135,7 +135,7 @@ void Server::executeServer(void)
 		if (event_counts == -1)
 		{
 			if (g_stop == 1)
-				throw ServerException();
+				throw ServerException("signal error");
 			else
 				return ;
 		}
@@ -164,6 +164,7 @@ void Server::executeServer(void)
 					sock->handleEpollHupEvent(this->_epoll_fd, this->_socket);
 				}
 			}
+
 		}
 	}
 }
