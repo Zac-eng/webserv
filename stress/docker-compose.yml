@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  test:
+    container_name: stress-test
+    build: .
+    volumes:
+      - "..:/home/webserv"  # 文字列として正しく解釈されるようにクォートが必要
+    ports:
+      - "8081:8081"         # 文字列形式で記述すべき
+    tty: true
+    network_mode: host      # 注意: Mac/Windows では非対応（Linuxのみ）
