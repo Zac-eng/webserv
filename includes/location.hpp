@@ -1,7 +1,7 @@
 #ifndef LOCATION_HPP
 #define LOCATION_HPP
 
-#include "nginx.hpp"
+
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -10,6 +10,7 @@
 #include <set>
 #include <map>
 
+class ServerConfig;
 
 class LocationConfig
 {

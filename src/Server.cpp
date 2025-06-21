@@ -81,22 +81,23 @@ void Server::createListenServer(void)
 	it = this->_conf.begin();
 	for (; this->_conf.end() != it; it++)
 	{
+		std::cout <<"socket -----" << std::endl;
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
 		{
 			delete socket;
-			throw ServerException();
+			throw ServerException("Socket Error");
 		}
 		if (set_nonblocking(socket->getFd()) == false)
 		{
 			delete socket;
-			throw ServerException();
+			throw ServerException("nonblock error");
 		}
 		socket->setStartTime(-1);
 		this->_socket.insert(std::make_pair(socket->getFd(), socket));
 	}
 	if (epollCreate() == false)
-		throw ServerException();
+		throw ServerException("epoll error");
 	return ;
 }
 
@@ -105,25 +106,20 @@ void Server::checkTimeOut(void)
 	std::map<int, ASocket*>::iterator it;
 	time_t start;
 	time_t end;
-	struct epoll_event ev;
-	ev.events = EPOLLOUT;
+
 
 	it = this->_socket.begin();
-	for (; it != this->_socket.end(); it++)
+	while (it != this->_socket.end())
 	{
-		ev.data.fd = it->first;
 		end = time(NULL);
 		start = it->second->getStartTime();
 		// std::cout << end - start << std::endl;
 		if (start != -1 && (end - start) > TIMEOUT)
 		{
-			if (it->second->getTimeOut() == true)
-				continue ;
-			if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_MOD, it->first, &ev) == -1) {
-				it->second->setTimeOut(true);
-			}
-			it->second->setTimeOut(true);
+			if (it->second->handleTimeOut(this->_epoll_fd, this->_socket, it->first) == false)
+				return ;
 		}
+		it++;
 	}
 }
 
@@ -131,6 +127,7 @@ void Server::executeServer(void)
 {
 	int event_counts;
 	struct epoll_event event[MAX_EVENTS];
+	int fd;
 
 	while (g_stop)
 	{
@@ -139,20 +136,27 @@ void Server::executeServer(void)
 		if (event_counts == -1)
 		{
 			if (g_stop == 1)
-				throw ServerException();
+				throw ServerException("signal error");
 			else
 				return ;
 		}
 		for (int i = 0; i < event_counts; i++)
 		{
-		// std::cout <<event[i].data.fd<<std::endl;
+			fd = event[i].data.fd;
 			if (event[i].events == EPOLLIN)
 			{
-				this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);
+				if (this->_socket.find(fd) != this->_socket.end())
+				{
+					this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);
+				}
 			}
 			else if (event[i].events == EPOLLOUT)
 			{
-				this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
+				if (this->_socket.find(fd) != this->_socket.end())
+				{
+
+					this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
+				}
 			}
 			else if (event[i].events == EPOLLHUP)
 			{

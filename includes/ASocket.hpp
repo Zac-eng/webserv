@@ -41,4 +41,6 @@ class ASocket
 		virtual bool createSocket() = 0;
 		virtual void handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
 		virtual void handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket) = 0;
+		virtual bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) = 0;
+
 };

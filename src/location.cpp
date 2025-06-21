@@ -29,6 +29,7 @@ void LocationConfig::reset() {
 	redirect_map.clear();
 	path_parser.clear();
 	on_off = false;
+	redirect_flag = false;
 }
 
 bool LocationConfig::check_location(std::istream& config_file, LocationConfig& location_config, const ServerConfig& config)

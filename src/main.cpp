@@ -9,10 +9,10 @@
 #include "location.hpp"
 #include "Signal.hpp"
 
-void printServerConfig(const ServerConfig& server, int serverIndex, int listenPort) {
+void printServerConfig(const ServerConfig& server, int serverIndex) {
 	std::cout << "Server " << serverIndex << ":" << std::endl;
 
-	std::cout << "  Listen Port: " << listenPort << std::endl;
+	std::cout << "  Listen Port: " << server.getListenPort() << std::endl;
 	std::cout << "  Server Name: " << server.getServerName() << std::endl;
 	std::cout << "  Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
 
@@ -75,7 +75,6 @@ void printServerConfig(const ServerConfig& server, int serverIndex, int listenPo
 	}
 }
 
-
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
@@ -85,29 +84,20 @@ int main(int argc, char **argv) {
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;
 
-	
 	if (parser.parse_config(config_filename, configs)) {
-		std::cout << "Config file parsed successfully!" << std::endl;
-		
-		std::vector<int> listen_ports = parser.getListenPorts();
-		std::vector<int> listen_counts = parser.getListenCounts();
-		int portIndexOffset = 0;
+		std::cout << "Config file parsed successfully!\n" << std::endl;
+
 		for (size_t i = 0; i < configs.size(); ++i) {
-			int listenCount = listen_counts[i];
-			for (int a = 0; a < listenCount; ++a) {
-				int port = listen_ports[portIndexOffset + a];
-				printServerConfig(configs[i], static_cast<int>(portIndexOffset + a + 1), port);
-			}
-			portIndexOffset += listenCount;
+			printServerConfig(configs[i], static_cast<int>(i + 1));
 		}
-		
-		
 	} else {
 		std::cerr << "Failed to parse config file." << std::endl;
+		return 1;
 	}
     try
     {
 		Server server(configs);
+		std::cout << "-----" << std::endl;
         server.createListenServer();
 		std::signal(SIGINT, Signal::signal_handler);
         server.executeServer();

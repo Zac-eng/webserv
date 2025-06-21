@@ -216,6 +216,7 @@ std::string getStatusMessage(int statuscode) {
 		case 500: return "Internal Server Error";
 		case 501: return "Not Implemented";
 		case 502: return "Bad Gateway";
+		case 504: return "CGI Timeout";
 		case 505: return "HTTP Version Not Supported";
 		default: return "Unknown Error";
 	}
@@ -238,6 +239,10 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 	std::ostringstream response;
 	std::string body = generateDefaultErrorBody(code);
 
+	if (this->_error_file_flag == true && !this->_body.empty())
+	{
+		body = this->_body;
+	}
 	this->_response.clear();
 	response << "HTTP/1.1 " << code << " " << title << "\r\n";
 	response << "Content-Type: text/html; charset=UTF-8\r\n";
@@ -324,6 +329,11 @@ void Response::ResponseRequestTimeOut(void)
 	ErrorResponse(408, "HTTP Request TimeOut");
 }
 
+void Response::ResponseCgiTimeOut(void)
+{
+	ErrorResponse(504, "Cgi TimeOut");
+}
+
 void Response::responseLargeRequestBody(void)
 {
 	ErrorResponse(413, "Request Entity Too Large");
@@ -371,11 +381,12 @@ void Response::closeResponse(bool flag)
 		ResponseNotImplemented();
 	else if(this->_status_code == 502)
 		ResponseBadGateway();
+	else if(this->_status_code == 504)
+		ResponseCgiTimeOut();
 	else if(this->_status_code == 505)
 		ResponseVersionNotSupported();
 	return ;
 }
-
 void Response::CheckConnectionHeader(std::map<std::string, std::string> header)
 {
 	std::map<std::string, std::string>::iterator it;
@@ -404,39 +415,54 @@ std::string Response::getRedirectUri(void)
 
 void Response::CreateResponse()
 {
-	std::vector<std::string>::iterator it;
+std::vector<std::string>::iterator it;
 
-	it = this->_header.begin();
-	this->_response = "HTTP/1.1 200 OK\r\n";
-	for (; it != this->_header.end(); it++)
-		this->_response += *it;
-	this->_response += "\r\n";
-	this->_response += this->_body;
-	write(this->_fd, this->_response.c_str(), this->_response.length());
+std::cout << "response" << std::endl;
+it = this->_header.begin();
+this->_response = "HTTP/1.1 200 OK\r\n";
+for (; it != this->_header.end(); it++)
+this->_response += *it;
+if (!this->_cgi_buffer.empty())
+{
+this->_response += this->_cgi_buffer;
+}
+else
+{
+this->_response += "\r\n";
+this->_response += this->_body;
+}
+write(this->_fd, this->_response.c_str(), this->_response.length());
 }
 
 void Response::createDateHeader(void)
 {
-	time_t now;
-	struct tm n_time;
-	char buf[80];
-	std::string date;
+time_t now;
+struct tm n_time;
+char buf[80];
+std::string date;
 
-	now = time(0);
-	n_time = *gmtime(&now);
-	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
-	date = "Date: ";
-	date += buf;
-	date += "\r\n";
-	this->_header.push_back(date);
+now = time(0);
+n_time = *gmtime(&now);
+strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &n_time);
+date = "Date: ";
+date += buf;
+date += "\r\n";
+this->_header.push_back(date);
 }
 
 void  Response::CreateResponseHeader(Request& req)
 {
 std::map<std::string, std::string> header;
 std::string file;
+std::stringstream ss;
+
 
 file = this->_filename;
+if (this->_content_length.empty())
+{
+	ss << this->_body.length();
+	this->_content_length = ss.str();
+}
 // CheckFileType(file);
 this->_header.push_back("Server: webserv/1.0\r\n");
 if (this->_cgi_buffer.empty())
@@ -456,43 +482,21 @@ void Response::handleGet(Request& req)
 	// return (StatusMessage::OK())
 }
 
-
-void Response::handleDelete(void)
-{
-	if (remove(this->_path.c_str()) != 0)
-		throw ResponseException(400);
-	this->_status_code = 200;
-	return ;
-}
-
-void Response::handlePost(Request& req)
-{
-	std::ofstream file(this->_path.c_str());
-
-	if (!file.is_open())
-		throw std::runtime_error("error");
-	file << req.getBody();
-	file.close();
-	this->_status_code = 200;
-	return ;
-}
-
 void Response::HandleMethod(Request& req)
 {
-	if (!this->_cgi_buffer.empty())
-	{
-		// ReaponseHeader(req);
-		write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
-		return ;
-	}
+	std::cout << this->_cgi_buffer << std::endl;
+	// if (!this->_cgi_buffer.empty())
+	// {
+	// 	// ReaponseHeader(req);
+	// 	write(this->_fd, this->_cgi_buffer.c_str(), this->_cgi_buffer.length());
+	// 	return ;
+	// }
 	if (req.getMethod() == "GET")
 		handleGet(req);
 	else if (req.getMethod() == "POST")
-		handlePost(req);
+		handleGet(req);
 	else if (req.getMethod() == "DELETE")
-		handleDelete();
-	else 
-		this->_status_code = 405;
+		handleGet(req);
 	return ;
 }
 

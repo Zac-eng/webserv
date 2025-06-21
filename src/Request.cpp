@@ -87,6 +87,18 @@ void Request::setBody(const std::string& body)
 	return ;
 }
 
+std::string Request::getPathInfo(void) const
+{
+	return (this->_path_info);
+}
+
+void Request::setPathInfo(const std::string& body)
+{
+	this->_path_info = body;
+	return ;
+}
+
+
 const std::map<std::string, std::string>& Request::getHeader(void) const
 {
 	return (this->_header);
@@ -241,6 +253,12 @@ void Request::setMaxBodySize(const long& max_body_size)
 {
 	this->_max_body_size = max_body_size;
 }
+
+const long& Request::getMaxBodySize()
+{
+	return (this->_max_body_size);
+}
+
 
 void Request::setBoundary(const std::string& boundary)
 {
@@ -593,13 +611,14 @@ bool isSlash(const std::string& uri, std::string::const_iterator& it)
 // }
 
 
-bool Request::ValidUri(const std::string& uri)
+bool Request::parseOtherUri(const std::string& uri)
 {
 	std::string::const_iterator it;
 	std::string::const_iterator file_tmp;
 	std::string::const_iterator dir_tmp;
 	it = uri.begin();
 
+	std::cout << uri<<std::endl;
 	if (isSlash(uri, it) == false)
 		return (false);
 	dir_tmp = it;
@@ -616,13 +635,13 @@ bool Request::ValidUri(const std::string& uri)
 	}
 	else
 		this->_directory = uri.substr(0, dir_tmp - uri.begin());
+	dir_tmp++;
+	it = dir_tmp;
 	if (dir_tmp == uri.end())
 	{
 		this->_path = this->_directory;
 		return (true);
 	}
-	dir_tmp++;
-	it = dir_tmp;
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '.')
@@ -632,7 +651,10 @@ bool Request::ValidUri(const std::string& uri)
 		}
 	}
 	if (it == uri.end())
-		this->_file = uri.substr(dir_tmp - uri.begin());
+	{
+		this->_directory += uri.substr(dir_tmp - uri.begin());
+		return (true);
+	}
 	for (; it != uri.end(); it++)
 	{
 		if (*it == '?')
@@ -663,7 +685,121 @@ bool Request::ValidUri(const std::string& uri)
 	return (true);
 }
 
+bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
+{
+	std::string::const_iterator it;
+	std::string::const_iterator dir_it;
+	size_t pos;
+	std::string tmp;
+	it = uri.begin();
 
+	if (isSlash(uri, it) == false)
+		return (false);
+	std::cout << "path:"<<*it<<std::endl;
+	tmp = *it;
+	dir_it = it;
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '/')
+		{
+			std::cout << "---"<< std::endl;
+			pos = tmp.find(".php");
+			if (pos != std::string::npos)
+				break ;
+			std::cout << "---下"<< std::endl;
+			dir_it = it;
+			tmp.clear();
+			continue ;
+		}
+		tmp += *it;
+	}
+	if (dir_it == uri.begin())
+		this->_directory = *dir_it;
+	else
+		this->_directory = uri.substr(0, dir_it - uri.begin());
+	dir_it++;
+	it = dir_it;
+	tmp.clear();
+	if (it == uri.end())
+	{
+		this->_path = uri;
+		return (true);
+	}
+	for (; it != uri.end(); it++)
+	{
+		if (query_flag == true)
+		{
+			if (*it == '?')
+			{
+				dir_it = it;
+				break ;
+			}
+		}
+		else
+		{
+			if (*it == '/')
+			{
+				dir_it = it;
+				break ;
+			}
+		}
+		tmp += *it;
+	}
+	it--;
+	this->_file = tmp;
+	it+=2;
+	if (query_flag == true)
+	{
+		this->_query = uri.substr(it - uri.begin());
+		return (true);
+	}
+	tmp.clear();
+	for (; it != uri.end(); it++)
+	{
+		if (*it == '?')
+		{
+			dir_it = it;
+			break ;
+		}
+		tmp += *it;
+	}
+	if (it == uri.end())
+	{
+		this->_path_info = tmp;
+	}
+	else
+	{
+		it--;
+		this->_path_info = tmp;
+		it += 2;
+	}
+	this->_query = uri.substr(it - uri.begin());
+	this->_path = uri;
+	return (true);
+}
+
+bool Request::validUri(const std::string& uri)
+{
+	size_t pos;
+	std::string::const_iterator it;
+
+	pos = uri.find(".php");
+	if (pos != std::string::npos)
+	{
+		it = uri.begin() + pos;
+		it += 4;
+		if (it != uri.end() && (*it == '/' || *it == '?'))
+		{
+			this->_extension = "php";
+			if (*it == '?')
+				return (parseUriPathInfoPhp(uri, true));
+			else
+				return (parseUriPathInfoPhp(uri, false));
+		}
+
+	}
+	return (parseOtherUri(uri));
+}
 
 bool Request::ParseUri(const std::string& request, std::string::const_iterator& it)
 {
@@ -673,7 +809,7 @@ bool Request::ParseUri(const std::string& request, std::string::const_iterator& 
 		return (false);
 	if (GetSubstringUntilSpace(request, it, uri) == false)
 		return (false);
-	if (ValidUri(uri) == false)
+	if (validUri(uri) == false)
 		return (false);
 	this->_path = uri;
 	// if (CheckRootPath(uri) == true)
@@ -850,7 +986,7 @@ bool Request::parseChunkValue(const std::string& request)
 
 size_t convertDecimal(const std::string& request)
 {
-	char * end;
+	char *end;
 	long result;
 	std::string object;
 	std::string::const_iterator it;
@@ -900,6 +1036,7 @@ bool Request::parsePostBody(const std::string& request)
 	if (this->_chunk_flag == true)
 		return (parseChunk(request));
 	this->_body += request;
+	std::cout <<"body_size:"<< this->_body.length() << std::endl;
 	if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
 		throw RequestException(413, "large request body");
 	if (this->_body.length() > this->_body_size)
@@ -943,6 +1080,7 @@ void Request::reSetRequest(void)
 	this->_file.clear();
 	this->_extension.clear();
 	this->_query.clear();
+	this->_path_info.clear();
 	this->_version.clear();
 	this->_body.clear();
 	this->_header.clear();
@@ -1017,6 +1155,10 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 		{
 			this->_progress_multipart_flag = true;
 			this->parseMultipart(request);
+			if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
+				throw RequestException(413, "large request body");
+			if (this->_body.length() > this->_body_size)
+				throw RequestException(400, "body size");
 			return  (true);
 		}
 		if (parsePostBody(request) == false)

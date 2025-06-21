@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <functional>
 #include <map>
+#include "location.hpp"
 
 class LocationConfig;
 
@@ -38,6 +39,8 @@ class ServerConfig
 		void setErrorPages(const std::map<int, std::string>& errors);
 		void setClientMaxBodySize(long int size);
 	private:
+		bool set_default_listen;
+		bool listen_dupli;
 		int listen_port;
 		long int client_max_body_size;
 		std::string server_name;

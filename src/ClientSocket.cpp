@@ -98,7 +98,6 @@ bool ClientSocket::CloseClientFd()
 	return (true);
 }
 
-
 bool ClientSocket::CheckRequestFlag(std::string& buffer, std::string::iterator& it)
 {
 	//ポストを実行中で、キャリッジリターンが送られた時の処理。chunkが終わっているか終わっていないかの確認。
@@ -244,6 +243,45 @@ bool ClientSocket::existUri(const std::string& directory, const std::string& fil
 	return (false);
 }
 
+void ClientSocket::generateAutoIndex(const std::string directory, const std::string uri)
+{
+	DIR *dir;
+	dirent *entry;
+	std::ostringstream body;
+	std::string name;
+	std::string full_path;
+
+	dir = opendir(directory.c_str());
+	if (dir == NULL)
+	{
+		throw RequestException(404, "open dir");
+	}
+	body << "<html><head><title>Index of " << uri << "</title></head></body>\n";
+	body << "<h1>Index of "<< uri << "</h1><ul>\n";
+
+	entry = readdir(dir);
+	while (entry != NULL)
+	{
+		name = entry->d_name;
+		if (name == "." || name == "..")
+		{
+			entry = readdir(dir);
+			continue ;
+		}
+		std::cout <<"uri:"<<uri<<std::endl;
+		if (uri.empty() || uri[uri.length() - 1] != '/')
+			full_path = uri + "/" + name;
+		else
+			full_path = uri + name;
+		body << "<li><a href=\"" << full_path << "\">" << name << "</a></li>\n";
+		entry = readdir(dir);
+	}
+	body << "</ul></body></html>\n";
+	closedir(dir);
+	this->_response.setBody(body.str());
+	std::cout <<this->_response.getBody()<< std::endl;
+	return ;
+}
 
 void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 {
@@ -276,7 +314,15 @@ void ClientSocket::CombineUriAndLocationRoot(LocationConfig& location)
 	else
 	{
 		if ((location.getIndexFiles()).empty())
-			return ;
+		{
+			if (location.getautoindex() == true)
+			{
+				if (this->_request.getMethod() != "GET")
+					throw RequestException(400, "method auto error");
+				return (generateAutoIndex(object, this->_request.getDirectory()));
+			}
+			throw RequestException(404, "location file error");
+		}
 		it = location.getIndexFiles().begin();
 		for (; it != (location.getIndexFiles()).end(); it++)
 		{
@@ -420,10 +466,11 @@ bool ClientSocket::checkExistErrorPages(const std::string& path, std::string dir
 		return (false);
 	if (*it_tmp == '/')
 		it_tmp++;
+		
 	directory = path.substr(0, it_tmp - path.begin());
 	file = path.substr(it_tmp - path.begin());
 	if (this->existUri(directory, file) == false)
-		return (false);
+	return (false);
 	this->_response.setDirectory(directory);
 	this->_response.setFilename(file);
 	this->_response.setPath(path);
@@ -445,10 +492,10 @@ void ClientSocket::checkErrorPages(size_t status)
 	for (; it != error_pages.end(); it++)
 	{
 		if (it->first == (int)status)
-			break ;
+		break ;
 	}
 	if (it == error_pages.end())
-		return ;
+	return ;
 	path = it->second;
 	if (this->checkExistErrorPages(path, directory, file) == false)
 		return ;
@@ -553,10 +600,18 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			return ;
 		if (this->_complete_parse_flag == true)
 		{
+			this->_start_time = -1;
 			if (it != buffer.end())
 				throw RequestException(400, "Parse not finish");
 			// if (this->_request.CheckMethodAndHeader() == false)
 				// 	return (false);
+			// std::cout << "conf 前です" << std::endl;
+			// std::cout << "query"<<this->_request.getQuery()<<std::endl;
+			// std::cout <<  "directory"<<this->_request.getDirectory()<<std::endl;
+	
+			// std::cout << this->_request.getFile()<<std::endl;
+			// std::cout << this->_request.getPath()<<std::endl;
+			// std::cout << this->_request.getPathInfo()<<std::endl;
 			ChangeConfUri(this->_request.getPath());
 			if (!(this->_response.getRedirectUri()).empty())
 			{
@@ -564,10 +619,11 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				{
 					this->_request.setMethod("GET");
 				}
+				throw new RequestException(301, "redirect");
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-				std::cout << this->_request.getQuery()<<std::endl;
+
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())
@@ -585,15 +641,25 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
 					throw RequestException(500, "Parse not finish");
 				}
+				
 				if (sock.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
 					throw RequestException(500, "sock_map insertion failed");
+				cgi->setStartTime(time(NULL));
 				return ;
 			}
 			else
 			{
+									std::cout << this->_request.getQuery()<<std::endl;
+			std::cout << this->_request.getDirectory()<<std::endl;
+	
+			std::cout << this->_request.getFile()<<std::endl;
+			std::cout << this->_request.getPath()<<std::endl;
+			std::cout << this->_request.getPathInfo()<<std::endl;
 				if (this->_request.getMethod() != "GET")
 					throw RequestException(400, "cgi method error");
-				this->checkReadFile();
+				if ((this->_response.getBody()).empty())
+					this->checkReadFile();
+				std::cout << this->_request.getMaxBodySize()<<": "<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
@@ -633,10 +699,10 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		this->_start_time = time(NULL);
 		if (pos == std::string::npos)
 		{
-			// if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
-			// 	return ;
-			// 	}
-			// closeAndDeleteSocket(_socket);
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+				return ;
+				}
+			closeAndDeleteSocket(_socket);
 			return ;
 		}
 		else
@@ -647,7 +713,8 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (const RequestException& e)
 	{
-		
+
+	
 		std::cout << e.what() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				this->_request.setStatusNumber(500);
@@ -761,4 +828,22 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	this->_response.reSetResponse();
 	this->reSetClientSocket();
 	return ;
+}
+
+bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
+{
+		struct epoll_event ev;
+	ev.events = EPOLLOUT;
+		ev.data.fd = fd;
+
+	(void)_socket;
+	(void)fd;
+	if (this->getTimeOut() == true)	
+		return (true);
+	std::cout <<"client timeout"<< this->_fd << std::endl;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+			this->setTimeOut(true);
+		}
+	this->setTimeOut(true);
+	return (true);
 }

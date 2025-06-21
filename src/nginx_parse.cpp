@@ -11,7 +11,6 @@
 #include <stdexcept>
 #include <climits>
 
-
 void	ServerConfig::validate() const
 {
 	if (listen_port < 1 || listen_port > 65535)
@@ -109,8 +108,10 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 	bool has_open = false;
 	bool set_path = false;
 	bool has_root = false;
+	set_default_listen = false;
 	int listen_number = 0;
 	size_t prev_size = index_server.size();
+	
 
 	while (std::getline(block_stream, line))
 	{
@@ -162,8 +163,27 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 		} else if (block_keyword == "{") {
 			num_open++;
 		} else if (block_keyword == "}") {
-			handle_close_brace(config, listen_number);
+			if (num_close != num_open - 1) {
+				if (listen_number >= 2) {
+					const std::vector<int>& ports = config.getListenPorts();
+					for (size_t i = 0; i < ports.size(); ++i) {
+						ServerConfig duplicated = config;
+						duplicated.setListenPort(ports[i]);
+						try {
+							duplicated.validate();
+							configs.push_back(duplicated);
+						} catch (const std::runtime_error& e) {
+							std::cerr << "Error: " << e.what() << std::endl;
+							return false;
+						}
+					}
+					listen_dupli = true;
+				}
+				handle_close_brace(config, listen_number);
+			}
+
 			num_close++;
+			listen_number = 0;
 		} else {
 			std::cerr << "Error: Unexpected directive in server block: " << line << std::endl;
 			return false;
@@ -190,16 +210,14 @@ bool ServerConfig::process_server_blocks(const std::string& block_content, std::
 			config.locations.push_back(location_config);
 		}
 	}
-	if (config.listen_port == 0) {
-		config.listen_port = 80;
-	}
-	try {
-		config.validate();
-		configs.push_back(config);
-	}
-	catch (const std::runtime_error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
-		return false;
+	if (set_default_listen == true || listen_dupli == false) {
+		try {
+			config.validate();
+			configs.push_back(config);
+		} catch (const std::runtime_error& e) {
+			std::cerr << "Error: " << e.what() << std::endl;
+			return false;
+		}
 	}
 	return true;
 }
@@ -268,7 +286,6 @@ bool	ServerConfig::parse_config(const std::string& filename, std::vector<ServerC
 	bool	http_found = false;
 	while (std::getline(config_file, line))
 	{
-		// std::cout << "11"<<std::endl;
 		line = trim(line);
 		if (line.empty())
 			continue;
