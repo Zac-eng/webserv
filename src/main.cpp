@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
 		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
 		return 1;
 	}
+	signal(SIGCHLD, sigchld_handler);
 	std::string config_filename = argv[1];
 	std::vector<ServerConfig> configs;
 	ServerConfig parser;

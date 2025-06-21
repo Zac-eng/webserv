@@ -18,7 +18,7 @@ Server::~Server()
 	for (; it != this->_socket.end(); it++)
 	{
 		close(it->first);
-		delete it->second;
+		// delete it->second;
 	}
 	close(this->_epoll_fd);
 }
