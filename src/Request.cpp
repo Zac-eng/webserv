@@ -702,11 +702,9 @@ bool Request::parseUriPathInfoPhp(const std::string& uri, bool query_flag)
 	{
 		if (*it == '/')
 		{
-			std::cout << "---"<< std::endl;
 			pos = tmp.find(".php");
 			if (pos != std::string::npos)
 				break ;
-			std::cout << "---下"<< std::endl;
 			dir_it = it;
 			tmp.clear();
 			continue ;
@@ -1036,11 +1034,12 @@ bool Request::parsePostBody(const std::string& request)
 	if (this->_chunk_flag == true)
 		return (parseChunk(request));
 	this->_body += request;
-	std::cout <<"body_size:"<< this->_body.length() << std::endl;
 	if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
 		throw RequestException(413, "large request body");
 	if (this->_body.length() > this->_body_size)
+	{
 		throw RequestException(400, "body size");
+	}
 	return (true);
 }
 
@@ -1158,7 +1157,12 @@ bool Request::ParseRequest(const std::string& request, bool parse_post_flag)
 			if (this->_max_body_size >= 0 && this->_body.length() > (size_t)this->_max_body_size)
 				throw RequestException(413, "large request body");
 			if (this->_body.length() > this->_body_size)
+			{
+				std::cout << this->_body.length() <<std::endl;
+				std::cout << this->_body_size <<std::endl;
+
 				throw RequestException(400, "body size");
+			}
 			return  (true);
 		}
 		if (parsePostBody(request) == false)

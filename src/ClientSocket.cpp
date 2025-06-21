@@ -217,8 +217,10 @@ size_t MatchPathLength(const std::string& uri, LocationConfig& location)
 	if (uri.empty() || path.empty())
 		return (0);
 	while (uri[i] != '\0' && path[i] != '\0' && uri[i] == path[i])
+	{
 		i++;
-	return (i);
+	}
+		return (i);
 }
 
 bool ClientSocket::existUri(const std::string& directory, const std::string& file)
@@ -363,7 +365,10 @@ void ClientSocket::parseRedirect(LocationConfig& location)
 
 	// (void)location;
 	// redirect_map = location.getRedirect();
+	if ((location.getRedirectMap().empty()))
+		throw RequestException(500, "redirect");
 	redirect_map = (location.getRedirectMap()).begin();
+
 
 	// // this->_response.setRedirectUri(location.getRedirectUri());
 	// // this->_request.setStatusNumber(location.getRedirectNumber());
@@ -590,7 +595,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 	std::string::iterator it;
 	struct epoll_event ev;
 
-	std::cout << buffer << std::endl;
 	ev.events = EPOLLOUT;
 	ev.data.fd = this->_fd;
 	it = buffer.begin();
@@ -603,15 +607,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			this->_start_time = -1;
 			if (it != buffer.end())
 				throw RequestException(400, "Parse not finish");
-			// if (this->_request.CheckMethodAndHeader() == false)
-				// 	return (false);
-			// std::cout << "conf 前です" << std::endl;
-			// std::cout << "query"<<this->_request.getQuery()<<std::endl;
-			// std::cout <<  "directory"<<this->_request.getDirectory()<<std::endl;
-	
-			// std::cout << this->_request.getFile()<<std::endl;
-			// std::cout << this->_request.getPath()<<std::endl;
-			// std::cout << this->_request.getPathInfo()<<std::endl;
+			if (this->_request.getExtension() == "php" && this->_request.getMultipartFlag() == false)
+			{
+				throw RequestException(400, "post");	
+			}
 			ChangeConfUri(this->_request.getPath());
 			if (!(this->_response.getRedirectUri()).empty())
 			{
@@ -619,11 +618,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				{
 					this->_request.setMethod("GET");
 				}
-				throw new RequestException(301, "redirect");
+				throw RequestException(301, "redirect");
 			}
 			else if (this->_request.getExtension() == "php")
 			{
-
 				this->_response_flag = true;
 				this->_response.setFd(this->_fd);
 				if (this->_request.getFile().empty())
@@ -637,7 +635,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				ev.events = EPOLLOUT;
 				ev.data.fd = cgi->getWritePipe();
-				std::cout << ev.data.fd << std::endl;
 				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
 					throw RequestException(500, "Parse not finish");
 				}
@@ -649,17 +646,10 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 			}
 			else
 			{
-									std::cout << this->_request.getQuery()<<std::endl;
-			std::cout << this->_request.getDirectory()<<std::endl;
-	
-			std::cout << this->_request.getFile()<<std::endl;
-			std::cout << this->_request.getPath()<<std::endl;
-			std::cout << this->_request.getPathInfo()<<std::endl;
 				if (this->_request.getMethod() != "GET")
 					throw RequestException(400, "cgi method error");
 				if ((this->_response.getBody()).empty())
 					this->checkReadFile();
-				std::cout << this->_request.getMaxBodySize()<<": "<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
 				throw RequestException(500, "Parse not finish");
@@ -840,7 +830,6 @@ bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket,
 	(void)fd;
 	if (this->getTimeOut() == true)	
 		return (true);
-	std::cout <<"client timeout"<< this->_fd << std::endl;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
 			this->setTimeOut(true);
 		}

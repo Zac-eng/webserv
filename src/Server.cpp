@@ -81,7 +81,6 @@ void Server::createListenServer(void)
 	it = this->_conf.begin();
 	for (; this->_conf.end() != it; it++)
 	{
-		std::cout <<"socket -----" << std::endl;
 		ASocket *socket = new ListenSocket(*it);
 		if (socket->createSocket() == false)
 		{
@@ -171,6 +170,7 @@ void Server::executeServer(void)
 				delete this->_socket[event[i].data.fd];
 				this->_socket.erase(event[i].data.fd);
 			}
+
 		}
 	}
 }
