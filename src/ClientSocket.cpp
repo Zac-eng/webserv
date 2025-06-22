@@ -726,7 +726,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 	return ;
 }
 
-
 void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _socket)
 {
 	int byte_size = 0;

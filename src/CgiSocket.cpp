@@ -246,14 +246,6 @@ void closeAndDeleteSocket(std::map<int, ASocket*>& socket, int fd)
 	return ;
 }
 
-int CgiSocket::ctlClientEpollOut(int epoll_fd) const {
-  struct epoll_event ev;
-
-  ev.events = EPOLLOUT;
-  ev.data.fd = this->_client_fd;
-  return epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev);
-}
-
 bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
 {
   	// struct epoll_event ev;
@@ -262,7 +254,7 @@ bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, in
     return (true);
   {
     kill(this->_cgi_pid, SIGINT);
-    ctlClientEpollOut(epoll_fd);
+    setModEpollEvent(epoll_fd, false, _client_fd);
     //   ev.events = EPOLLOUT;
     //   ev.data.fd = this->_client_fd;
     //   close(this->_pipe_fds[READ]);

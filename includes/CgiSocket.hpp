@@ -33,7 +33,6 @@ public:
 	CgiSocket& operator = (const CgiSocket& obj);
 	static CgiSocket* createCgiSocket(ServerConfig& conf, Request& req, const sockaddr_in& client_addr, std::string& response_buf, int client_fd);
 	int		waitChildProcess() const;
-	int		ctlClientEpollOut(int epoll_fd) const;
 	bool	createSocket(void);
 	int		getReadPipe() const;
 	int		getWritePipe() const;
@@ -41,9 +40,9 @@ public:
 	void	handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	void	handleEpollHupEvent(int epoll_fd, std::map<int, ASocket*>& _socket);
 	bool 	handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
-bool setAddEpollEvent(int epoll, bool event_flag, int fd);
-bool setModEpollEvent(int epoll, bool event_flag, int fd);
-bool setDelEpollEvent(int epoll, int fd);
+	bool 	setAddEpollEvent(int epoll, bool event_flag, int fd);
+	bool 	setModEpollEvent(int epoll, bool event_flag, int fd);
+	bool 	setDelEpollEvent(int epoll, int fd);
 };
 
 void close_pipes(int ptc_pipe[], int ctp_pipe[]);
