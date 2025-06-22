@@ -165,9 +165,7 @@ void Server::executeServer(void)
 				if (sock != NULL) {
 					sock->waitChildProcess();
 				}
-				if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL) != 0) {
-					perror("epoll delete, cgi");
-				}
+				epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL);
 				delete this->_socket[event[i].data.fd];
 				this->_socket.erase(event[i].data.fd);
 			}

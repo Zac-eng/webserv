@@ -16,8 +16,11 @@ class ServerConfig
 		ServerConfig() : listen_port(0) , client_max_body_size(-1) {}
 		void validate() const;
 		void addListenPort(int port);
+		std::vector<std::string> index_server;
 		void setIndex(const std::vector<std::string>& indexes);
 		bool	parse_config(const std::string& filename, std::vector<ServerConfig>& configs);
+		bool has_index_server;
+		std::vector<int> index_server_count;
 		std::vector<int> listen_counts;
 		int num_open;
 		int num_close;
@@ -26,27 +29,24 @@ class ServerConfig
 		int getListenPort() const;
 		std::string getServerName() const;
 		std::string getRootServer() const;
-		std::vector<std::string> getIndexServer() const;
+		const std::vector<std::string> getIndexServer() const;
 		const std::map<int, std::string> getErrorPages() const;
 		const std::vector<int>& getListenPorts() const;
 		const std::vector<int>& getListenCounts() const;
 		const std::vector<LocationConfig>& getLocations() const;
 		long int getClientMaxBodySize() const;
-
+		
 		void setListenPort(int port);
 		void setServerName(const std::string& name);
 		void setRootServer(const std::string& root);
 		void setErrorPages(const std::map<int, std::string>& errors);
 		void setClientMaxBodySize(long int size);
 	private:
-		int listen_port;
-		bool listen_dupli;
 		bool set_default_listen;
+		bool listen_dupli;
+		int listen_port;
 		long int client_max_body_size;
 		std::string server_name;
-		// std::string root_server;
-		std::vector<std::string> index_server;
-		std::vector<int> index_server_count;
 		std::map<int, std::string> error_pages;
 		std::vector<int> listen_ports;
 		std::vector<LocationConfig> locations;

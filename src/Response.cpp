@@ -253,8 +253,6 @@ void Response::ErrorResponse(size_t code, const std::string& title)
 
 	this->_response = response.str();
 	write(this->_fd, this->_response.c_str(), this->_response.length());
-  	  perror("write error");
-
 }
 
 void Response::executeRedirectResponse(size_t code, const std::string& title)

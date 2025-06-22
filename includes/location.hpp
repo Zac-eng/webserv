@@ -28,6 +28,8 @@ class LocationConfig
 		void setMethodCount(const std::vector<int>& counts);
 		void setautoindex(bool on_off);
 		
+		void addIndexPushCount(size_t count);
+
 		const std::string& getPath() const;
 		const std::string& getRoot() const;
 		const std::string& getFastcgiIndex() const;
@@ -55,6 +57,7 @@ class LocationConfig
 		bool on_off;
 		std::string path_parser;
 		bool redirect_flag;
+		bool has_index_location;
 		std::map<int, std::string> redirect_map;
 		std::vector<std::string> allow_method;
 		std::string fastcgi_index;
