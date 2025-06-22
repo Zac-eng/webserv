@@ -160,7 +160,6 @@ void Server::executeServer(void)
 			}
 			if (event[i].events & EPOLLHUP)
 			{
-				std::cout << "epoll hup" << std::endl;
 				CgiSocket* sock = dynamic_cast<CgiSocket*>(this->_socket[event[i].data.fd]);
 				if (sock != NULL) {
 					sock->waitChildProcess();

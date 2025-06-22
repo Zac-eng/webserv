@@ -43,7 +43,6 @@ bool ListenSocket::bindSocket()
 	address.sin_family = AF_INET;
 	address.sin_port = htons(this->_conf.getListenPort());
 	ip_address = inet_addr((this->_conf.getServerName()).c_str());
-	std::cout << this->_conf.getServerName()<<std::endl;
 	if (ip_address == INADDR_NONE)
 	{
 		return (false);
@@ -51,7 +50,6 @@ bool ListenSocket::bindSocket()
 	address.sin_addr.s_addr = ip_address;
 	if (bind(this->_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
 	{
-			std::cout << this->_fd<< std::endl;
 		return (false);
 	}
 	this->_host_name = this->_conf.getServerName();

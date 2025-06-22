@@ -270,7 +270,6 @@ void ClientSocket::generateAutoIndex(const std::string directory, const std::str
 			entry = readdir(dir);
 			continue ;
 		}
-		std::cout <<"uri:"<<uri<<std::endl;
 		if (uri.empty() || uri[uri.length() - 1] != '/')
 			full_path = uri + "/" + name;
 		else
@@ -280,7 +279,6 @@ void ClientSocket::generateAutoIndex(const std::string directory, const std::str
 	}
 	body << "</ul></body></html>\n";
 	closedir(dir);
-		std::cout << _response.getCgiBuffer() << this->_fd << std::endl;
 
 	this->_response.setBody(body.str());
 	return ;
@@ -401,8 +399,6 @@ bool ClientSocket::CheckAndChangeLocationUri(std::vector<LocationConfig>& locati
 		throw (RequestException(405, "Allow method"));
 	if (location_tmp.getRedirectFlag() == true)
 	{
-		std::cout << "aa"<<std::endl;
-		std::cout << location_tmp.getPath()<<std::endl;
 		parseRedirect(location_tmp);
 	}
 	else
@@ -710,7 +706,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					throw RequestException(400, "cgi method error");
 				if ((this->_response.getBody()).empty())
 					this->checkReadFile();
-				std::cout << this->_request.getMaxBodySize()<<"max: net"<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (setModEpollEvent(epoll_fd, socket, false, this->_fd) == false) {
 				throw RequestException(500, "Parse not finish");

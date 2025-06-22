@@ -16,7 +16,6 @@ void	ServerConfig::validate() const
 	if (listen_port < 1 || listen_port > 65535)
 		throw std::runtime_error("listen, Directive not specified ");
 	if (server_name.empty()) {
-		std::cout << "server_name" << server_name << std::endl;
 		throw std::runtime_error("server_name, Directive not specified");
 	}
 	for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
