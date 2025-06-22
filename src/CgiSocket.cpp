@@ -18,8 +18,8 @@ CgiSocket::CgiSocket(
 
 CgiSocket::~CgiSocket() {
   kill(_cgi_pid, SIGINT);
-  // close(this->_pipe_fds[READ]);
-  // close(this->_pipe_fds[WRITE]);
+  close(this->_pipe_fds[READ]);
+  close(this->_pipe_fds[WRITE]);
 }
 
 CgiSocket::CgiSocket(
@@ -139,7 +139,7 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
     perror("epoll_ctl: del read");
   }
   close(this->_pipe_fds[READ]);
-  delete this;
+  // delete this;
 }
 
 void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
@@ -151,12 +151,20 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   if (write_epoll != socket.end()) {
     socket.erase(write_epoll);
   }
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
+      std::cout << "ttt"<<std::endl;
+    perror("epoll_ctl: add");
+  close(this->_pipe_fds[WRITE]);
+  return ;
+}
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, this->_pipe_fds[READ], &ev) == -1) {
     perror("epoll_ctl: add");
+    std::cout << "aa"<<std::endl;
     close(this->_pipe_fds[WRITE]);
     return ;
   }
   if (socket.insert(std::make_pair(this->_pipe_fds[READ], this)).second == false) {
+        std::cout << "bb"<<std::endl;
     perror("epoll_ctl: add");
     close(this->_pipe_fds[WRITE]);
     return ;

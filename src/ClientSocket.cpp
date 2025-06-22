@@ -533,6 +533,68 @@ bool ClientSocket::getFileSize(int fd)
 	return (true);
 }
 
+bool ClientSocket::setAddEpollEvent(int epoll_fd, std::map<int, ASocket*>& socket, bool event_flag, int fd)
+{
+	struct epoll_event ev;
+
+	ev.data.fd = fd;
+	(void)socket;
+	if (event_flag == true)
+		ev.events = EPOLLIN;
+	else
+		ev.events = EPOLLOUT;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+	{
+		if (errno == EEXIST)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+				return (false);
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
+}
+
+bool ClientSocket::setModEpollEvent(int epoll_fd, std::map<int, ASocket*>& socket, bool event_flag, int fd)
+{
+	struct epoll_event ev;
+
+	(void)socket;
+
+	ev.data.fd = fd;
+	if (event_flag == true)
+		ev.events = EPOLLIN;
+	else
+		ev.events = EPOLLOUT;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
+	{
+		if (errno == ENOENT)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+				return (false);
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
+}
+
+bool ClientSocket::setDelEpollEvent(int epoll_fd, std::map<int, ASocket*>& socket, int fd)
+{
+	(void)socket;
+
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
+	{
+		if (errno == ENOENT)
+		{
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
+}
+
 bool ClientSocket::readFile(int fd)
 {
 	int byte_size;
@@ -587,14 +649,11 @@ void ClientSocket::checkReadFile(void)
 }
 
 
-void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& sock)
+void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& socket)
 {
 	std::string buffer = this->_buffer;
 	std::string::iterator it;
-	struct epoll_event ev;
 
-	ev.events = EPOLLOUT;
-	ev.data.fd = this->_fd;
 	it = buffer.begin();
 	while (it != buffer.end())
 	{
@@ -630,13 +689,17 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				CgiSocket* cgi = CgiSocket::createCgiSocket(this->_conf, this->_request, this->_address, _response._cgi_buffer, this->_fd);
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
-				ev.events = EPOLLOUT;
-				ev.data.fd = cgi->getWritePipe();
-				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+				if (setAddEpollEvent(epoll_fd, socket, false, cgi->getWritePipe()) == false) {
+					perror("client cgi error add");
+					delete cgi;
 					throw RequestException(500, "Parse not finish");
 				}
-				
-				if (sock.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
+				if (setDelEpollEvent(epoll_fd, socket, this->_fd) == false) {
+					delete cgi;
+				perror("client socket EPollDel");
+					throw RequestException(500, "Parse not finish");
+				}
+				if (socket.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
 					throw RequestException(500, "sock_map insertion failed");
 				cgi->setStartTime(time(NULL));
 				return ;
@@ -649,7 +712,8 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 					this->checkReadFile();
 				std::cout << this->_request.getMaxBodySize()<<"max: net"<<(this->_response.getBody()).length()<<std::endl;
 			}
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+			if (setModEpollEvent(epoll_fd, socket, false, this->_fd) == false) {
+				perror("client socket EPollOut");
 				throw RequestException(500, "Parse not finish");
 			}
 			this->_response_flag = true;
@@ -669,10 +733,7 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	int byte_size = 0;
 	char buf[BUFFER_SIZE];
 	size_t pos = 0;
-	struct epoll_event ev;
 
-	ev.events = EPOLLOUT;
-	ev.data.fd = this->_fd;
 	try
 	{
 		byte_size = read(this->_fd, buf, BUFFER_SIZE);
@@ -680,9 +741,12 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 			return ;
 		else if (byte_size == 0)
 		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, &ev) == -1) {
+			if (setDelEpollEvent(epoll_fd, _socket, this->_fd) == false)
+			{
+				perror("read error del");
+				closeAndDeleteSocket(_socket);
 				return ;
-				}
+			}
 			closeAndDeleteSocket(_socket);
 			return ;
 		}
@@ -710,9 +774,12 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	catch (const RequestException& e)
 	{
 		std::cout << e.what() << std::endl;
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
-				this->_request.setStatusNumber(500);
-			}
+		if (setModEpollEvent(epoll_fd, _socket, false, this->_fd) == false)
+		{
+			perror("client error mod ");
+			this->_request.setStatusNumber(500);
+		}
+
 		this->_request.setStatusNumber(e.getStatus());
 		this->_response_flag = true;
 		this->_start_time = -1;;
@@ -720,9 +787,10 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+		if (setModEpollEvent(epoll_fd, _socket, false, this->_fd) == false) {
+			perror("client socket EPollOut");
 			this->_request.setStatusNumber(500);
-			}
+		}
 		this->_request.setStatusNumber(500);
 		this->_response_flag = true;
 		this->_start_time = -1;;
@@ -759,10 +827,7 @@ void ClientSocket::reSetClientSocket()
 
 void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket)
 {
-	struct epoll_event ev;
 
-	ev.events = EPOLLIN;
-	ev.data.fd = this->_fd;
 	try
 	{
 		if (this->_time_out_flag == true)
@@ -778,11 +843,14 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 		}
 		if (this->_request.getConnectionFlag() == true)
 		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
+
+			if (setDelEpollEvent(epoll_fd, socket, this->_fd) == false)
+			{
 				throw (ResponseException(500));
 			}
 		}
-		else if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD,this->_fd, &ev) == -1) {
+		else if (setModEpollEvent(epoll_fd, socket, true, this->_fd) == false)
+		{
 			throw (ResponseException(500));
 		}
 		this->_response.ExecuteResponse(this->_request);
@@ -795,9 +863,10 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	catch (const ResponseException& e)
 	{
 		this->_response.setStatusCode(e.getStatus());
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
-				this->_response.setStatusCode(500);
-			}
+		if (setDelEpollEvent(epoll_fd, socket, this->_fd) == false)
+		{
+			this->_response.setStatusCode(500);
+		}
 		if ((this->_response.getRedirectUri()).empty())
 			checkErrorPages(this->_response.getStatusCode());
 		this->_response.closeResponse(this->_error_file_flag);
@@ -806,9 +875,10 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 	}
 	catch (std::exception& e)
 	{
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL,this->_fd, NULL) == -1) {
-				this->_response.setStatusCode(500);
-			}
+		if (setDelEpollEvent(epoll_fd, socket, this->_fd) == false)
+		{
+			this->_response.setStatusCode(500);
+		}
 		this->_response.setStatusCode(500);
 		checkErrorPages(500);
 		this->_response.closeResponse(this->_error_file_flag);
@@ -823,15 +893,11 @@ void ClientSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& so
 
 bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd) 
 {
-		struct epoll_event ev;
-	ev.events = EPOLLOUT;
-		ev.data.fd = fd;
-
 	(void)_socket;
-	(void)fd;
 	if (this->getTimeOut() == true)	
 		return (true);
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+	if (setModEpollEvent(epoll_fd, _socket, false, fd) == false) {
+			perror("timeout client ");
 			this->setTimeOut(true);
 		}
 	this->setTimeOut(true);

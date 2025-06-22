@@ -18,7 +18,7 @@ Server::~Server()
 	for (; it != this->_socket.end(); it++)
 	{
 		close(it->first);
-		// delete it->second;
+		delete it->second;
 	}
 	close(this->_epoll_fd);
 }
@@ -112,7 +112,6 @@ void Server::checkTimeOut(void)
 	{
 		end = time(NULL);
 		start = it->second->getStartTime();
-		// std::cout << end - start << std::endl;
 		if (start != -1 && (end - start) > TIMEOUT)
 		{
 			if (it->second->handleTimeOut(this->_epoll_fd, this->_socket, it->first) == false)
@@ -131,25 +130,27 @@ void Server::executeServer(void)
 	while (g_stop)
 	{
 		event_counts = epoll_wait(this->_epoll_fd, event, MAX_EVENTS, EPOLL_TIME);
-		this->checkTimeOut();
+		// this->checkTimeOut();
 		if (event_counts == -1)
 		{
-			if (g_stop == 1)
-				throw ServerException("signal error");
-			else
-				return ;
+			if (errno == EINTR)
+			{
+				continue ;
+			}
+			throw ServerException("epoll wait error");
+			return ;
 		}
 		for (int i = 0; i < event_counts; i++)
 		{
 			fd = event[i].data.fd;
-			if (event[i].events == EPOLLIN)
+			if (event[i].events & EPOLLIN)
 			{
 				if (this->_socket.find(fd) != this->_socket.end())
 				{
 					this->_socket[event[i].data.fd]->handleEpollInEvent(this->_epoll_fd, this->_socket);
 				}
 			}
-			else if (event[i].events == EPOLLOUT)
+			if (event[i].events & EPOLLOUT)
 			{
 				if (this->_socket.find(fd) != this->_socket.end())
 				{
@@ -157,13 +158,19 @@ void Server::executeServer(void)
 					this->_socket[event[i].data.fd]->handleEpollOutEvent(this->_epoll_fd, this->_socket);
 				}
 			}
-			else if (event[i].events == EPOLLHUP)
-			{
-				CgiSocket* sock = dynamic_cast<CgiSocket*>(this->_socket[event[i].data.fd]);
-				if (sock != NULL) {
-					sock->handleEpollHupEvent(this->_epoll_fd, this->_socket);
-				}
-			}
+			// if (event[i].events & EPOLLHUP)
+			// {
+			// 	std::cout << "epoll hup" << std::endl;
+			// 	CgiSocket* sock = dynamic_cast<CgiSocket*>(this->_socket[event[i].data.fd]);
+			// 	if (sock != NULL) {
+			// 		sock->waitChildProcess();
+			// 	}
+			// 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event[i].data.fd, NULL) != 0) {
+			// 		perror("epoll delete, cgi");
+			// 	}
+			// 	delete this->_socket[event[i].data.fd];
+			// 	this->_socket.erase(event[i].data.fd);
+			// }
 
 		}
 	}
