@@ -98,14 +98,13 @@ int main(int argc, char **argv) {
     try
     {
 		Server server(configs);
-		std::cout << "-----" << std::endl;
         server.createListenServer();
 		std::signal(SIGINT, Signal::signal_handler);
         server.executeServer();
     }
     catch (const ServerException& e)
     {
-		std::cout <<"aaa"<< e.what() << std::endl;
+		std::cout <<"main"<< e.what() << std::endl;
     }
     catch (std::exception& e)
     {

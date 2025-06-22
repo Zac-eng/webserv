@@ -79,6 +79,10 @@ void checkReadFile(void);
 void parseRedirect(LocationConfig& location);
 bool handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, int fd);
 void generateAutoIndex(const std::string directory, const std::string uri);
+bool setAddEpollEvent(int epoll, std::map<int, ASocket*>& socket, bool event_flag, int fd);
+bool setModEpollEvent(int epoll, std::map<int, ASocket*>& socket, bool event_flag, int fd);
+bool setDelEpollEvent(int epoll, std::map<int, ASocket*>& socket, int fd);
+
 
 
 Request getRequest(void) const;
