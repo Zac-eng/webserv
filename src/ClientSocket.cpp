@@ -690,17 +690,17 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				if (cgi == NULL)
 					throw RequestException(this->_request.getStatusNumber(), "cgi cannot executed");
 				if (setAddEpollEvent(epoll_fd, socket, false, cgi->getWritePipe()) == false) {
-					perror("client cgi error add");
 					delete cgi;
 					throw RequestException(500, "Parse not finish");
 				}
 				if (setDelEpollEvent(epoll_fd, socket, this->_fd) == false) {
 					delete cgi;
-				perror("client socket EPollDel");
 					throw RequestException(500, "Parse not finish");
 				}
-				if (socket.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false)
+				if (socket.insert(std::make_pair(cgi->getWritePipe(), cgi)).second == false) {
+					delete cgi;
 					throw RequestException(500, "sock_map insertion failed");
+				}
 				cgi->setStartTime(time(NULL));
 				return ;
 			}
@@ -713,7 +713,6 @@ void ClientSocket::checkExecuteResponse(int epoll_fd, std::map<int, ASocket*>& s
 				std::cout << this->_request.getMaxBodySize()<<"max: net"<<(this->_response.getBody()).length()<<std::endl;
 			}
 			if (setModEpollEvent(epoll_fd, socket, false, this->_fd) == false) {
-				perror("client socket EPollOut");
 				throw RequestException(500, "Parse not finish");
 			}
 			this->_response_flag = true;
@@ -743,7 +742,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		{
 			if (setDelEpollEvent(epoll_fd, _socket, this->_fd) == false)
 			{
-				perror("read error del");
 				closeAndDeleteSocket(_socket);
 				return ;
 			}
@@ -776,7 +774,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 		std::cout << e.what() << std::endl;
 		if (setModEpollEvent(epoll_fd, _socket, false, this->_fd) == false)
 		{
-			perror("client error mod ");
 			this->_request.setStatusNumber(500);
 		}
 
@@ -788,7 +785,6 @@ void ClientSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& _so
 	catch (std::exception& e)
 	{
 		if (setModEpollEvent(epoll_fd, _socket, false, this->_fd) == false) {
-			perror("client socket EPollOut");
 			this->_request.setStatusNumber(500);
 		}
 		this->_request.setStatusNumber(500);
@@ -897,9 +893,8 @@ bool ClientSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket,
 	if (this->getTimeOut() == true)	
 		return (true);
 	if (setModEpollEvent(epoll_fd, _socket, false, fd) == false) {
-			perror("timeout client ");
-			this->setTimeOut(true);
-		}
+		this->setTimeOut(true);
+	}
 	this->setTimeOut(true);
 	return (true);
 }

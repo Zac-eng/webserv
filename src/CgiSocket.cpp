@@ -43,68 +43,6 @@ bool CgiSocket::createSocket(void)
 	return (false);
 }
 
-bool CgiSocket::setAddEpollEvent(int epoll_fd, bool event_flag, int fd)
-{
-	struct epoll_event ev;
-
-	ev.data.fd = fd;
-	if (event_flag == true)
-		ev.events = EPOLLIN;
-	else
-		ev.events = EPOLLOUT;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
-	{
-		if (errno == EEXIST)
-		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
-				return (false);
-			return (true);
-		}
-		return (false);
-	}
-	return (true);
-}
-
-bool CgiSocket::setModEpollEvent(int epoll_fd, bool event_flag, int fd)
-{
-	struct epoll_event ev;
-
-	(void)socket;
-
-	ev.data.fd = fd;
-	if (event_flag == true)
-		ev.events = EPOLLIN;
-	else
-		ev.events = EPOLLOUT;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
-	{
-		if (errno == ENOENT)
-		{
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
-				return (false);
-			return (true);
-		}
-		return (false);
-	}
-	return (true);
-}
-
-bool CgiSocket::setDelEpollEvent(int epoll_fd, int fd)
-{
-	(void)socket;
-
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
-	{
-		if (errno == ENOENT)
-		{
-			return (true);
-		}
-		return (false);
-	}
-	return (true);
-}
-
-
 CgiSocket* CgiSocket::createCgiSocket(
   ServerConfig& conf,
   Request& req,
@@ -128,7 +66,6 @@ CgiSocket* CgiSocket::createCgiSocket(
   else if (pid == 0) {
     const char *args[] = {req.getFile().c_str(), NULL};
     if (!prepareChildPipes(ptc_pipe, ctp_pipe)) {
-      perror("child pipes");
       close_pipes(ptc_pipe, ctp_pipe);
       std::exit(50);
     }
@@ -136,10 +73,8 @@ CgiSocket* CgiSocket::createCgiSocket(
     if (execve(req.getFile().c_str(), (char **)args, (char **)meta_vars) != 0) {
       switch (errno) {
         case ENOENT:
-          perror("noent");
           std::exit(44);
         default:
-          perror("cgi error");
           std::exit(52);
       }
     }
@@ -147,7 +82,6 @@ CgiSocket* CgiSocket::createCgiSocket(
   }
   if (!prepareParentPipes(ptc_pipe, ctp_pipe)) {
     req.setStatusNumber(500);
-    perror("parent pipes");
     close_pipes(ptc_pipe, ctp_pipe);
     kill(pid, SIGINT);
     return NULL;
@@ -164,7 +98,6 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   (void)socket, (void)epoll_fd;
   read_count = read(this->_pipe_fds[READ], read_buf, BUFFER_SIZE - 1);
   if (read_count < 0) {
-    perror("read");
     return ;
   }
   read_buf[read_count] = '\0';
@@ -186,28 +119,20 @@ void CgiSocket::handleEpollInEvent(int epoll_fd, std::map<int, ASocket*>& socket
   }
   ss << response_body;
   std::cerr << response_body << std::endl;
-  std::cerr << (this->_response_body.empty() ? "body empty" : "body filled") << std::endl;
   this->_response_body = ss.str();
-  std::cerr << (this->_response_body.empty() ? "body empty" : "body filled") << std::endl;
 
   std::map<int, ASocket*>::iterator read_epoll = socket.find(this->_pipe_fds[READ]);
   if (read_epoll != socket.end()) {
     socket.erase(read_epoll);
   }
-
   if (setAddEpollEvent(epoll_fd, false, this->_client_fd) == false) {
-    perror("epoll_ctl: add");
     return ;
-				}
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[READ], NULL) == -1) {
-    perror("epoll_ctl: del read");
-  }
+	}
 	if (setDelEpollEvent(epoll_fd, this->_pipe_fds[READ]) == false) {
-    perror("epoll_ctl: del read");
-					throw RequestException(500, "Parse not finish");
+		throw RequestException(500, "Parse not finish");
   }
   close(this->_pipe_fds[READ]);
-  // delete this;
+  // delete read_epoll->second;
 }
 
 void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socket) {
@@ -216,18 +141,15 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   if (write_epoll != socket.end()) {
     socket.erase(write_epoll);
   }
-  if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, this->_pipe_fds[WRITE], NULL) == -1) {
-    perror("epoll_ctl: add");
-  close(this->_pipe_fds[WRITE]);
-  return ;
-}
-  				if (setAddEpollEvent(epoll_fd, true, this->_pipe_fds[READ]) == false) {
-    perror("epoll_ctl: add");
+  if (setDelEpollEvent(epoll_fd, this->_pipe_fds[WRITE]) == false) {
     close(this->_pipe_fds[WRITE]);
     return ;
-				}
+  }
+  if (setAddEpollEvent(epoll_fd, true, this->_pipe_fds[READ]) == false) {
+    close(this->_pipe_fds[WRITE]);
+    return ;
+	}
   if (socket.insert(std::make_pair(this->_pipe_fds[READ], this)).second == false) {
-    perror("epoll_ctl: add");
     close(this->_pipe_fds[WRITE]);
     return ;
   }
@@ -238,7 +160,6 @@ void CgiSocket::handleEpollOutEvent(int epoll_fd, std::map<int, ASocket*>& socke
   std::string cgi_input = _req.getBoundary() + "\r\n" + _req.getBody() + _req.getBoundary() + "--\r\n";
   std::cout << cgi_input.c_str() << std::endl;
   if (write(this->_pipe_fds[WRITE], cgi_input.c_str(), cgi_input.length()) < 0) {
-    perror("write failed");
     close(this->_pipe_fds[WRITE]);
     return ;
   }
@@ -251,13 +172,9 @@ void	CgiSocket::handleEpollHupEvent(int epoll_fd, std::map<int, ASocket*>& _sock
 
 	waitChildProcess();
   if (setAddEpollEvent(epoll_fd, false, this->_client_fd) == false) {
-	  perror("epoll delete, cgi");
-
     return ;
-				}
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, target_fd, NULL) != 0) {
-	  perror("epoll delete, cgi");
 	}
+	setDelEpollEvent(epoll_fd, target_fd);
 	_socket.erase(target_fd);
 	delete this;
 }
@@ -344,21 +261,79 @@ bool CgiSocket::handleTimeOut(int epoll_fd, std::map<int, ASocket*>& _socket, in
   if (this->getTimeOut() == true)
     return (true);
   {
-    perror("timeout");
     kill(this->_cgi_pid, SIGINT);
     ctlClientEpollOut(epoll_fd);
     //   ev.events = EPOLLOUT;
     //   ev.data.fd = this->_client_fd;
     //   close(this->_pipe_fds[READ]);
     //  if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, this->_client_fd, &ev) == -1) {
-    //     perror("epoll_ctl: add");
     //  }
     this->_req.setStatusNumber(504);
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
+    // if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
+    if (setDelEpollEvent(epoll_fd, fd) == false) {
 			this->setTimeOut(true);
 		}
 		this->setTimeOut(true);
     closeAndDeleteSocket(_socket, fd);
     return (false);
   }
+}
+
+bool CgiSocket::setAddEpollEvent(int epoll_fd, bool event_flag, int fd)
+{
+	struct epoll_event ev;
+
+	ev.data.fd = fd;
+	if (event_flag == true)
+		ev.events = EPOLLIN;
+	else
+		ev.events = EPOLLOUT;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+	{
+		if (errno == EEXIST)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
+				return (false);
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
+}
+
+bool CgiSocket::setModEpollEvent(int epoll_fd, bool event_flag, int fd)
+{
+	struct epoll_event ev;
+
+	(void)socket;
+
+	ev.data.fd = fd;
+	if (event_flag == true)
+		ev.events = EPOLLIN;
+	else
+		ev.events = EPOLLOUT;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
+	{
+		if (errno == ENOENT)
+		{
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+				return (false);
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
+}
+
+bool CgiSocket::setDelEpollEvent(int epoll_fd, int fd)
+{
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
+	{
+		if (errno == ENOENT)
+		{
+			return (true);
+		}
+		return (false);
+	}
+	return (true);
 }
